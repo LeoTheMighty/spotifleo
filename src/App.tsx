@@ -1,26 +1,30 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import Dashboard from './just_good';
 
-function App() {
+import { observer } from 'mobx-react';
+import SpotifyAuthView from './SpotifyAuthView';
+import useSpotifyStore from './state/SpotifyStore';
+import { StoreProvider } from './state/SpotifyStoreProvider';
+
+import 'react-spotify-auth/dist/index.css'
+
+
+const App = observer(() => {
+  const store = useSpotifyStore();
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <StoreProvider store={store}>
+          { store.token ? (
+            <Dashboard token={store.token} />
+          ) : (
+            <SpotifyAuthView setToken={store.setToken} />
+          )}
+        </StoreProvider>
       </header>
     </div>
   );
-}
+});
 
 export default App;

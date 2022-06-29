@@ -1,9 +1,15 @@
 export type SpotifyItemType = 'album' | 'artist' | 'playlist' | 'track' | 'show' | 'episode' | 'user';
 
+export type Images = {
+  small: string;
+  large: string;
+}
+
 export interface SpotifyItem {
+  id: string;
   type: SpotifyItemType;
   name: string;
-  img: string;
+  img?: Images;
   url: string;
   uri: string;
 }
@@ -26,7 +32,10 @@ export interface Track extends SpotifyItem {
   artist: string;
 }
 
-export interface Artist extends SpotifyItem {}
+export interface Artist extends SpotifyItem {
+  genre: string;
+  popularity: number;
+}
 
 export interface Playlist extends SpotifyItem {}
 
@@ -35,9 +44,37 @@ export interface Playback {
 
 }
 
+
+// Auth
+export interface PCKECodes {
+  code: string;
+  codeVerifier: string;
+}
+
+export interface Token {
+  accessToken: string;
+  refreshToken: string;
+  expires: Date; // when the token has expired
+}
+
 // ============================
 // API Request/Response Objects
 // ============================
+
+export interface SpotifyAccessTokenResponse {
+  access_token: string;
+  token_type: 'Bearer',
+  scope: string; // space separated list of scopes that have been granted
+  expires_in: number; // number of seconds when the access token is valid
+  refresh_token: string;
+}
+
+export interface SpotifyRefreshTokenResponse {
+  access_token: string;
+  token_type: 'Bearer',
+  scope: string; // space separated list of scopes that have been granted
+  expires_in: number; // number of seconds when the access token is valid
+}
 
 export interface SpotifyItemResponse {
   id: string;

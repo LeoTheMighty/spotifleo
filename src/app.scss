@@ -1,8 +1,16 @@
 // Variables
 
-$background-color: #abc123;
+$primary-color: #1db954;
+
 
 $primary-text: #ffffff;
+
+$search-bar-color: #09651b;
+
+
+$background-color: black;
+$gradient-to: $primary-color;
+$primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($gradient-to, 1) 200vh);
 
 // Styles
 
@@ -20,24 +28,133 @@ code {
   monospace;
 }
 
-.App {
-  text-align: center;
+.app {
+  //text-align: center;
+  color: $primary-text;
+  background: $primary-gradient;
+  width: 100vw;
+  height: 100vh;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
+//.App-header {
+//  background-color: #282c34;
+//  min-height: 100vh;
+//  display: flex;
+//  flex-direction: column;
+//  align-items: center;
+//  justify-content: center;
+//  font-size: calc(10px + 2vmin);
+//  color: white;
+//}
 
 .dashboard {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
 }
+
+.top-bar {
+  height: 7.5rem;
+  //position: relative;
+  width: 100%;
+}
+
+.search-container {
+  width: 95%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
+.search-bar {
+  width: 100%;
+  height: 4rem;
+  color: white;
+  text-align: center;
+  border: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.search-bar-input {
+  width: 100%;
+  height: 100%;
+  background: $search-bar-color;
+  color: white;
+  border-radius: 4rem;
+  border: none;
+  padding: 1.65rem 1.5rem 1.5rem;
+  font-size: 1.75rem;
+  flex-direction: column;
+}
+
+.search-bar-input.results-showing {
+  border-radius: 2rem 2rem 0 0;
+  outline: none;
+  border: 2px solid lightblue;
+  border-bottom: none;
+}
+
+.search-bar-icon {
+  font-size: 1.5rem;
+  color: gray;
+  position: absolute;
+  right: 1.5rem;
+}
+
+.search-clear-button {
+  color: gray;
+  position: absolute;
+  right: 4rem;
+}
+
+.search-bar-input::placeholder {
+  color: gray;
+  font-size: 1.75rem;
+}
+
+.search-bar-input:focus {
+  outline-color: lightblue;
+}
+
+.search-bar-input::selection {
+  background: #0dcaf0;
+}
+
+.search-bar-results {
+  background: #0a53be;
+  width: 100%;
+  border: 2px solid lightblue;
+  border-top: 0;
+  display: none;
+  flex-direction: column;
+  height: 50vh;
+}
+
+.search-bar-results.showing {
+  display: flex !important;
+}
+
+.search-bar-result {
+  background: lightblue;
+  height: 4rem;
+  border: none;
+}
+
+.artist-result {
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 
 .background-player {
   position: absolute;

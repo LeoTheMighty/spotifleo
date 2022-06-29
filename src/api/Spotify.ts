@@ -1,6 +1,7 @@
 // What to port over
 
 import { ArtistResponse, FetchResponse, PlaybackResponse } from '../types';
+import { formatResp } from '../logic/common';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
 const MAX_FETCH_ITEMS = 50;
@@ -13,6 +14,7 @@ const DELETE = 'DELETE';
 type Query = { [param: string]: string | number };
 
 // What API calls do we need?
+
 // 0. Search for an artist
 // 1. Get all artist's tracks? (fir)
 //    a. Get all artist's albums
@@ -137,19 +139,7 @@ const callSpotifyAPI = async (
 ) => new Promise<any>((resolve, reject) => {
   fetch(SPOTIFY_API_BASE_URI + endpoint + (query(queryValues) || ''), {
     method,
-    headers: {
-      authorization: `Bearer ${token}`
-    },
+    headers: { authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
-  }).then(async (r) => {
-    if (r.status === 204) {
-      resolve(true);
-    }
-    const response = await r.json();
-    if (response.error) {
-      reject(response.error);
-    } else {
-      resolve(response);
-    }
-  }).catch(reject);
+  }).then(formatResp).then(resolve).catch(reject);
 });

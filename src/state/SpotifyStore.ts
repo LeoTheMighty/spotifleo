@@ -9,8 +9,12 @@ import {
   callNext,
   getCurrentUserPlaylists,
   playPlayback, pausePlayback, getPlayback, nextPlayback, prevPlayback, seekPlayback
-} from '../api/SpotifyHelper';
+} from '../api/Spotify';
 import { artistString, getImages } from '../logic/common';
+import { Artist, Token, Track } from '../types';
+import { serializerArtists } from '../logic/serializers';
+import { getToken, storeToken } from '../logic/storage';
+import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
 const spotifyAuthTokenCookieLocation: string = 'spotifyAuthToken';
 
@@ -26,10 +30,18 @@ const respondNoToken = () => respondError(new Error('No Spotify Token'));
 
 export interface SpotifyStore {
   // Spotify Authentication
-  token?: string;
-  setToken: (token: string) => void;
+  token?: Token;
+  useToken: () => Promise<string | undefined>;
+  newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
+  fetchToken: () => void;
+  // setToken: (token: string) => void;
 
   // High Level Spotify Edit Actions
+  artistResults: Artist[];
+  loadedTracks: Track[];
+
+  searchArtists: (term: string) => Response;
+  clearSearchArtistResults: () => Response;
   loadAllArtistTracks: (artistID: string) => Response;
   applyLoadedToNewPlaylist: (name: string, description: string) => Response;
   getPlaylistTracks: (trackID: string) => Response;
@@ -52,17 +64,42 @@ export interface SpotifyStore {
   seekToPosition: (value: number) => Response;
   pretendToProceedPosition: () => void;
   updatePlayer: () => Response;
-
-  // test: () => void;
 }
 
 const useSpotifyStore = () => {
   const store: SpotifyStore = useLocalObservable<SpotifyStore>(() => ({
-    token: Cookies.get(spotifyAuthTokenCookieLocation),
-    setToken: action((token: string) => {
-      store.token = token;
+    token: undefined,
+    useToken: action(async () => {
+      if (!store.token) {
+        store.fetchToken();
+      }
+      if (store.token && shouldRefreshToken(store.token)) {
+        console.log('Refreshing token');
+
+        const response = await fetchRefreshToken(store.token.refreshToken);
+
+        store.newToken(response.access_token, store.token.refreshToken, response.expires_in);
+      }
+
+      return store.token?.accessToken;
+    }),
+    newToken: action((accessToken, refreshToken, expiresIn) => {
+      // getTime and constructor is in milliseconds
+      const expires = new Date(new Date().getTime() + (expiresIn * 1000));
+      const token: Token = {
+        refreshToken,
+        accessToken,
+        expires,
+      };
+      storeToken(token);
+    }),
+    fetchToken: action(() => {
+      store.token = getToken();
       // TODO: Set initial states for app?
     }),
+    // setToken: action((token: string) => {
+    //   store.token = token;
+    // }),
 
     // test: action(async () => {
     //   if (!store.token) {
@@ -84,14 +121,24 @@ const useSpotifyStore = () => {
     //   // store.token && console.log(await getAlbumTracks(dojaAlbum, store.token));
     //   // console.log('SEARCH FOR ARTIST');
     //   // store.token && console.log(await searchForArtist('doja', 20, store.token));
-    //
-    //   // store.token && console.log());
-    //   const playback: PlaybackResponse = await getPlayback(store.token);
-    //   console.log(playback);
-    //   store.progress = (playback.progress_ms && playback.item.duration_ms) ?
-    //     (playback.progress_ms / playback.item.duration_ms) * 100:
-    //     0;
     // }),
+    artistResults: [],
+    loadedTracks: [],
+
+    searchArtists: action(async (term: string) => {
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
+
+      const response = await searchForArtist(term, 5, token);
+
+      // response.artists.items[0].followers.total;
+
+      store.artistResults.push(...serializerArtists(response.artists.items));
+
+      return respondSuccess();
+    }),
+
+    clearSearchArtistResults: action(async () => respondSuccess(store.artistResults = [])),
 
     loadAllArtistTracks: (artistID: string) => undefined,
     applyLoadedToNewPlaylist: (name: string, description: string) => undefined,
@@ -108,17 +155,18 @@ const useSpotifyStore = () => {
     currentTrackLargeImageURL: '',
 
     togglePlaying: action(async () => {
-      if (!store.token) return respondNoToken();
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
 
       if (store.playing) {
         try {
-          await pausePlayback(store.token);
+          await pausePlayback(token);
         } catch (error: any) {
           return respondError(error);
         }
       } else {
         try {
-          await playPlayback(store.token);
+          await playPlayback(token);
         } catch (error: any) {
           return respondError(error);
         }
@@ -128,10 +176,11 @@ const useSpotifyStore = () => {
     }),
 
     skipNext: action(async () => {
-      if (!store.token) return respondNoToken();
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
 
       try {
-        await nextPlayback(store.token);
+        await nextPlayback(token);
       } catch (error: any) {
         return respondError(error);
       }
@@ -140,10 +189,11 @@ const useSpotifyStore = () => {
     }),
 
     skipPrevious: action(async () => {
-      if (!store.token) return respondNoToken();
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
 
       try {
-        await prevPlayback(store.token);
+        await prevPlayback(token);
       } catch (error: any) {
         return respondError(error);
       }
@@ -152,10 +202,11 @@ const useSpotifyStore = () => {
     }),
 
     seekToPosition: action(async (value: number) => {
-      if (!store.token) return respondNoToken();
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
 
       try {
-        await seekPlayback(value, store.token);
+        await seekPlayback(value, token);
       } catch (error: any) {
         return respondError(error);
       }
@@ -171,10 +222,11 @@ const useSpotifyStore = () => {
     }),
 
     updatePlayer: action(async () => {
-      if (!store.token) return respondNoToken();
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
 
       try {
-        const playback = await getPlayback(store.token);
+        const playback = await getPlayback(token);
 
         runInAction(() => {
           store.playing = playback.is_playing;

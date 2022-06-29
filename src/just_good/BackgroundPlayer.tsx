@@ -7,7 +7,7 @@ const BackgroundPlayer = observer(() => {
   const store = useSpotifyStore();
 
   useEffect(() => {
-    console.log('start');
+    console.log('update player');
     store.updatePlayer();
 
     if (store.playing) {
@@ -16,8 +16,6 @@ const BackgroundPlayer = observer(() => {
   }, [store, store.playing]);
 
   const pretendSeekCallback = async () => {
-    console.log('callback');
-
     if (store?.playing) {
       await store.pretendToProceedPosition();
 

@@ -42,7 +42,7 @@ const IconView = ({ item, i } : Props) => {
       <a>
         <img
           className="spotify-icon-img"
-          src={item.img}
+          src={item.img?.small}
           alt={`${item.name} ${artist && 'by ' + artist}`}
         />
       </a>

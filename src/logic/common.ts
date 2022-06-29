@@ -1,10 +1,21 @@
-import { ArtistResponse, ImageResponse } from '../types';
+import { ArtistResponse, ImageResponse, Images } from '../types';
+
+export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
+  if (r.status === 204) return resolve(true);
+  r.json().then((resp) => {
+    if (resp.error) {
+      reject(resp.error);
+    } else {
+      resolve(resp);
+    }
+  });
+});
 
 export const artistString = (artists?: ArtistResponse[]) => (
   artists ? artists.map((artist) => artist.name).join(',') : ''
 );
 
-export const getImages = (images?: ImageResponse[]): { small: string, large: string } => {
+export const getImages = (images?: ImageResponse[]): Images => {
   let minURL = '';
   let minHeight = Infinity;
   let maxURL = '';
@@ -23,8 +34,11 @@ export const getImages = (images?: ImageResponse[]): { small: string, large: str
   }
 
   return { small: minURL, large: maxURL };
-
 }
+
+export const getGenre = (genres: string[]): string => genres.join(', ');
+
+export const getScope = (scopes: string[]): string => scopes.join(' ');
 
 export const formatMs = (ms: number) => {
   const seconds = Math.floor(ms / 1000);

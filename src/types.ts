@@ -44,6 +44,17 @@ export interface Playback {
 
 }
 
+export interface CachedPlaylist {
+  name: string;
+  id: string;
+}
+
+export interface JustGoodPlaylist extends CachedPlaylist {
+  artistId?: string;
+  artistImg?: Images;
+  artistName: string;
+  progressPlaylist?: CachedPlaylist;
+}
 
 // Auth
 export interface PCKECodes {

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
-import { fetchAccessToken, getParams } from './authHelper';
+import { getParams } from '../logic/common';
+import { fetchAccessToken } from './authHelper';
 import { getPKCECodes, storeToken } from '../logic/storage';
 import { useStore } from '../state/SpotifyStoreProvider';
 
@@ -21,7 +22,7 @@ const SpotifyAuthCallback = () => {
         fetchAccessToken(params.code, verifier).then((response) => {
           store.newToken(response.access_token, response.refresh_token, response.expires_in);
 
-          navigate('/');
+          navigate('/spotifleo');
         }).catch((error) => {
           console.debug('Ignoring failure');
         });

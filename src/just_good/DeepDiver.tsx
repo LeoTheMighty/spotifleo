@@ -5,6 +5,7 @@ import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
+import { getParams } from '../logic/common';
 
 const TEST_PLAYLIST_ID = '';
 
@@ -28,10 +29,6 @@ Back button "<"                                 "View Playlist in Spotify"
 
 // Prepare 5 components.
 
-type Props = {
-  playlistID: string; //
-};
-
 const SongScroller = ({ songs }: { songs: Track[] }) => {
   return (
     <div className="song-scroller">
@@ -46,21 +43,27 @@ const addSongToJustGood = (trackID: string, playlistID: string) => {
 
 }
 
-const DeepDiver = observer((props: Props) => {
+const DeepDiver = observer(() => {
   const store = useStore();
+  const params = getParams();
 
   const [songList, setSongList] = useState([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-
-  }, []);
+    if (params.playlist_id) {
+      console.log('Lmao');
+      console.log(params.playlist_id);
+    } else {
+      console.error('No playlist provided');
+    }
+  }, [params.playlist_id]);
 
   // get 5. 2 before, the current, 2 after
   const getSongs = () => songList.slice(index - 2, index + 3);
 
   return (
-    <div>
+    <div className="deep-diver">
       <div className="justify-content-between">
         <button> {'<'} </button>
         <button> View Playlist in Spotify </button>

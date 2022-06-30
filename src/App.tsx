@@ -9,6 +9,8 @@ import { StoreProvider } from './state/SpotifyStoreProvider';
 
 import 'react-spotify-auth/dist/index.css'
 import SpotifyAuthCallback from './auth/SpotifyAuthCallback';
+import DeepDiver from './just_good/DeepDiver';
+import TopBar from './just_good/TopBar';
 
 const App = observer(() => {
   const store = useSpotifyStore();
@@ -19,14 +21,16 @@ const App = observer(() => {
     <div className="app">
       <StoreProvider store={store}>
         <BrowserRouter>
-          <Routes>
-            <Route path="/welcome" element="hey :)"/>
-            <Route path="/" element={store.token ? (
-              <Dashboard />
-            ) : (
-              <SpotifyAuthView />
-            )} />
-            <Route path="/callback" element={<SpotifyAuthCallback />}/>
+            <TopBar/>
+            <Routes>
+            { store.token ? [
+              <Route path="/spotifleo/welcome" element="hey :)"/>,
+              <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
+              <Route path="/spotifleo" element={<Dashboard />} />
+            ] : [
+              <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
+              <Route path="/*" element={<SpotifyAuthView />} />
+            ]}
           </Routes>
         </BrowserRouter>
       </StoreProvider>

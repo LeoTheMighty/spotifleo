@@ -8,25 +8,38 @@ import {
   searchForArtist,
   callNext,
   getCurrentUserPlaylists,
-  playPlayback, pausePlayback, getPlayback, nextPlayback, prevPlayback, seekPlayback
+  playPlayback,
+  pausePlayback,
+  getPlayback,
+  nextPlayback,
+  prevPlayback,
+  seekPlayback,
+  getAllCurrentUserPlaylists,
+  getCurrentUserProfile
 } from '../api/Spotify';
-import { artistString, getImages } from '../logic/common';
-import { Artist, Token, Track } from '../types';
-import { serializerArtists } from '../logic/serializers';
-import { getToken, storeToken } from '../logic/storage';
+import {
+  artistString,
+  getImages,
+  JUST_GOOD_INDICATOR,
+  PROGRESS_INDICATOR,
+  splitJustGoodPlaylists,
+  splitPlaylists
+} from '../logic/common';
+import { Artist, ArtistResponse, CachedPlaylist, Images, JustGoodPlaylist, Token, Track } from '../types';
+import { serializeArtists } from '../logic/serializers';
+import { getUser, getToken, storeToken, storeUser, StoredUser } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
-const spotifyAuthTokenCookieLocation: string = 'spotifyAuthToken';
+export type Response = Promise<boolean>;
+// export type Response<T> = Promise<{
+//   success: boolean;
+//   body?: T;
+//   error?: Error;
+// }> | undefined;
 
-export type Response = Promise<{
-  success: boolean;
-  body?: any;
-  error?: Error;
-}> | undefined;
-
-const respondSuccess = (body?: any) => ({ success: true, body });
-const respondError = (error: Error) => ({ success: false, error });
-const respondNoToken = () => respondError(new Error('No Spotify Token'));
+// const respondSuccess = (body?: any) => ({ success: true, body });
+// const respondError = (error: Error) => ({ success: false, error });
+const respondNoToken = () => { throw new Error('No Spotify Token') };
 
 export interface SpotifyStore {
   // Spotify Authentication
@@ -34,7 +47,19 @@ export interface SpotifyStore {
   useToken: () => Promise<string | undefined>;
   newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
   fetchToken: () => void;
-  // setToken: (token: string) => void;
+
+  // User Setup
+  setupLoading: boolean;
+
+  userId?: string;
+  userName?: string;
+  userImg?: Images;
+  userPlaylists?: CachedPlaylist[];
+  justGoodPlaylists?: JustGoodPlaylist[];
+  inProgressJustGoodPlaylists?: JustGoodPlaylist[];
+
+  fetchUser: () => Response;
+  setupUser: () => Promise<StoredUser>;
 
   // High Level Spotify Edit Actions
   artistResults: Artist[];
@@ -50,9 +75,10 @@ export interface SpotifyStore {
 
   // High Level Spotify Player
   playing: boolean;
-  // both milliseconds
   currentTrackName: string;
   currentTrackArtist: string;
+
+  // both milliseconds
   currentTrackProgress: number;
   currentTrackDuration: number;
   currentTrackSmallImageURL: string,
@@ -92,59 +118,161 @@ const useSpotifyStore = () => {
         expires,
       };
       storeToken(token);
+      store.token = token;
     }),
-    fetchToken: action(() => {
+    fetchToken: action(async () => {
       store.token = getToken();
-      // TODO: Set initial states for app?
-    }),
-    // setToken: action((token: string) => {
-    //   store.token = token;
-    // }),
 
-    // test: action(async () => {
-    //   if (!store.token) {
-    //     return;
-    //   }
-    //
-    //   console.log('test');
-    //   const doja = '5cj0lLjcoR7YOSnhnX0Po5';
-    //   const dojaDeepDivePlaylist = '60CudX0GVgmf5MZ4fGF4Bl';
-    //   const dojaAlbum = '1MmVkhiwTH0BkNOU3nw5d3';
-    //
-    //   console.log('GET ARTIST ALBUMS');
-    //   store.token && console.log(await getArtistAlbums(doja, store.token));
-    //   // console.log('GET PLAYLIST TRACKS');
-    //   // store.token && console.log(await getPlaylistTracks(dojaDeepDivePlaylist, 20, 0, store.token));
-    //   // console.log('GET CURRENT USER PLAYLISTS');
-    //   // store.token && console.log(await getCurrentUserPlaylists(20, 0, store.token));
-    //   // console.log('GET ALBUM TRACKS');
-    //   // store.token && console.log(await getAlbumTracks(dojaAlbum, store.token));
-    //   // console.log('SEARCH FOR ARTIST');
-    //   // store.token && console.log(await searchForArtist('doja', 20, store.token));
-    // }),
+      // Set initial states for app
+      await store.fetchUser();
+    }),
+
+    setupLoading: false,
+    userId: undefined,
+    userName: undefined,
+    userImg: undefined,
+    userPlaylists: undefined,
+    justGoodPlaylists: undefined,
+    inProgressJustGoodPlaylists: undefined,
+
+    fetchUser: action(async () => {
+      let user = getUser();
+
+      if (!user) {
+        user = await store.setupUser();
+      }
+
+      store.userId = user.userId;
+      store.userName = user.userName;
+      store.userImg = user.userImg;
+      store.userPlaylists = user.userPlaylists;
+
+      const { inProgressJustGoodPlaylists, finishedJustGoodPlaylists } = splitJustGoodPlaylists(user.justGoodPlaylists);
+
+      store.justGoodPlaylists = finishedJustGoodPlaylists;
+      store.inProgressJustGoodPlaylists = inProgressJustGoodPlaylists;
+
+      return true;
+    }),
+
+    setupUser: action(async () => {
+      const token = await store.useToken();
+      if (!token) return respondNoToken();
+
+      store.setupLoading = true;
+
+      console.log('Fetching user profile!')
+
+      const user = await getCurrentUserProfile(token);
+
+      console.log('Loaded profile.');
+      console.log(user);
+
+      store.userId = user.id;
+      store.userName = user.display_name;
+      store.userImg = getImages(user.images);
+
+      console.log('Fetching all user playlists...')
+
+      const playlists = await getAllCurrentUserPlaylists(token);
+
+      console.log('Fetched.');
+      console.log(playlists);
+
+      console.log('splitting the playlists...');
+
+      const { justGoodPlaylists: justJustGoodPlaylists, progressPlaylists, userPlaylists } = splitPlaylists(playlists);
+
+      console.log('splitted');
+      console.log({ justJustGoodPlaylists, progressPlaylists, userPlaylists });
+
+      const justGoodPlaylists: JustGoodPlaylist[] = [];
+      const progressMap: { [artistName: string]: CachedPlaylist } = {};
+
+      progressPlaylists.forEach((playlist) => {
+        progressMap[playlist.name.substring(PROGRESS_INDICATOR.length).trim()] = playlist;
+      });
+
+      console.log('Created the progress map.');
+      console.log(progressMap);
+
+      for (let i = 0; i < justJustGoodPlaylists.length; i++) {
+        console.log(`Processing Just Good playlist ${i}.`);
+        const playlist = justJustGoodPlaylists[i];
+        console.log(playlist);
+        const artistName = playlist.name.substring(JUST_GOOD_INDICATOR.length).trim();
+        console.log(`Artist Name from playlist: ${artistName}`);
+
+        const artist: ArtistResponse | undefined = (await searchForArtist(artistName, 1, token)).artists.items[0];
+        console.log('Artist received from search:');
+        console.log(artist);
+
+        justGoodPlaylists.push({
+          ...playlist,
+          artistId: artist?.id,
+          artistName,
+          artistImg: getImages(artist?.images),
+          progressPlaylist: progressMap[artistName],
+        });
+
+        console.log('Finished just good playlist.');
+        console.log(justGoodPlaylists[justGoodPlaylists.length - 1]);
+      }
+
+      store.userPlaylists = userPlaylists;
+      store.justGoodPlaylists = justGoodPlaylists;
+
+      const storedUser: StoredUser = {
+        userId: store.userId,
+        userImg: store.userImg,
+        userName: store.userName,
+        userPlaylists: store.userPlaylists,
+        justGoodPlaylists: store.justGoodPlaylists,
+      };
+
+      storeUser(storedUser);
+
+      store.setupLoading = false;
+
+      return storedUser;
+    }),
+
     artistResults: [],
     loadedTracks: [],
 
     searchArtists: action(async (term: string) => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
       const response = await searchForArtist(term, 5, token);
 
       // response.artists.items[0].followers.total;
 
-      store.artistResults.push(...serializerArtists(response.artists.items));
+      store.artistResults.push(...serializeArtists(response.artists.items));
 
-      return respondSuccess();
+      return true;
     }),
 
-    clearSearchArtistResults: action(async () => respondSuccess(store.artistResults = [])),
+    clearSearchArtistResults: action(async () => {
+      store.artistResults = [];
+      return true;
+    }),
 
-    loadAllArtistTracks: (artistID: string) => undefined,
-    applyLoadedToNewPlaylist: (name: string, description: string) => undefined,
-    getPlaylistTracks: (trackID: string) => undefined,
-    addTrackToPlaylist: (trackID: string, playlistID: string) => undefined,
-    removeTrackFromPlaylist: (trackID: string, playlistID: string) => undefined,
+    loadAllArtistTracks: async (artistID: string) => {
+      return false;
+    },
+    applyLoadedToNewPlaylist: async (name: string, description: string) => {
+      return false;
+    },
+    getPlaylistTracks: async (trackID: string) => {
+      return false;
+    },
+    addTrackToPlaylist: async (trackID: string, playlistID: string) => {
+      return false;
+    },
+    removeTrackFromPlaylist: async (trackID: string, playlistID: string) => {
+      return false;
+    },
 
     playing: false,
     currentTrackName: '',
@@ -156,62 +284,38 @@ const useSpotifyStore = () => {
 
     togglePlaying: action(async () => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
-      if (store.playing) {
-        try {
-          await pausePlayback(token);
-        } catch (error: any) {
-          return respondError(error);
-        }
-      } else {
-        try {
-          await playPlayback(token);
-        } catch (error: any) {
-          return respondError(error);
-        }
-      }
-      store.updatePlayer();
-      return respondSuccess();
+      await (store.playing ? pausePlayback(token) : playPlayback(token));
+
+      return await store.updatePlayer();
     }),
 
     skipNext: action(async () => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
-      try {
-        await nextPlayback(token);
-      } catch (error: any) {
-        return respondError(error);
-      }
-      store.updatePlayer();
-      return respondSuccess();
+      await nextPlayback(token);
+
+      return await store.updatePlayer();
     }),
 
     skipPrevious: action(async () => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
-      try {
-        await prevPlayback(token);
-      } catch (error: any) {
-        return respondError(error);
-      }
-      store.updatePlayer();
-      return respondSuccess();
+      await prevPlayback(token);
+
+      return await store.updatePlayer();
     }),
 
     seekToPosition: action(async (value: number) => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
-      try {
-        await seekPlayback(value, token);
-      } catch (error: any) {
-        return respondError(error);
-      }
-      store.updatePlayer();
-      return respondSuccess();
+      await seekPlayback(value, token);
+
+      return await store.updatePlayer();
     }),
 
     /**
@@ -223,35 +327,31 @@ const useSpotifyStore = () => {
 
     updatePlayer: action(async () => {
       const token = await store.useToken();
-      if (!token) return respondNoToken();
+      if (!token) return false;
 
-      try {
-        const playback = await getPlayback(token);
+      const playback = await getPlayback(token);
 
-        runInAction(() => {
-          store.playing = playback.is_playing;
-          store.currentTrackName = playback.item?.name || '';
-          store.currentTrackArtist = artistString(playback.item?.artists);
-          store.currentTrackProgress = playback.progress_ms || 0;
-          store.currentTrackDuration = playback.item?.duration_ms || 0;
-          const { small, large } = getImages(playback.item.album?.images);
-          store.currentTrackSmallImageURL = small;
-          store.currentTrackLargeImageURL = large;
+      runInAction(() => {
+        store.playing = playback.is_playing;
+        store.currentTrackName = playback.item?.name || '';
+        store.currentTrackArtist = artistString(playback.item?.artists);
+        store.currentTrackProgress = playback.progress_ms || 0;
+        store.currentTrackDuration = playback.item?.duration_ms || 0;
+        const { small, large } = getImages(playback.item.album?.images);
+        store.currentTrackSmallImageURL = small;
+        store.currentTrackLargeImageURL = large;
 
-          console.log('CHECK PLAYER STATUS UPDATED TO:');
-          console.log(`Playing: ${store.playing}`);
-          console.log(`Track Name: ${store.currentTrackName}`);
-          console.log(`Track Artist: ${store.currentTrackArtist}`);
-          console.log(`Track Progress: ${store.currentTrackProgress}`);
-          console.log(`Track Duration: ${store.currentTrackDuration}`);
-          console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
-          console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
-        });
-      } catch (error: any) {
-        return respondError(error);
-      }
+        // console.log('CHECK PLAYER STATUS UPDATED TO:');
+        // console.log(`Playing: ${store.playing}`);
+        // console.log(`Track Name: ${store.currentTrackName}`);
+        // console.log(`Track Artist: ${store.currentTrackArtist}`);
+        // console.log(`Track Progress: ${store.currentTrackProgress}`);
+        // console.log(`Track Duration: ${store.currentTrackDuration}`);
+        // console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
+        // console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
+      });
 
-      return respondSuccess();
+      return true;
     }),
   }));
 

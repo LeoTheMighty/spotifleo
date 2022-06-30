@@ -1,6 +1,13 @@
 // What to port over
 
-import { ArtistResponse, FetchResponse, PlaybackResponse } from '../types';
+import {
+  ArtistResponse,
+  CachedPlaylist,
+  FetchResponse,
+  PlaybackResponse,
+  PlaylistResponse,
+  UserProfileResponse,
+} from '../types';
 import { formatResp } from '../logic/common';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
@@ -85,7 +92,29 @@ export const removeTrackFromPlaylist = async (trackURI: string, playlistID: stri
     }]
   })
 );
-export const getCurrentUserPlaylists = async (limit: number, offset: number, token: string) => (
+
+export const getCurrentUserProfile = async (token: string): Promise<UserProfileResponse> => (
+  callSpotifyAPI(token, '/me', GET)
+);
+
+/**
+ * TODO: Opportunity to return progress
+ */
+export const getAllCurrentUserPlaylists = async (token: string): Promise<CachedPlaylist[]> => {
+  const playlists: CachedPlaylist[] = [];
+  let total = 1;
+  while (playlists.length < total) {
+    const response = await getCurrentUserPlaylists(MAX_FETCH_ITEMS, playlists.length, token);
+
+    response.items.forEach((playlist) => {
+      playlists.push({ id: playlist.id, name: playlist.name });
+    });
+    total = response.total
+  }
+  return playlists;
+};
+
+export const getCurrentUserPlaylists = async (limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistResponse>> => (
   callSpotifyAPI(token, '/me/playlists', GET, {
     limit,
     offset,
@@ -113,6 +142,13 @@ export const callNext = async (token: string, nextUrl: string): Promise<any> => 
 
 export const getPlayback = async (token: string): Promise<PlaybackResponse> => callSpotifyAPI(token, '/me/player', GET);
 export const playPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/play', PUT);
+export const playPlaylistPlayback = async (playlistUri: string, index: number, token: string) => callSpotifyAPI(token, '/me/player/play', PUT, undefined, {
+  context_uri: playlistUri,  // the uri of the playlist/album to play
+  offset: {
+    position: index, // the index of the context to play
+    // uri: '',     // the uri of the track to play
+  }
+});
 export const pausePlayback = async (token: string) => callSpotifyAPI(token, '/me/player/pause', PUT);
 export const nextPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/next', POST);
 export const prevPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/previous', POST);

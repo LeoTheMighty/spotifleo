@@ -50,19 +50,6 @@ export const generateAndStoreCodes = async (): Promise<PCKECodes> => {
   });
 }
 
-export const getParams = (): { [key: string]: string } => {
-  return window ? window.location.search
-    .substring(1)
-    .split('&')
-    .reduce((initial: { [key: string]: string }, item) => {
-      if (item) {
-        const parts: string[] = item.split('=');
-        initial[parts[0]] = decodeURIComponent(parts[1]);
-      }
-      return initial;
-    }, {}) : {};
-};
-
 // URLs
 export const getRedirectURL = (code: string, state?: string) => (
   oauthURL + '/authorize?' +
@@ -126,10 +113,4 @@ export const fetchRefreshToken = async (refreshToken: string): Promise<SpotifyRe
   })
 );
 
-export const shouldRefreshToken = (token: Token): boolean => {
-  console.log(token);
-  console.log(token.expires);
-  console.log(new Date());
-  console.log(token.expires.getTime() <= new Date().getTime());
-  return token.expires <= new Date();
-}
+export const shouldRefreshToken = (token: Token): boolean => token.expires <= new Date();

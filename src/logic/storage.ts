@@ -1,12 +1,21 @@
-import { PCKECodes, Token } from '../types';
+import { CachedPlaylist, Images, JustGoodPlaylist, PCKECodes, Token } from '../types';
 
 const CODES_KEY = 'codes';
 const TOKEN_KEY = 'token';
+const USER_KEY = 'user_cache';
 
 type StoredToken = {
   accessToken: string;
   refreshToken: string;
   expires: string;
+};
+
+export type StoredUser = {
+  userId: string;
+  userName: string;
+  userImg: Images;
+  userPlaylists: CachedPlaylist[];
+  justGoodPlaylists: JustGoodPlaylist[];
 };
 
 const parse = <T>(value?: string | null): T | undefined => {
@@ -33,10 +42,11 @@ export const getToken = (): Token | undefined => {
   };
 }
 
-export const storePlaylists = () => {
-  // use web db api
+export const storeUser = (user: StoredUser) => {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 };
 
-export const getPlaylists = () => {
+export const getUser = (): StoredUser | undefined => (
+  parse(localStorage.getItem(USER_KEY))
+);
 
-};

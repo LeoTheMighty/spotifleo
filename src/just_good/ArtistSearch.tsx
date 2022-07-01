@@ -25,7 +25,7 @@ const ArtistSearch = observer(() => {
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => inputChange(e.target.value);
 
-  const showResults = inputSelected;
+  const showResults = inputSelected && store.artistResults?.length !== 0;
   return (
     <div
       className="search-container"
@@ -33,15 +33,19 @@ const ArtistSearch = observer(() => {
     >
       <div className="search-bar">
         <input
-          className={`search-bar-input ${inputSelected ? 'results-showing' : ''}`}
+          className={`search-bar-input ${showResults ? 'results-showing' : ''}`}
           type="text"
           name="searchInput"
-          placeholder="Search for Artists to Deep Dive"
+          placeholder="Find Artists"
           onChange={debounce(onChange, SEARCH_DEBOUNCE_TIME)}
           onSelect={() => setInputSelected(true)}
           onBlur={() => setInputSelected(false)}
         />
-        {showResults}
+        {showResults && (
+          <button className="search-clear-button" onTouchStart={() => inputChange('')}>
+            <i className="bi bi-x" />
+          </button>
+        )}
         <i className="bi bi-search search-bar-icon" />
       </div>
       <div className={`search-bar-results ${showResults ? 'showing' : ''}`}>

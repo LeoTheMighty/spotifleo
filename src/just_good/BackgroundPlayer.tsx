@@ -3,24 +3,25 @@ import useSpotifyStore from '../state/SpotifyStore';
 import Slider from './SpotifySlider';
 import { observer } from 'mobx-react';
 
+const SHOULD_PRETEND = true;
+
 const BackgroundPlayer = observer(() => {
   const store = useSpotifyStore();
 
   useEffect(() => {
     console.log('update player');
     store.updatePlayer();
-
-    if (store.playing) {
+    if (store.playing && SHOULD_PRETEND) {
       setTimeout(pretendSeekCallback, 1000);
     }
   }, [store, store.playing]);
 
   const pretendSeekCallback = async () => {
-    if (store?.playing) {
+    if (store?.playing && SHOULD_PRETEND) {
       await store.pretendToProceedPosition();
 
       if (store.currentTrackProgress >= store.currentTrackDuration) {
-        store.updatePlayer();
+        await store.updatePlayer();
       }
 
       setTimeout(pretendSeekCallback, 1000);

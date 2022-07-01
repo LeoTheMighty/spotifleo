@@ -28,6 +28,8 @@ export const storePKCECodes = (codes: PCKECodes): PCKECodes => {
   return codes;
 }
 export const getPKCECodes = (): PCKECodes | undefined => parse(sessionStorage.getItem(CODES_KEY));
+export const removePKCECodes = () => sessionStorage.removeItem(CODES_KEY);
+
 export const storeToken = (token: Token): Token => {
   localStorage.setItem(TOKEN_KEY, JSON.stringify(token));
   return token;
@@ -42,6 +44,8 @@ export const getToken = (): Token | undefined => {
   };
 }
 
+export const removeToken = () => localStorage.removeItem(TOKEN_KEY);
+
 export const storeUser = (user: StoredUser) => {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 };
@@ -49,4 +53,6 @@ export const storeUser = (user: StoredUser) => {
 export const getUser = (): StoredUser | undefined => (
   parse(localStorage.getItem(USER_KEY))
 );
+
+export const removeUser = () => localStorage.removeItem(USER_KEY);
 

@@ -31,9 +31,9 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <div className="top-bar d-flex justify-content-center align-items-center sticky-top">
-        <ArtistSearch />
-      </div>
+      {/*<div className="top-bar d-flex justify-content-center align-items-center sticky-top">*/}
+      {/*  <ArtistSearch />*/}
+      {/*</div>*/}
       <p> Finished Just Good Playlists: </p>
       <HorizontalScrollView>
         {store.justGoodPlaylists?.map((playlist) => (

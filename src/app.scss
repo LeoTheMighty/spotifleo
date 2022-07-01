@@ -6,11 +6,13 @@ $primary-color: #1db954;
 $primary-text: #ffffff;
 
 $search-bar-color: #09651b;
+$search-bar-highlight-color: $primary-color;
 
 
 $background-color: black;
 $gradient-to: $primary-color;
-$primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($gradient-to, 1) 200vh);
+$primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh),
+                   repeating-linear-gradient(245deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh);
 
 // Styles
 
@@ -26,6 +28,14 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
   monospace;
+}
+
+a {
+  color: $primary-text;
+}
+
+#root {
+  background: black;
 }
 
 .app {
@@ -56,15 +66,28 @@ code {
   justify-content: center;
 }
 
+$top-bar-height: 5.5rem;
+$search-bar-height: 4rem;
+
 .top-bar {
-  height: 7.5rem;
-  //position: relative;
+  position: sticky;
+  top: 0;
   width: 100%;
+  height: $top-bar-height;
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+}
+
+.top-bar-icon {
+  margin: 0.25rem;
 }
 
 .search-container {
-  width: 95%;
   height: 100%;
+  width: 100%;
   display: flex;
   justify-content: flex-start;
   flex-direction: column;
@@ -72,14 +95,15 @@ code {
 
 .search-bar {
   width: 100%;
-  height: 4rem;
+  height: $search-bar-height;
+  margin-top: calc((#{$top-bar-height} - #{$search-bar-height}) / 2);
   color: white;
   text-align: center;
   border: none;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-top: 1rem;
+  position: relative;
 }
 
 .search-bar-input {
@@ -97,21 +121,30 @@ code {
 .search-bar-input.results-showing {
   border-radius: 2rem 2rem 0 0;
   outline: none;
-  border: 2px solid lightblue;
+  border: 2px solid $search-bar-highlight-color;
   border-bottom: none;
 }
 
 .search-bar-icon {
   font-size: 1.5rem;
-  color: gray;
+  color: gray !important;
   position: absolute;
-  right: 1.5rem;
+  right: 1rem;
+  //right: 1rem;
+  //right: 1.5rem;
 }
 
 .search-clear-button {
   color: gray;
   position: absolute;
-  right: 4rem;
+  right: 3rem;
+  box-shadow: none;
+  border: none;
+
+}
+
+.btn-close:focus {
+  box-shadow: none;
 }
 
 .search-bar-input::placeholder {
@@ -120,21 +153,22 @@ code {
 }
 
 .search-bar-input:focus {
-  outline-color: lightblue;
+  outline-color: $search-bar-highlight-color;
 }
 
 .search-bar-input::selection {
-  background: #0dcaf0;
+  background: $search-bar-highlight-color;
 }
 
 .search-bar-results {
-  background: #0a53be;
+  background: $search-bar-color;
   width: 100%;
-  border: 2px solid lightblue;
+  border: 2px solid $search-bar-highlight-color;
   border-top: 0;
   display: none;
   flex-direction: column;
   height: 50vh;
+  z-index: 50;
 }
 
 .search-bar-results.showing {
@@ -142,7 +176,7 @@ code {
 }
 
 .search-bar-result {
-  background: lightblue;
+  background: $search-bar-highlight-color;
   height: 4rem;
   border: none;
 }
@@ -175,16 +209,6 @@ code {
 
 .deep-diver {
   color: $primary-text;
-}
-
-.top-bar {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 5.5rem;
-  background: black;
-  display: flex;
-  flex-direction: column;
 }
 
 .background-player {
@@ -244,7 +268,7 @@ button {
 }
 
 .bi {
-  color: white;
+  color: inherit;
   font-size: 2rem;
   width: 1em;
   height: 1em;

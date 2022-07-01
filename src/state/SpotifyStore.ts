@@ -27,7 +27,7 @@ import {
 } from '../logic/common';
 import { Artist, ArtistResponse, CachedPlaylist, Images, JustGoodPlaylist, Token, Track } from '../types';
 import { serializeArtists } from '../logic/serializers';
-import { getUser, getToken, storeToken, storeUser, StoredUser } from '../logic/storage';
+import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
 export type Response = Promise<boolean>;
@@ -47,6 +47,7 @@ export interface SpotifyStore {
   useToken: () => Promise<string | undefined>;
   newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
   fetchToken: () => void;
+  deauthorize: () => void;
 
   // User Setup
   setupLoading: boolean;
@@ -60,6 +61,9 @@ export interface SpotifyStore {
 
   fetchUser: () => Response;
   setupUser: () => Promise<StoredUser>;
+  evictUser: () => void;
+
+  // Deep Diver
 
   // High Level Spotify Edit Actions
   artistResults: Artist[];
@@ -125,6 +129,13 @@ const useSpotifyStore = () => {
 
       // Set initial states for app
       await store.fetchUser();
+    }),
+    deauthorize: action(() => {
+      store.evictUser();
+
+      removeToken();
+
+      store.token = undefined;
     }),
 
     setupLoading: false,
@@ -237,6 +248,17 @@ const useSpotifyStore = () => {
       return storedUser;
     }),
 
+    evictUser: action(() => {
+      removeUser();
+
+      store.userId = undefined;
+      store.userName = undefined;
+      store.userImg = undefined;
+      store.userPlaylists = undefined;
+      store.justGoodPlaylists = undefined;
+      store.inProgressJustGoodPlaylists = undefined;
+    }),
+
     artistResults: [],
     loadedTracks: [],
 
@@ -341,14 +363,14 @@ const useSpotifyStore = () => {
         store.currentTrackSmallImageURL = small;
         store.currentTrackLargeImageURL = large;
 
-        // console.log('CHECK PLAYER STATUS UPDATED TO:');
-        // console.log(`Playing: ${store.playing}`);
-        // console.log(`Track Name: ${store.currentTrackName}`);
-        // console.log(`Track Artist: ${store.currentTrackArtist}`);
-        // console.log(`Track Progress: ${store.currentTrackProgress}`);
-        // console.log(`Track Duration: ${store.currentTrackDuration}`);
-        // console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
-        // console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
+        console.log('CHECK PLAYER STATUS UPDATED TO:');
+        console.log(`Playing: ${store.playing}`);
+        console.log(`Track Name: ${store.currentTrackName}`);
+        console.log(`Track Artist: ${store.currentTrackArtist}`);
+        console.log(`Track Progress: ${store.currentTrackProgress}`);
+        console.log(`Track Duration: ${store.currentTrackDuration}`);
+        console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
+        console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
       });
 
       return true;

@@ -3,7 +3,7 @@ import { PCKECodes, SpotifyAccessTokenResponse, SpotifyRefreshTokenResponse, Tok
 import { storePKCECodes } from '../logic/storage';
 
 const oauthURL = 'https://accounts.spotify.com';
-const redirectUri = window.location.origin + '/callback'
+const redirectUri = window.location.origin + '/spotifleo/callback'
 const scopes = ['playlist-modify-public', 'user-library-modify', 'streaming', 'user-read-playback-state'];
 
 // technically supposed to be secret don't print out these bad boys

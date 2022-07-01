@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
 import { getParams } from '../logic/common';
 import { fetchAccessToken } from './authHelper';
-import { getPKCECodes, storeToken } from '../logic/storage';
+import { getPKCECodes, removePKCECodes, storeToken } from '../logic/storage';
 import { useStore } from '../state/SpotifyStoreProvider';
 
 const SpotifyAuthCallback = () => {
@@ -22,6 +22,10 @@ const SpotifyAuthCallback = () => {
         fetchAccessToken(params.code, verifier).then((response) => {
           store.newToken(response.access_token, response.refresh_token, response.expires_in);
 
+          // no longer necessary
+          removePKCECodes();
+
+          console.log('done');
           navigate('/spotifleo');
         }).catch((error) => {
           console.debug('Ignoring failure');

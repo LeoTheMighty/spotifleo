@@ -1,28 +1,23 @@
-// Variables
+@import './styles/variables';
 
-$primary-color: #1db954;
-
-
-$primary-text: #ffffff;
-
-$search-bar-color: #09651b;
-$search-bar-highlight-color: $primary-color;
-
-
-$background-color: black;
-$gradient-to: $primary-color;
-$primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh),
-                   repeating-linear-gradient(245deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh);
-
-// Styles
+@import './node_modules/react-spotify-auth/dist/index';
+@import './node_modules/bootstrap/scss/bootstrap';
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css");
 
 body {
+  //margin: 0;
+  //font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  //'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  //sans-serif;
+  //-webkit-font-smoothing: antialiased;
+  //-moz-osx-font-smoothing: grayscale;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-  sans-serif;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  //font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 300;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: $primary-text;
 }
 
 code {
@@ -30,7 +25,17 @@ code {
   monospace;
 }
 
+b {
+  font-weight: bold;
+}
+
 a {
+  color: $primary-text;
+}
+
+button {
+  background: transparent;
+  border: none;
   color: $primary-text;
 }
 
@@ -39,23 +44,11 @@ a {
 }
 
 .app {
-  //text-align: center;
   color: $primary-text;
   background: $primary-gradient;
   width: 100vw;
   height: 100vh;
 }
-
-//.App-header {
-//  background-color: #282c34;
-//  min-height: 100vh;
-//  display: flex;
-//  flex-direction: column;
-//  align-items: center;
-//  justify-content: center;
-//  font-size: calc(10px + 2vmin);
-//  color: white;
-//}
 
 .dashboard {
   width: 100%;
@@ -65,9 +58,6 @@ a {
   align-content: center;
   justify-content: center;
 }
-
-$top-bar-height: 5.5rem;
-$search-bar-height: 4rem;
 
 .top-bar {
   position: sticky;
@@ -153,7 +143,8 @@ $search-bar-height: 4rem;
 }
 
 .search-bar-input:focus {
-  outline-color: $search-bar-highlight-color;
+  //outline: 2px solid $search-bar-highlight-color;
+  outline: none;
 }
 
 .search-bar-input::selection {
@@ -189,9 +180,26 @@ $search-bar-height: 4rem;
   align-items: center;
 }
 
+.just-good-scroller {
+  height: 13rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+}
+
+.just-good-scroller-image {
+  height: calc(100% - 2rem);
+  aspect-ratio: 1 / 1;
+}
+
 .horizontal-menu-wrapper {
   display: flex;
   width: 100%;
+  height: 100%;
 }
 
 .horizontal-menu-scroll-container {
@@ -204,7 +212,23 @@ $search-bar-height: 4rem;
 }
 
 .horizontal-menu-item {
+  // height: 50vw;
+  height: 100%;
+}
 
+.toggle-button-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.toggle-overlay {
+  position: absolute;
+  background: rgba(gray, 0.4);
+}
+
+.toggle-button {
+  position: absolute;
 }
 
 .deep-diver {
@@ -223,9 +247,14 @@ $search-bar-height: 4rem;
 
 .background-player-action-panel {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   height: 4rem;
   margin-bottom: 0.25rem;
+  width: 100%;
+}
+
+.background-player-remote {
+  width: 10rem;
 }
 
 .background-player-album {
@@ -235,8 +264,8 @@ $search-bar-height: 4rem;
 }
 
 .background-player-description {
-  width: 6rem;
-  font-size: 0.5rem;
+  width: 100%;
+  font-size: 0.6rem;
   margin-left: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -252,19 +281,28 @@ $search-bar-height: 4rem;
   white-space: nowrap;
 }
 
+.background-player-spacer {
+  width: 100%;
+}
+
 .background-player-good-button {
-  width: (4 + 6)rem;
+  //width: 4rem + 6rem;
+  height: calc(100% - 2rem);
+
+  width: calc(100% - 2rem);
+  // aspect-ratio: 2 / 1;
+  //max-width: fit-content;
   background: green;
-  margin-block: 0.5rem;
-  margin-left: 3rem;
-  margin-right: 1rem;
+  //margin-block: 0.5rem;
+  //margin-left: 3rem;
+  //margin-right: 1rem;
+  margin: 1rem;
   border-radius: 0.5rem;
 }
 
-button {
-  background: transparent;
-  border: none;
-  color: $primary-text;
+.background-player-good-button-container {
+  height: 100%;
+  aspect-ratio: 5 / 3;
 }
 
 .bi {
@@ -335,7 +373,7 @@ button {
   outline: none;
 }
 
-@import './node_modules/react-spotify-auth/dist/index';
-@import './node_modules/bootstrap/scss/bootstrap';
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css");
+.modal-content {
+  background: $search-bar-color !important;
+}
 

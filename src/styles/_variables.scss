@@ -1,0 +1,23 @@
+// Variables
+
+// Colors
+
+$primary-color: #1db954;
+
+
+$primary-text: #ffffff;
+
+$search-bar-color: #042e01;
+$search-bar-highlight-color: $primary-color;
+
+
+$background-color: black;
+$gradient-to: $primary-color;
+$primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh),
+repeating-linear-gradient(245deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh);
+
+// Measurements
+
+$top-bar-height: 5.5rem;
+$search-bar-height: 4rem;
+

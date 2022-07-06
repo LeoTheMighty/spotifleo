@@ -49,11 +49,12 @@ export interface CachedPlaylist {
   id: string;
 }
 
-export interface JustGoodPlaylist extends CachedPlaylist {
+export interface CachedJustGoodPlaylist extends CachedPlaylist {
   artistId?: string;
   artistImg?: Images;
   artistName: string;
-  progressPlaylist?: CachedPlaylist;
+  inProgress: boolean;
+  deepDivePlaylist?: CachedPlaylist;
 }
 
 // Auth

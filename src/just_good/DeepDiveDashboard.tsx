@@ -6,6 +6,8 @@ import UserProfile from '../components/UserProfile';
 import { useStore } from '../state/SpotifyStoreProvider';
 import HorizontalScrollView from '../components/HorizontalScrollView';
 import { useNavigate } from 'react-router-dom';
+import LoadingIndicator from '../common/LoadingIndicator';
+import JustGoodScroller from './JustGoodScroller';
 
 const TEST_PLAYLIST_ID = '';
 
@@ -34,26 +36,10 @@ const Dashboard = () => {
       {/*<div className="top-bar d-flex justify-content-center align-items-center sticky-top">*/}
       {/*  <ArtistSearch />*/}
       {/*</div>*/}
-      <p> Finished Just Good Playlists: </p>
-      <HorizontalScrollView>
-        {store.justGoodPlaylists?.map((playlist) => (
-          <button type="button" className="horizontal-menu-item d-block" onClick={() => navigate({ pathname: '/spotifleo/deepdiver', search: `?playlist_id=${playlist.id}`})}>
-            { playlist.artistImg && <img className="background-player-album" src={playlist.artistImg.small} alt="test" /> }
-            <p> {playlist.name} </p>
-          </button>
-        ))}
-      </HorizontalScrollView>
-      <p> In Progress Just Good Playlists: </p>
-      <HorizontalScrollView>
-        {store.inProgressJustGoodPlaylists?.map((playlist) => (
-          <div className="horizontal-menu-item d-block">
-            { playlist.artistImg && <img className="background-player-album" src={playlist.artistImg.small} alt="test" /> }
-            <p> {playlist.name} </p>
-          </div>
-        ))}
-      </HorizontalScrollView>
-      {/*<DeepDiver playlistID={TEST_PLAYLIST_ID} />*/}
-      {/*<UserProfile />*/}
+      <JustGoodScroller label="Finished Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.justGoodPlaylists} />
+      <JustGoodScroller label="In Progress Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.inProgressJustGoodPlaylists} />
+      <JustGoodScroller label="Planned Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.plannedJustGoodPlaylists} />
+
       <BackgroundPlayer />
     </div>
   );

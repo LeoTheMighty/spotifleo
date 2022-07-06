@@ -1,7 +1,8 @@
-import { ArtistResponse, CachedPlaylist, ImageResponse, Images, JustGoodPlaylist } from '../types';
+import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist } from '../types';
 
 export const JUST_GOOD_INDICATOR = 'Just Good';
-export const PROGRESS_INDICATOR = 'In Progress';
+export const IN_PROGRESS_INDICATOR = '[WIP] Just Good';
+export const DEEP_DIVE_INDICATOR = 'Deep Dive of';
 
 export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
   if (r.status === 204) return resolve(true);
@@ -64,41 +65,55 @@ export const formatMs = (ms: number) => {
 
 export const splitPlaylists = (playlists: CachedPlaylist[]): {
   justGoodPlaylists: CachedPlaylist[],
-  progressPlaylists: CachedPlaylist[],
+  inProgressJustGoodPlaylists: CachedPlaylist[],
+  deepDivePlaylists: CachedPlaylist[],
   userPlaylists: CachedPlaylist[],
 } => {
   const justGoodPlaylists: CachedPlaylist[] = [];
-  const progressPlaylists: CachedPlaylist[] = [];
+  const inProgressJustGoodPlaylists: CachedPlaylist[] = [];
+  const deepDivePlaylists: CachedPlaylist[] = [];
   const userPlaylists: CachedPlaylist[] = [];
 
   playlists.forEach((playlist) => {
-    if (playlist.name.startsWith(JUST_GOOD_INDICATOR)) {
+    const { name } = playlist;
+    if (name.startsWith(JUST_GOOD_INDICATOR)) {
       justGoodPlaylists.push(playlist);
-    } else if (playlist.name.startsWith(PROGRESS_INDICATOR)) {
-      progressPlaylists.push(playlist);
+    } else if (name.startsWith(IN_PROGRESS_INDICATOR)) {
+      inProgressJustGoodPlaylists.push(playlist);
+    } else if (name.startsWith(DEEP_DIVE_INDICATOR)) {
+      deepDivePlaylists.push(playlist)
     } else {
       userPlaylists.push(playlist);
     }
   });
 
-  return { justGoodPlaylists, progressPlaylists, userPlaylists };
+  return { justGoodPlaylists, inProgressJustGoodPlaylists, deepDivePlaylists, userPlaylists };
 };
 
-export const splitJustGoodPlaylists = (playlists: JustGoodPlaylist[]): {
-  inProgressJustGoodPlaylists: JustGoodPlaylist[],
-  finishedJustGoodPlaylists: JustGoodPlaylist[],
+export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
+  finishedJustGoodPlaylists: CachedJustGoodPlaylist[],
+  inProgressJustGoodPlaylists: CachedJustGoodPlaylist[],
+  plannedJustGoodPlaylists: CachedJustGoodPlaylist[],
 } => {
-  const inProgressJustGoodPlaylists: JustGoodPlaylist[] = [];
-  const finishedJustGoodPlaylists: JustGoodPlaylist[] = [];
+  const finishedJustGoodPlaylists: CachedJustGoodPlaylist[] = [];
+  const inProgressJustGoodPlaylists: CachedJustGoodPlaylist[] = [];
+  const plannedJustGoodPlaylists: CachedJustGoodPlaylist[] = [];
 
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
-    (playlist.progressPlaylist ? inProgressJustGoodPlaylists : finishedJustGoodPlaylists).push(playlist);
+    if (!playlist.deepDivePlaylist) {
+      plannedJustGoodPlaylists.push(playlist);
+    } else if (playlist.inProgress) {
+      inProgressJustGoodPlaylists.push(playlist);
+    } else {
+      finishedJustGoodPlaylists.push(playlist);
+    }
   }
 
   return {
     finishedJustGoodPlaylists,
     inProgressJustGoodPlaylists,
+    plannedJustGoodPlaylists,
   };
 }
 

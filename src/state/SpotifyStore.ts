@@ -18,14 +18,14 @@ import {
   getCurrentUserProfile
 } from '../api/Spotify';
 import {
-  artistString,
+  artistString, DEEP_DIVE_INDICATOR,
   getImages,
   JUST_GOOD_INDICATOR,
-  PROGRESS_INDICATOR,
+  IN_PROGRESS_INDICATOR,
   splitJustGoodPlaylists,
   splitPlaylists
 } from '../logic/common';
-import { Artist, ArtistResponse, CachedPlaylist, Images, JustGoodPlaylist, Token, Track } from '../types';
+import { Artist, ArtistResponse, CachedPlaylist, Images, CachedJustGoodPlaylist, Token, Track } from '../types';
 import { serializeArtists } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
@@ -56,14 +56,18 @@ export interface SpotifyStore {
   userName?: string;
   userImg?: Images;
   userPlaylists?: CachedPlaylist[];
-  justGoodPlaylists?: JustGoodPlaylist[];
-  inProgressJustGoodPlaylists?: JustGoodPlaylist[];
+  justGoodPlaylists?: CachedJustGoodPlaylist[];
+  inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
+  plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
 
   fetchUser: () => Response;
   setupUser: () => Promise<StoredUser>;
+  resetUser: () => Response;
   evictUser: () => void;
 
   // Deep Diver
+  currentDeepDiverPlaylist?: CachedJustGoodPlaylist;
+  fetchCurrentDeepDiverPlaylist: (playlist_id: string) => void;
 
   // High Level Spotify Edit Actions
   artistResults: Artist[];
@@ -145,6 +149,7 @@ const useSpotifyStore = () => {
     userPlaylists: undefined,
     justGoodPlaylists: undefined,
     inProgressJustGoodPlaylists: undefined,
+    plannedJustGoodPlaylists: undefined,
 
     fetchUser: action(async () => {
       let user = getUser();
@@ -158,10 +163,15 @@ const useSpotifyStore = () => {
       store.userImg = user.userImg;
       store.userPlaylists = user.userPlaylists;
 
-      const { inProgressJustGoodPlaylists, finishedJustGoodPlaylists } = splitJustGoodPlaylists(user.justGoodPlaylists);
+      const {
+        finishedJustGoodPlaylists,
+        inProgressJustGoodPlaylists,
+        plannedJustGoodPlaylists,
+      } = splitJustGoodPlaylists(user.justGoodPlaylists);
 
       store.justGoodPlaylists = finishedJustGoodPlaylists;
       store.inProgressJustGoodPlaylists = inProgressJustGoodPlaylists;
+      store.plannedJustGoodPlaylists = plannedJustGoodPlaylists;
 
       return true;
     }),
@@ -192,42 +202,55 @@ const useSpotifyStore = () => {
 
       console.log('splitting the playlists...');
 
-      const { justGoodPlaylists: justJustGoodPlaylists, progressPlaylists, userPlaylists } = splitPlaylists(playlists);
+      const {
+        justGoodPlaylists: justJustGoodPlaylists,
+        inProgressJustGoodPlaylists,
+        deepDivePlaylists,
+        userPlaylists,
+      } = splitPlaylists(playlists);
 
       console.log('splitted');
-      console.log({ justJustGoodPlaylists, progressPlaylists, userPlaylists });
+      console.log({ justJustGoodPlaylists, inProgressJustGoodPlaylists, deepDivePlaylists, userPlaylists });
 
-      const justGoodPlaylists: JustGoodPlaylist[] = [];
-      const progressMap: { [artistName: string]: CachedPlaylist } = {};
+      const justGoodPlaylists: CachedJustGoodPlaylist[] = [];
 
-      progressPlaylists.forEach((playlist) => {
-        progressMap[playlist.name.substring(PROGRESS_INDICATOR.length).trim()] = playlist;
+      const deepDiveMap: { [artistName: string]: CachedPlaylist } = {};
+      deepDivePlaylists.forEach((playlist) => {
+        deepDiveMap[playlist.name.substring(DEEP_DIVE_INDICATOR.length).trim()] = playlist;
       });
 
-      console.log('Created the progress map.');
-      console.log(progressMap);
+      console.log('Created the deep dive map.');
+      console.log(deepDiveMap);
 
-      for (let i = 0; i < justJustGoodPlaylists.length; i++) {
-        console.log(`Processing Just Good playlist ${i}.`);
-        const playlist = justJustGoodPlaylists[i];
-        console.log(playlist);
-        const artistName = playlist.name.substring(JUST_GOOD_INDICATOR.length).trim();
-        console.log(`Artist Name from playlist: ${artistName}`);
+      for (let x = 0; x < 2; x++) {
+        const inProgress: boolean = x === 1;
+        const playlists = inProgress ? inProgressJustGoodPlaylists : justJustGoodPlaylists;
+        const prefix = inProgress ? IN_PROGRESS_INDICATOR : JUST_GOOD_INDICATOR;
 
-        const artist: ArtistResponse | undefined = (await searchForArtist(artistName, 1, token)).artists.items[0];
-        console.log('Artist received from search:');
-        console.log(artist);
+        for (let i = 0; i < playlists.length; i++) {
+          console.log(`Processing ${inProgress ? 'In Progress' : ''} Just Good playlist ${i}.`);
+          const playlist = playlists[i];
 
-        justGoodPlaylists.push({
-          ...playlist,
-          artistId: artist?.id,
-          artistName,
-          artistImg: getImages(artist?.images),
-          progressPlaylist: progressMap[artistName],
-        });
+          console.log(playlist);
+          const artistName = playlist.name.substring(prefix.length).trim();
+          console.log(`Artist Name from playlist: ${artistName}`);
 
-        console.log('Finished just good playlist.');
-        console.log(justGoodPlaylists[justGoodPlaylists.length - 1]);
+          const artist: ArtistResponse | undefined = (await searchForArtist(artistName, 1, token)).artists.items[0];
+          console.log('Artist received from search:');
+          console.log(artist);
+
+          justGoodPlaylists.push({
+            ...playlist,
+            artistId: artist?.id,
+            artistName,
+            artistImg: getImages(artist?.images),
+            inProgress,
+            deepDivePlaylist: deepDiveMap[artistName],
+          });
+
+          console.log('Finished just good playlist.');
+          console.log(justGoodPlaylists[justGoodPlaylists.length - 1]);
+        }
       }
 
       store.userPlaylists = userPlaylists;
@@ -248,6 +271,13 @@ const useSpotifyStore = () => {
       return storedUser;
     }),
 
+    resetUser: action(async () => {
+      store.evictUser();
+      await store.fetchUser();
+      console.log("FINISHED RESETTING USER");
+      return true;
+    }),
+
     evictUser: action(() => {
       removeUser();
 
@@ -258,6 +288,18 @@ const useSpotifyStore = () => {
       store.justGoodPlaylists = undefined;
       store.inProgressJustGoodPlaylists = undefined;
     }),
+
+    currentDeepDiverPlaylist: undefined,
+    fetchCurrentDeepDiverPlaylist: (playlistId: string) => {
+      if (!store.justGoodPlaylists) return;
+      for (let i = 0; i < store.justGoodPlaylists.length; i++) {
+        const p = store.justGoodPlaylists[i];
+        if (p.id === playlistId) {
+          store.currentDeepDiverPlaylist = p;
+          return;
+        }
+      }
+    },
 
     artistResults: [],
     loadedTracks: [],

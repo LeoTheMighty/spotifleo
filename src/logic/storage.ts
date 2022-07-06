@@ -1,4 +1,4 @@
-import { CachedPlaylist, Images, JustGoodPlaylist, PCKECodes, Token } from '../types';
+import { CachedPlaylist, Images, CachedJustGoodPlaylist, PCKECodes, Token } from '../types';
 
 const CODES_KEY = 'codes';
 const TOKEN_KEY = 'token';
@@ -15,7 +15,7 @@ export type StoredUser = {
   userName: string;
   userImg: Images;
   userPlaylists: CachedPlaylist[];
-  justGoodPlaylists: JustGoodPlaylist[];
+  justGoodPlaylists: CachedJustGoodPlaylist[];
 };
 
 const parse = <T>(value?: string | null): T | undefined => {

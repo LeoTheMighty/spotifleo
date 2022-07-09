@@ -11,16 +11,18 @@ type Props = {
 const ToggleButton = ({ className, onChange, defaultValue, on, off }: Props) => {
   const [value, setValue] = useState<boolean>(defaultValue === undefined ? false : defaultValue);
 
+  const onClick = () => setValue((v) => {
+    const val = !v;
+
+    onChange && onChange(val);
+
+    return val;
+  });
+
   return (
     <div className="toggle-button-container">
-      <div className={`${value ? 'toggle-overlay': ''}`} />
-      <button className={`${className || 'toggle-button'} `} onClick={() => setValue((v) => {
-      const val = !v;
-
-      onChange && onChange(val);
-
-      return val;
-    })}>
+      <button className={`${value ? 'toggle-overlay': 'd-none'}`} onClick={onClick}/>
+      <button className={`${className || 'toggle-button'} `} onClick={onClick}>
       {value ? on : off}
     </button>
     </div>

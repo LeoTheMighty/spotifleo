@@ -32,15 +32,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="dashboard">
-      {/*<div className="top-bar d-flex justify-content-center align-items-center sticky-top">*/}
-      {/*  <ArtistSearch />*/}
-      {/*</div>*/}
+    <div className="deep-dive-dashboard">
       <JustGoodScroller label="Finished Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.justGoodPlaylists} />
       <JustGoodScroller label="In Progress Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.inProgressJustGoodPlaylists} />
       <JustGoodScroller label="Planned Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.plannedJustGoodPlaylists} />
 
-      <BackgroundPlayer />
+      <div className="m-5" />
     </div>
   );
 };

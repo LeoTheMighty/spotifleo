@@ -1,0 +1,150 @@
+@import './variables';
+
+.bottom-bar {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: 5.5rem;
+  background: rgba(black, 0.9);
+}
+
+.background-player {
+  display: flex;
+  flex-direction: column;
+}
+
+.background-player-action-panel {
+  display: flex;
+  justify-content: center;
+  height: 4rem;
+  margin-bottom: 0.25rem;
+  width: 100%;
+}
+
+.background-player-action-panel-left {
+  display: flex;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+}
+
+.background-player-action-panel-right {
+  display: flex;
+  justify-content: flex-end;
+  height: 100%;
+  width: 100%;
+}
+
+.background-player-remote {
+  width: 10rem;
+}
+
+.background-player-album {
+  width: unset;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 1px;
+}
+
+.background-player-description {
+  width: 100%;
+  font-size: 0.6rem;
+  margin-left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  text-align: start;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.no-wrap {
+  display: block;
+  width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.background-player-spacer {
+  width: 100%;
+}
+
+.background-player-good-button {
+  //width: 4rem + 6rem;
+  height: calc(100% - 2rem);
+
+  width: calc(100% - 2rem);
+  // aspect-ratio: 2 / 1;
+  //max-width: fit-content;
+  background: green;
+  //margin-block: 0.5rem;
+  //margin-left: 3rem;
+  //margin-right: 1rem;
+  margin: 1rem;
+  border-radius: 0.5rem;
+}
+
+.background-player-good-button-container {
+  height: 100%;
+  aspect-ratio: 5 / 3;
+}
+
+.bi {
+  color: inherit;
+  font-size: 2rem;
+  width: 1em;
+  height: 1em;
+  display: flex;
+}
+
+//.prev-button {
+//  height: 100%;
+//  aspect-ratio: 1 / 1;
+//}
+//.play-button {
+//  height: 100%;
+//  aspect-ratio: 1 / 1;
+//}
+//.next-button {
+//  height: 100%;
+//  aspect-ratio: 1 / 1;
+//}
+
+.spotify-slider {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.6rem;
+  margin-inline: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.slider {
+  height: 3px;
+  width: 100%;
+  margin-inline: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.track {
+  height: 100%;
+}
+
+.track-0 {
+  background: white;
+}
+
+.track-1 {
+  background: gray;
+}
+
+.thumb {
+  background: white;
+  border-radius: 2rem;
+  height: 10px;
+  width: 10px;
+
+  &:hover {
+  }
+}

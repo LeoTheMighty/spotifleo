@@ -1,14 +1,16 @@
 // What to port over
 
 import {
+  Album, AlbumResponse,
   ArtistResponse,
   CachedPlaylist,
   FetchResponse,
   PlaybackResponse,
-  PlaylistResponse,
+  PlaylistResponse, PlaylistTrackResponse, SpotifyItemResponse, Track, TrackResponse,
   UserProfileResponse,
 } from '../types';
 import { formatResp } from '../logic/common';
+import { deserializeAlbum } from '../logic/serializers';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
 const MAX_FETCH_ITEMS = 50;
@@ -48,11 +50,39 @@ export const searchForArtist = async (
   })
 );
 
-export const getArtistAlbums = async (artistID: string, token: string) => (
+/*
+
+Returned in chronological order but then split into different album groups
+
+ */
+
+export const getArtistAlbums = async (artistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<AlbumResponse>> => (
   callSpotifyAPI(token, `/artists/${artistID}/albums`, GET, {
-    limit: MAX_FETCH_ITEMS,
+    include_groups: 'album,single,appears_on',
+    limit,
+    offset,
   })
-)
+);
+
+export const getAllArtistAlbums = async (artistID: string, token: string): Promise<Album[]> => (
+  fetchAll(
+    (offset) => getArtistAlbums(artistID, MAX_FETCH_ITEMS, offset, token),
+    deserializeAlbum,
+    (response) => response.album_type !== 'compilation',
+    (response) => `${response.name}_${response.album_type}`,
+    )
+);
+//   const albums: Album[] = [];
+//
+//   let total = 1;
+//   while (albums.length < total) {
+//     const response = await getArtistAlbums(artistID, MAX_FETCH_ITEMS, albums.length, token);
+//     response.items.forEach((albumResponse) => albums.push(deserializeAlbum(albumResponse)));
+//     total = response.total
+//   }
+//
+//   return albums;
+// };
 
 export const getAlbumTracks = async (albumID: string, token: string) =>
   callSpotifyAPI(token, `/albums/${albumID}/tracks`, GET, {
@@ -68,7 +98,7 @@ export const createPlaylist = async (name: string, description: string, token: s
 );
 
 // Look into Fields to make this as efficient as possible. Not supported by everything don't worry about it
-export const getPlaylistTracks = async (playlistID: string, limit: number, offset: number, token: string) => (
+export const getPlaylistTracks = async (playlistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<TrackResponse>> => (
   callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, GET, {
     // additional_types: '',
     // fields: '',
@@ -76,6 +106,19 @@ export const getPlaylistTracks = async (playlistID: string, limit: number, offse
     offset,
   })
 );
+
+export const getAllPlaylistTracks = async (playlistId: string, token: string): Promise<TrackResponse[]> => {
+  const tracks: TrackResponse[] = [];
+
+  let total = 1;
+  while (tracks.length < total) {
+    const response = await getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, tracks.length, token);
+    tracks.push(...response.items);
+    total = response.total
+  }
+
+  return tracks;
+}
 
 // TODO IF we're ever adding a lot of songs, use the body instead for the values
 export const addTrackToPlaylist = async (playlistID: string, trackURI: string, token: string) => (
@@ -121,6 +164,42 @@ export const getCurrentUserPlaylists = async (limit: number, offset: number, tok
   })
 );
 
+/**
+ * TODO: TEST
+ *
+ * @param fetch
+ * @param deserialize
+ * @param filter
+ * @param uniqueKey
+ */
+const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse), U>(
+  fetch: (offset: number) => Promise<FetchResponse<T>>,
+  deserialize: (response: T) => U,
+  filter: (response: T) => boolean = () => true,
+  uniqueKey?: (response: T) => string,
+): Promise<U[]> => {
+  const items: U[] = [];
+  let total = 1;
+  let offset = 0;
+  let uniqueSet: Set<string> | undefined = undefined;
+  if (uniqueKey) { uniqueSet = new Set(); }
+  while (offset < total) {
+    const response = await fetch(offset);
+
+    response.items.filter(filter).forEach((t) => {
+      if (uniqueKey && uniqueSet) {
+        const key = uniqueKey(t);
+        if (uniqueSet.has(key)) return;
+        uniqueSet.add(key);
+      }
+      items.push(deserialize(t))
+    });
+
+    offset += response.items.length;
+    total = response.total
+  }
+  return items;
+};
 
 /**
  * Returns a string formatted to append to the end of a URL in order to define query parameters.

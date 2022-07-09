@@ -28,6 +28,10 @@ export const getParams = (): { [key: string]: string } => {
     }, {}) : {};
 };
 
+export const getArtistIds = (artists?: ArtistResponse[]): string[] | undefined => (
+  artists && artists.map((a) => a.id)
+);
+
 export const artistString = (artists?: ArtistResponse[]) => (
   artists ? artists.map((artist) => artist.name).join(',') : ''
 );

@@ -25,17 +25,17 @@ type Props = {
  */
 
 const IconView = ({ item, i } : Props) => {
-  let artist = null;
-  switch (item.type) {
-    case 'album':
-      artist = (item as Album).artist;
-      break;
-    case 'playlist':
-      artist = (item as Track).artist;
-      break;
-    default:
-      break;
-  }
+  // let artist = null;
+  // switch (item.type) {
+  //   case 'album':
+  //     artist = (item as Album).artist;
+  //     break;
+  //   case 'playlist':
+  //     artist = (item as Track).artist;
+  //     break;
+  //   default:
+  //     break;
+  // }
 
   return (
     <div className={`icon-view-${i}`}>
@@ -43,7 +43,7 @@ const IconView = ({ item, i } : Props) => {
         <img
           className="spotify-icon-img"
           src={item.img?.small}
-          alt={`${item.name} ${artist && 'by ' + artist}`}
+          // alt={`${item.name} ${artist && 'by ' + artist}`}
         />
       </a>
     </div>

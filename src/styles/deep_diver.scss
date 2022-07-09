@@ -1,0 +1,78 @@
+@import './variables';
+
+.deep-dive-dashboard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+}
+
+.just-good-scroller {
+  height: 30vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+}
+
+.just-good-scroller-image {
+  width: unset;
+  height: calc(100% - 2rem);
+  aspect-ratio: 1 / 1;
+}
+
+.toggle-button-container {
+  position: relative;
+  //height: 100%;
+  width: 100%;
+}
+
+.toggle-album {
+  width: 50vw;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toggle-album-container {
+  width: 90%;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+
+.toggle-overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.toggle-album-x {
+  pointer-events: none;
+  position: absolute;
+  color: #4f5050 !important;
+  font-size: 15vw !important;
+  top: calc(50% - 15vw / 2);
+  left: calc(50% - 15vw / 2);
+}
+
+.toggle-overlay-active {
+  background: rgba(gray, 0.8);
+}
+
+.toggle-album-img {
+
+}
+
+.deep-diver {
+  color: $primary-text;
+}

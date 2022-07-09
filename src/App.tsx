@@ -11,6 +11,7 @@ import 'react-spotify-auth/dist/index.css'
 import SpotifyAuthCallback from './auth/SpotifyAuthCallback';
 import DeepDiver from './just_good/DeepDiver';
 import TopBar from './just_good/TopBar';
+import BottomBar from './just_good/BottomBar';
 import SpotifyAuthLogout from './auth/SpotifyAuthLogout';
 
 const NavToRoot = () => {
@@ -28,7 +29,7 @@ const App = observer(() => {
     <div className="app">
       <StoreProvider store={store}>
         <BrowserRouter>
-          <TopBar/>
+          <TopBar />
           <Routes>
             { store.token ? [
               <Route path="/spotifleo/welcome" element="hey :)"/>,
@@ -41,6 +42,7 @@ const App = observer(() => {
               <Route path="/*" element={<SpotifyAuthView />} />
             ]}
           </Routes>
+          <BottomBar />
         </BrowserRouter>
       </StoreProvider>
     </div>

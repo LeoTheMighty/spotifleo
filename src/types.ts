@@ -14,34 +14,61 @@ export interface SpotifyItem {
   uri: string;
 }
 
-// export interface IconViewable extends SpotifyItem {
-//   img: string; // src/url of img
-//   title: string;
-//   href: string; // url to item
-// }
+export type AlbumType = 'album' | 'single' | 'compilation';
+export type AlbumGroup = AlbumType | 'appears_on'; // you can choose to also get albums that the artist appears on
 
-// export interface ListViewable extends SpotifyItem {
-//
-// }
+// export interface ArtistPreview
+// export interface AlbumPreview
+// export interface TrackPreview
 
 export interface Album extends SpotifyItem {
-  artist: string;
+  artistIds?: string[];
+  albumType: AlbumType;
+  albumGroup: AlbumGroup;
+  releaseDate: Date;
+  trackCount: number;
+  // restrictions
+  // available markets?
+}
+
+export interface FetchedAlbum extends Album {
+  tracks: Track[];
 }
 
 export interface Track extends SpotifyItem {
-  artist: string;
+  artistIds?: string[];
+  albumId: string;
+  discNumber: number;
+  trackNumber: number;
+  popularity: number;
+  duration: number; // milliseconds
+  explicit: boolean;
 }
 
 export interface Artist extends SpotifyItem {
   genre: string;
   popularity: number;
+  followers?: number;
 }
 
-export interface Playlist extends SpotifyItem {}
+export interface FetchedArtist extends Artist {
+  albums: Album[];
+}
+
+export interface Playlist extends SpotifyItem {
+  description: string;
+}
+
+export interface FetchedPlaylist extends Playlist {
+  tracks: Track[];
+}
 
 export interface Playback {
   playing?: SpotifyItem;
+}
 
+export interface JustGoodPlaylist extends Playlist, CachedJustGoodPlaylist {
+  deepDivePlaylist: Playlist;
 }
 
 export interface CachedPlaylist {
@@ -115,7 +142,7 @@ export interface ImageResponse {
 export interface ArtistResponse extends SpotifyItemResponse {
   type: 'artist';
   external_urls: { spotify: string };
-  followers: { href: string, total: 0 };
+  followers?: { href: string, total: number };
   genres: string[],
   images: ImageResponse[];
   name: string;
@@ -124,21 +151,21 @@ export interface ArtistResponse extends SpotifyItemResponse {
 
 export interface AlbumResponse extends SpotifyItemResponse {
   type: 'album';
-  album_type?: string;
-  album_group?: string; // The field is present when getting an artist's albums. Compare to album_type this field represents relationship between the artist and the album.
-  total_tracks?: number,
-  available_markets?: string[],
-  images?: { url: string, height: number, width: number }[],
-  name?: string,
-  release_date?: string;
-  release_date_precision?: 'year' | 'month' | 'day';
+  album_type: AlbumType;
+  album_group?: AlbumGroup; // The field is present when getting an artist's albums. Compare to album_type this field represents relationship between the artist and the album.
+  total_tracks: number,
+  available_markets: string[],
+  images: { url: string, height: number, width: number }[],
+  name: string,
+  release_date: string;
+  release_date_precision: 'year' | 'month' | 'day';
   restrictions?: { reason: 'market' | 'product' | 'explicit' };
   artists?: ArtistResponse[];
   tracks?: FetchResponse<TrackResponse>;
 }
 
 export interface TrackResponse extends SpotifyItemResponse {
-  album?: AlbumResponse;
+  album: AlbumResponse;
   artists: ArtistResponse[];
   available_markets?: string[]; // A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code.
   disc_number: number; // The disc number (usually 1 unless the album consists of more than one disc).
@@ -169,6 +196,30 @@ export interface TrackResponse extends SpotifyItemResponse {
   track_number: number; // The number of the track. If an album has several discs, the track number is the number on the specified disc.
   type: 'track';
   is_local: boolean; // Whether or not the track is from a local file.
+}
+
+/**
+ * /audio-features/{id} or /audio-features
+ */
+export interface TrackFeatureResponse {
+  acousticness: number; // <float> A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic. >= 0 <= 1
+  analysis_url: string; // A URL to access the full audio analysis of this track. An access token is required to access this data.
+  danceability: number; // <float> Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+  duration_ms: number;  // The duration of the track in milliseconds.
+  energy: number; // <float> Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.
+  id: string; // The Spotify ID for the track.
+  instrumentalness: number; // <float> Predicts whether a track contains no vocals. "Ooh" and "aah" sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly "vocal". The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0.
+  key: number; // integer The key the track is in. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. If no key was detected, the value is -1. >= -1 <= 11
+  liveness: number; // <float> Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live.
+  loudness: number; // <float> The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typically range between -60 and 0 db.
+  mode: number; // Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented by 1 and minor is 0.
+  speechiness: number; // <float> Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in sections or layered, including such cases as rap music. Values below 0.33 most likely represent music and other non-speech-like tracks.
+  tempo: number; // <float> The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration.
+  time_signature: number; // integer An estimated time signature. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure). The time signature ranges from 3 to 7 indicating time signatures of "3/4", to "7/4". >= 3 <= 7
+  track_href: string; // A link to the Web API endpoint providing full details of the track.
+  type: 'audio_features';
+  uri: string; // The Spotify URI for the track.
+  valence: number; // <float> A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry). >= 0 <= 1
 }
 
 export interface UserResponse extends SpotifyItemResponse {
@@ -251,5 +302,24 @@ export interface PlaybackResponse {
     transferring_playback?: boolean; // transferring playback between devices
   };
 }
+
+// View
+export type DeepDiverViewType = 'edit-deep-dive' | 'deep-dive' | 'view-deep-dive';
+
+export interface Progress {
+  progress: number; // <float> 0.0 - 1.0;
+  current: string; // description of what is currently happening
+}
+export type progressCallback = () => Progress;
+
+// export interface IconViewable extends SpotifyItem {
+//   img: string; // src/url of img
+//   title: string;
+//   href: string; // url to item
+// }
+
+// export interface ListViewable extends SpotifyItem {
+//
+// }
 
 

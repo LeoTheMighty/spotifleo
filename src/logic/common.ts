@@ -1,8 +1,8 @@
 import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist } from '../types';
 
-export const JUST_GOOD_INDICATOR = 'Just Good';
-export const IN_PROGRESS_INDICATOR = '[WIP] Just Good';
-export const DEEP_DIVE_INDICATOR = 'Deep Dive of';
+export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
+export const IN_PROGRESS_INDICATOR = '(TESTING) [WIP] Just Good';
+export const DEEP_DIVE_INDICATOR = '(TESTING) Deep Dive of';
 
 export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
   if (r.status === 204) return resolve(true);
@@ -14,6 +14,29 @@ export const formatResp = async (r: Response): Promise<any> => new Promise((reso
     }
   });
 });
+
+export const getDeepDivePlaylistName = (artistName: string) => `${DEEP_DIVE_INDICATOR} ${artistName}`;
+export const getDeepDivePlaylistDescription = (artistName: string) => (
+  `The chosen parts of the artist's discography to go through and evaluate for the "${getJustGoodPlaylistName(artistName)}" playlist!`
+);
+export const getJustGoodPlaylistName = (artistName: string) => `${JUST_GOOD_INDICATOR} ${artistName}`;
+export const getJustGoodPlaylistDescription = (artistName: string) => (
+  `Only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist.`
+);
+export const getInProgressJustGoodPlaylistName = (artistName: string) => `${IN_PROGRESS_INDICATOR} ${artistName}`;
+export const getInProgressJustGoodPlaylistDescription = (artistName: string) => (
+  `WORK IN PROGRESS!!! But will be only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist.`
+);
+
+export const formatQueryList = (list: string[]) => list.join(',');
+
+export const chunkList = <T>(list: T[], maxLength: number): T[][] => {
+  const chunkedList: T[][] = [];
+  for (let i = 0; i < list.length; i += maxLength) {
+    chunkedList.push(list.slice(i, i + maxLength));
+  }
+  return chunkedList;
+}
 
 export const getParams = (): { [key: string]: string } => {
   return window ? window.location.search

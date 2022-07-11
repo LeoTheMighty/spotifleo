@@ -46,8 +46,9 @@ export const getToken = (): Token | undefined => {
 
 export const removeToken = () => localStorage.removeItem(TOKEN_KEY);
 
-export const storeUser = (user: StoredUser) => {
+export const storeUser = (user: StoredUser): StoredUser => {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  return user;
 };
 
 export const getUser = (): StoredUser | undefined => (

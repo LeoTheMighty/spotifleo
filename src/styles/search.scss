@@ -15,6 +15,7 @@
 
 .top-bar-icon {
   margin: 0.25rem;
+  font-size: 2rem !important;
 }
 
 .search-container {
@@ -53,12 +54,12 @@
 .search-bar-input.results-showing {
   border-radius: 2rem 2rem 0 0;
   outline: none;
-  border: 2px solid $search-bar-highlight-color;
+  border: 1px solid $search-bar-highlight-color;
   border-bottom: none;
 }
 
 .search-bar-icon {
-  font-size: 1.5rem;
+  font-size: 1.5rem !important;
   color: gray !important;
   position: absolute;
   right: 1rem;
@@ -72,7 +73,7 @@
   right: 3rem;
   box-shadow: none;
   border: none;
-
+  font-size: 2rem;
 }
 
 .btn-close:focus {
@@ -90,13 +91,13 @@
 }
 
 .search-bar-input::selection {
-  background: $search-bar-highlight-color;
+  background: $search-bar-color;
 }
 
 .search-bar-results {
   background: $search-bar-color;
   width: 100%;
-  border: 2px solid $search-bar-highlight-color;
+  border: 1px solid $search-bar-highlight-color;
   border-top: 0;
   display: none;
   flex-direction: column;
@@ -109,7 +110,7 @@
 }
 
 .search-bar-result {
-  background: $search-bar-highlight-color;
+  background: $search-bar-color;
   height: 4rem;
   border: none;
 }
@@ -118,6 +119,31 @@
   display: flex;
   flex-direction: row;
   align-content: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.artist-result-img {
+  width: unset;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.artist-result-name {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-align: start;
+  display: flex;
+  align-items: start;
+  margin-inline: 0.5rem;
+}
+
+.search-result-action {
+  font-size: 1rem;
+  height: 50%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
   align-items: center;
 }

@@ -1,10 +1,13 @@
 import React from 'react';
 import BackgroundPlayer from './BackgroundPlayer';
+import { useStore } from '../state/SpotifyStoreProvider';
 
 const BottomBar = () => {
+  const store = useStore();
+
   return (
     <div className="bottom-bar">
-      <BackgroundPlayer />
+      { store.token && <BackgroundPlayer /> }
     </div>
   );
 };

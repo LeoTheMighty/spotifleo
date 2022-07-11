@@ -4,6 +4,7 @@ import { useStore } from '../state/SpotifyStoreProvider';
 import { debounce } from 'lodash';
 import LoadingIndicator from '../common/LoadingIndicator';
 import ArtistSearchResult from './ArtistSearchResult';
+import { Artist } from '../types';
 
 const SEARCH_DEBOUNCE_TIME = 800;
 
@@ -11,8 +12,10 @@ const ArtistSearch = observer(() => {
   const store = useStore();
   const [inputSelected, setInputSelected] = useState(false);
 
-  const onClick = (id: string) => {
-    alert(id);
+  const onClick = (artist: Artist) => {
+    if (!store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) {
+      store.createJustGoodPlaylist(artist);
+    }
   };
 
   const inputChange = (value: string) => {
@@ -50,9 +53,13 @@ const ArtistSearch = observer(() => {
       </div>
       <div className={`search-bar-results ${showResults ? 'showing' : ''}`}>
         {store.artistResults.map((artist) => (
-          <ArtistSearchResult artist={artist} onClick={() => onClick(artist.name)} />
+          <ArtistSearchResult
+            artist={artist}
+            added={store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id) || false}
+            onClickAction={() => onClick(artist)}
+          />
         ))}
-        <LoadingIndicator />
+        <button className="primary-btn border-none" > More... </button>
       </div>
     </div>
   );

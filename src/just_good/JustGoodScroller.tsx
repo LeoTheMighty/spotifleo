@@ -3,6 +3,7 @@ import HorizontalScrollView from '../components/HorizontalScrollView';
 import LoadingIndicator from '../common/LoadingIndicator';
 import { CachedJustGoodPlaylist } from '../types';
 import { useNavigate } from 'react-router-dom';
+import Image from '../components/Image';
 
 type Props = {
   label?: string;
@@ -16,7 +17,7 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
 
   return (
     <div className="just-good-scroller">
-      <p> { label || 'Just Good Playlists' } </p>
+      <p> <h2> { label || 'Just Good Playlists' } </h2> </p>
       {playlists?.length ? (
         <HorizontalScrollView>
           {playlists?.map((playlist) => (
@@ -27,13 +28,13 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
                 pathname: '/spotifleo/deepdiver',
                 search: `?playlist_id=${playlist.id}&view=${view}`,
               })}>
-              {playlist.artistImg && <img className="just-good-scroller-image" src={playlist.artistImg.large} alt="test" />}
+              {playlist.artistImg && <Image className="just-good-scroller-image" src={playlist.artistImg} alt="test" large />}
               <p> {playlist.name} </p>
             </button>
           ))}
-          <LoadingIndicator onView={() => alert('viewed')} />
+          {/*<LoadingIndicator onView={() => alert('viewed')} />*/}
         </HorizontalScrollView>
-      ) : emptyLabel}
+      ) : <div className="d-flex align-items-center h-100"> <i>{ emptyLabel }</i> </div>}
     </div>
   );
 };

@@ -1,22 +1,28 @@
 import React from 'react';
 import { Artist } from '../types';
+import Image from '../components/Image';
+import { useStore } from '../state/SpotifyStoreProvider';
 
 type Props = {
   artist: Artist;
-  onClick: () => void;
+  added: boolean;
+  onClick?: () => void;
+  onClickAction: () => void;
 };
 
-const ArtistSearchResult = ({ artist, onClick }: Props) => {
+const ArtistSearchResult = ({ artist, added, onClick, onClickAction }: Props) => {
   return (
-    <button type="button" className="search-bar-result" onTouchStart={onClick} onMouseDown={onClick}>
+    <div className="search-bar-result">
       <div className="artist-result">
-        <img src={artist.img?.small || ''} alt={`${artist.name}`} />
-        { artist.name }
-        <button>
-          Add to Deep Dive Playlists
+        <button type="button" className="d-flex justify-content-start h-100" onTouchStart={onClick} onMouseDown={onClick}>
+          <Image className="artist-result-img" src={artist.img} alt={`${artist.name}`} />
+          <p className="artist-result-name">{ artist.name }</p>
+        </button>
+        <button className="primary-btn search-result-action" onTouchStart={onClickAction} onMouseDown={onClickAction}>
+        { added ? (<i className="bi bi-eye-fill" />) : <i className="bi bi-plus" />}
         </button>
       </div>
-    </button>
+    </div>
   );
 };
 

@@ -37,7 +37,7 @@ export interface FetchedAlbum extends Album {
 
 export interface Track extends SpotifyItem {
   artistIds?: string[];
-  albumId: string;
+  albumId?: string;
   discNumber: number;
   trackNumber: number;
   popularity: number;
@@ -165,7 +165,7 @@ export interface AlbumResponse extends SpotifyItemResponse {
 }
 
 export interface TrackResponse extends SpotifyItemResponse {
-  album: AlbumResponse;
+  album?: AlbumResponse; // not present in fetch album tracks
   artists: ArtistResponse[];
   available_markets?: string[]; // A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code.
   disc_number: number; // The disc number (usually 1 unless the album consists of more than one disc).

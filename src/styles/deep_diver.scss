@@ -16,8 +16,9 @@
   flex-direction: column;
   align-items: center;
   align-content: center;
-  justify-content: center;
-  font-size: $font-size-sm;
+  justify-content: flex-start;
+  font-size: 0.9rem;
+  margin-bottom: 4rem;
 }
 
 .just-good-scroller-image {
@@ -34,6 +35,7 @@
 
 .toggle-album {
   width: 50vw;
+  max-width: 27rem;
   text-align: center;
   display: flex;
   flex-direction: column;

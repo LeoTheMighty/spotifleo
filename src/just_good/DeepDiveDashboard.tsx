@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import DeepDiver from './DeepDiver';
 import BackgroundPlayer from './BackgroundPlayer';
 import ArtistSearch from './ArtistSearch';
@@ -8,8 +8,7 @@ import HorizontalScrollView from '../components/HorizontalScrollView';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
 import JustGoodScroller from './JustGoodScroller';
-
-const TEST_PLAYLIST_ID = '';
+import { observer } from 'mobx-react';
 
 /*
 
@@ -27,19 +26,17 @@ Extra:
 
 */
 
-const Dashboard = () => {
+const Dashboard = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
 
   return (
     <div className="deep-dive-dashboard">
-      <JustGoodScroller label="Finished Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.justGoodPlaylists} />
-      <JustGoodScroller label="In Progress Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.inProgressJustGoodPlaylists} />
-      <JustGoodScroller label="Planned Just Good Playlists:" emptyLabel="haha no bitches" playlists={store.plannedJustGoodPlaylists} />
-
-      <div className="m-5" />
+      <JustGoodScroller label="Finished Just Good Playlists" emptyLabel="haha no bitches" playlists={store.justGoodPlaylists} />
+      <JustGoodScroller label="In Progress Just Good Playlists" emptyLabel="haha no bitches" playlists={store.inProgressJustGoodPlaylists} />
+      <JustGoodScroller label="Planned Just Good Playlists" emptyLabel="haha no bitches" playlists={store.plannedJustGoodPlaylists} />
     </div>
   );
-};
+});
 
 export default Dashboard;

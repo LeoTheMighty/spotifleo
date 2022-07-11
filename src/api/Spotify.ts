@@ -1,19 +1,19 @@
-// What to port over
-
 import {
   Album, AlbumResponse,
   ArtistResponse,
-  CachedPlaylist,
+  CachedPlaylist, FetchedAlbum,
   FetchResponse,
   PlaybackResponse,
   PlaylistResponse, PlaylistTrackResponse, SpotifyItemResponse, Track, TrackResponse,
   UserProfileResponse,
 } from '../types';
-import { formatResp } from '../logic/common';
-import { deserializeAlbum } from '../logic/serializers';
+import { chunkList, formatQueryList, formatResp } from '../logic/common';
+import { deserializeAlbum, deserializeFetchedAlbum, deserializeFetchedAlbums } from '../logic/serializers';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
 const MAX_FETCH_ITEMS = 50;
+const MAX_FETCH_ALBUMS = 20;
+const MAX_ADD_TRACKS = 100;
 
 const GET = 'GET';
 const POST = 'POST'
@@ -72,25 +72,46 @@ export const getAllArtistAlbums = async (artistID: string, token: string): Promi
     (response) => `${response.name}_${response.album_type}`,
     )
 );
-//   const albums: Album[] = [];
-//
-//   let total = 1;
-//   while (albums.length < total) {
-//     const response = await getArtistAlbums(artistID, MAX_FETCH_ITEMS, albums.length, token);
-//     response.items.forEach((albumResponse) => albums.push(deserializeAlbum(albumResponse)));
-//     total = response.total
-//   }
-//
-//   return albums;
-// };
 
-export const getAlbumTracks = async (albumID: string, token: string) =>
-  callSpotifyAPI(token, `/albums/${albumID}/tracks`, GET, {
+export const getAllArtistAlbumsWithTracks = async (artistId: string, token: string): Promise<FetchedAlbum[]> => {
+  const albums: Album[] = await getAllArtistAlbums(artistId, token);
 
-  });
+  const albumIds = albums.map(a => a.id);
+
+  return deserializeFetchedAlbums(await getAllMultipleAlbums(albumIds, token)).map((album) => ({
+    ...album,
+    tracks: album.tracks.filter((t) => t.artistIds?.includes(artistId))
+  }));
+}
+
+export const getAlbumTracks = async (albumID: string, token: string): Promise<FetchResponse<TrackResponse>> =>
+  callSpotifyAPI(token, `/albums/${albumID}/tracks`, GET, {});
+
+export const getAllMultipleAlbums = async (albumIds: string[], token: string): Promise<AlbumResponse[]> => {
+  const albums: AlbumResponse[] = [];
+  const chunks = chunkList(albumIds, MAX_FETCH_ALBUMS);
+  for (let i = 0; i < chunks.length; i++) {
+    const albumResponses = await getMultipleAlbums(chunks[i], token);
+    albums.push(...albumResponses.albums);
+  }
+  console.log(albumIds.length);
+  console.log(albums.length);
+
+  return albums;
+};
+
+/**
+ * MAX IS 20 IDs
+ * @param albumIds
+ * @param token
+ */
+export const getMultipleAlbums = async (albumIds: string[], token: string): Promise<{albums: AlbumResponse[]}> => (
+  // TODO: CHECK IF NOT ALL TRACKS WERE RETURNED
+  callSpotifyAPI(token, '/albums', GET, { ids: formatQueryList(albumIds) })
+);
 
 // TODO i wonder if this works
-export const createPlaylist = async (name: string, description: string, token: string) => (
+export const createPlaylist = async (name: string, description: string, token: string): Promise<PlaylistResponse> => (
   callSpotifyAPI(token, '/me/playlists', POST, undefined, {
     name,
     description,
@@ -120,13 +141,21 @@ export const getAllPlaylistTracks = async (playlistId: string, token: string): P
   return tracks;
 }
 
-// TODO IF we're ever adding a lot of songs, use the body instead for the values
 export const addTrackToPlaylist = async (playlistID: string, trackURI: string, token: string) => (
-  callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, POST, {
-    position: 1,
-    uris: trackURI,
+  addTracksToPlaylist(playlistID, [trackURI], token)
+);
+export const addTracksToPlaylist = async (playlistID: string, trackURIs: string[], token: string): Promise<{ 'snapshot_id': string }> => (
+  callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, POST, undefined, {
+    uris: trackURIs,
   })
 );
+export const addAllTracksToPlaylist = async (playlistID: string, trackURIs: string[], token: string) => {
+  const chunks = chunkList(trackURIs, MAX_ADD_TRACKS);
+  for (let i = 0; i < chunks.length; i++) {
+    // We want to await each individual one so that the order remains consistent
+    await addTracksToPlaylist(playlistID, chunks[i], token);
+  }
+}
 
 export const removeTrackFromPlaylist = async (trackURI: string, playlistID: string, token: string) => (
   callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, DELETE, undefined, {

@@ -2,7 +2,7 @@ import {
   Album,
   AlbumResponse,
   Artist,
-  ArtistResponse, CachedPlaylist,
+  ArtistResponse, CachedPlaylist, FetchedAlbum,
   Playlist,
   PlaylistResponse,
   Track,
@@ -22,17 +22,17 @@ export const deserializeArtist = ({ id, external_urls: { spotify }, images, uri,
   popularity,
 });
 
-export const deserializeTracks = (tracks: TrackResponse[]): Track[] => tracks.map(deserializeTrack);
-export const deserializeTrack = ({ id, name, album, popularity, uri, external_urls: { spotify }, artists, disc_number, track_number, duration_ms, explicit }: TrackResponse): Track => ({
+export const deserializeTracks = (tracks: TrackResponse[], passedAlbum?: AlbumResponse): Track[] => tracks.map((t) => deserializeTrack(t, passedAlbum));
+export const deserializeTrack = ({ id, name, album, popularity, uri, external_urls: { spotify }, artists, disc_number, track_number, duration_ms, explicit }: TrackResponse, passedAlbum?: AlbumResponse): Track => ({
   id,
   name,
   type: 'track',
-  img: getImages(album?.images),
+  img: getImages(passedAlbum?.images || album?.images),
   popularity,
   url: spotify,
   uri,
   artistIds: getArtistIds(artists),
-  albumId: album.id,
+  albumId: passedAlbum?.id || album?.id,
   discNumber: disc_number,
   trackNumber: track_number,
   duration: duration_ms,
@@ -53,6 +53,13 @@ export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, im
   artistIds: getArtistIds(artists),
   trackCount: total_tracks,
 });
+
+export const deserializeFetchedAlbums = (albums: AlbumResponse[]): FetchedAlbum[] => albums.map(deserializeFetchedAlbum);
+export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => ({
+  ...deserializeAlbum(album),
+  tracks: album.tracks ? deserializeTracks(album.tracks?.items, album) : [],
+});
+
 
 export const deserializeCachedPlaylists = (playlists: PlaylistResponse[]): CachedPlaylist[] => playlists.map(deserializeCachedPlaylist);
 export const deserializeCachedPlaylist = ({ id, name }: PlaylistResponse): CachedPlaylist => ({ id, name });

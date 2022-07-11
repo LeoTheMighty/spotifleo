@@ -30,18 +30,20 @@ const App = observer(() => {
       <StoreProvider store={store}>
         <BrowserRouter>
           <TopBar />
-          <Routes>
-            { store.token ? [
-              <Route path="/spotifleo/welcome" element="hey :)"/>,
-              <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
-              <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
-              <Route path="/spotifleo" element={<Dashboard />} />,
-              <Route path="/*" element={<NavToRoot />} />
-            ] : [
-              <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
-              <Route path="/*" element={<SpotifyAuthView />} />
-            ]}
-          </Routes>
+          <div className="app-content">
+            <Routes>
+              { store.token ? [
+                <Route path="/spotifleo/welcome" element="hey :)"/>,
+                <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
+                <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
+                <Route path="/spotifleo" element={<Dashboard />} />,
+                <Route path="/*" element={<NavToRoot />} />
+              ] : [
+                <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
+                <Route path="/*" element={<SpotifyAuthView />} />
+              ]}
+            </Routes>
+          </div>
           <BottomBar />
         </BrowserRouter>
       </StoreProvider>

@@ -1,6 +1,37 @@
+@import './variables';
 
 .primary-btn {
+  color: $primary-color;
+  display: inline-block;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  background-color: transparent;
+  border: 1px solid $primary-color;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
+  &:hover, &:active { // good way to do hover and touch start
+    background-color: $primary-color;
+    color: $primary-text;
+  }
+}
+
+.secondary-btn {
+  color: $primary-text;
+  border-color: $primary-text;
+
+  &:hover, &:active { // good way to do hover and touch start
+    background-color: unset;
+    color: unset;
+  }
 }
 
 .toggle-button-container {
@@ -41,6 +72,7 @@
   width: 100%;
   position: relative;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
 }
 

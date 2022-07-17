@@ -27,9 +27,9 @@ const DeepDiver = observer(() => {
 
       // TODO: Load the playlist details
       store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType).then(() => {
-
+        console.log('Fully fetched the details');
       }).catch((error) => {
-
+        console.error(error);
       });
     } else {
       console.error('No playlist provided');

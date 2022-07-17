@@ -4,11 +4,16 @@ import {
   CachedPlaylist, FetchedAlbum,
   FetchResponse,
   PlaybackResponse,
-  PlaylistResponse, PlaylistTrackResponse, SpotifyItemResponse, Track, TrackResponse,
+  PlaylistResponse, PlaylistTrack, PlaylistTrackResponse, SpotifyItemResponse, Track, TrackResponse,
   UserProfileResponse,
 } from '../types';
 import { chunkList, formatQueryList, formatResp } from '../logic/common';
-import { deserializeAlbum, deserializeFetchedAlbum, deserializeFetchedAlbums } from '../logic/serializers';
+import {
+  deserializeAlbum,
+  deserializeFetchedAlbum,
+  deserializeFetchedAlbums, deserializePlaylistTrack, deserializeTrack,
+  deserializeTracks
+} from '../logic/serializers';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
 const MAX_FETCH_ITEMS = 50;
@@ -119,7 +124,7 @@ export const createPlaylist = async (name: string, description: string, token: s
 );
 
 // Look into Fields to make this as efficient as possible. Not supported by everything don't worry about it
-export const getPlaylistTracks = async (playlistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<TrackResponse>> => (
+export const getPlaylistTracks = async (playlistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistTrackResponse>> => (
   callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, GET, {
     // additional_types: '',
     // fields: '',
@@ -128,17 +133,18 @@ export const getPlaylistTracks = async (playlistID: string, limit: number, offse
   })
 );
 
-export const getAllPlaylistTracks = async (playlistId: string, token: string): Promise<TrackResponse[]> => {
-  const tracks: TrackResponse[] = [];
-
-  let total = 1;
-  while (tracks.length < total) {
-    const response = await getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, tracks.length, token);
-    tracks.push(...response.items);
-    total = response.total
-  }
-
-  return tracks;
+export const getAllPlaylistTracks = async (playlistId: string, token: string): Promise<PlaylistTrack[]> => {
+  return fetchAll((o) => getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, o, token), deserializePlaylistTrack);
+  // const tracks: TrackResponse[] = [];
+  //
+  // let total = 1;
+  // while (tracks.length < total) {
+  //   const response = await getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, tracks.length, token);
+  //   tracks.push(...response.items);
+  //   total = response.total
+  // }
+  //
+  // return tracks;
 }
 
 export const addTrackToPlaylist = async (playlistID: string, trackURI: string, token: string) => (
@@ -162,6 +168,13 @@ export const removeTrackFromPlaylist = async (trackURI: string, playlistID: stri
     tracks: [{
       uri: trackURI,
     }]
+  })
+);
+
+export const changePlaylistDetails = async (playlistID: string, name: string | undefined, description: string | undefined, token: string) => (
+  callSpotifyAPI(token, `/playlists/${playlistID}`, PUT, {}, {
+    name,
+    description,
   })
 );
 
@@ -203,7 +216,7 @@ export const getCurrentUserPlaylists = async (limit: number, offset: number, tok
  */
 const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse), U>(
   fetch: (offset: number) => Promise<FetchResponse<T>>,
-  deserialize: (response: T) => U,
+  deserialize: (response: T, index: number) => U,
   filter: (response: T) => boolean = () => true,
   uniqueKey?: (response: T) => string,
 ): Promise<U[]> => {
@@ -215,13 +228,13 @@ const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse),
   while (offset < total) {
     const response = await fetch(offset);
 
-    response.items.filter(filter).forEach((t) => {
+    response.items.filter(filter).forEach((t, i) => {
       if (uniqueKey && uniqueSet) {
         const key = uniqueKey(t);
         if (uniqueSet.has(key)) return;
         uniqueSet.add(key);
       }
-      items.push(deserialize(t))
+      items.push(deserialize(t, i))
     });
 
     offset += response.items.length;

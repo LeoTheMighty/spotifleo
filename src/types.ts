@@ -45,6 +45,12 @@ export interface Track extends SpotifyItem {
   explicit: boolean;
 }
 
+export interface PlaylistTrack extends Track {
+  addedAt: Date;
+  playlistIndex: number;
+  isLocal: boolean;
+}
+
 export interface Artist extends SpotifyItem {
   genre: string;
   popularity: number;
@@ -67,10 +73,6 @@ export interface Playback {
   playing?: SpotifyItem;
 }
 
-export interface JustGoodPlaylist extends Playlist, CachedJustGoodPlaylist {
-  deepDivePlaylist: Playlist;
-}
-
 export interface CachedPlaylist {
   name: string;
   id: string;
@@ -82,6 +84,11 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
   artistName: string;
   inProgress: boolean;
   deepDivePlaylist?: CachedPlaylist;
+}
+
+export interface JustGoodPlaylist extends CachedJustGoodPlaylist {
+  trackIds: Set<string>;
+  deepDiveTracks: Track[];
 }
 
 // Auth

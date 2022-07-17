@@ -77,4 +77,26 @@
 
 .deep-diver {
   color: $primary-text;
+  //height: 100%;
+}
+
+.deep-dive-driver {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.deep-dive-driver-track-scroller {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.deep-dive-driver-img {
+  width: 70%;
+  aspect-ratio: 1 / 1;
+  margin-inline: 1rem;
 }

@@ -1,4 +1,4 @@
-import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist } from '../types';
+import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist, SpotifyItem } from '../types';
 
 export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
 export const IN_PROGRESS_INDICATOR = '(TESTING) [WIP] Just Good';
@@ -143,4 +143,7 @@ export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
     plannedJustGoodPlaylists,
   };
 }
+
+export const getUri = (type: string, id: string) => `spotify:${type}:${id}`;
+export const getPlaylistUri = (id: string) => getUri('playlist', id);
 

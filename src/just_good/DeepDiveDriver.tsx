@@ -6,6 +6,8 @@ import { useStore } from '../state/SpotifyStoreProvider';
 import { ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
 import { getParams } from '../logic/common';
+import Image from '../components/Image';
+import DefaultAvatar from '../images/default_avatar.jpeg';
 
 const TEST_PLAYLIST_ID = '';
 
@@ -33,22 +35,9 @@ Back button "<"                                 "View Playlist in Spotify"
 
 // Prepare 5 components.
 
-const SongScroller = ({ songs }: { songs: Track[] }) => {
-  return (
-    <div className="song-scroller">
-      { songs.map((song, i) => (
-        <IconView item={song} i={i} />
-      ))}
-    </div>
-  )
-};
-
-const DeepDiveDriver = observer(({ }: Props) => {
+const DeepDiveDriver = observer(() => {
   const store = useStore();
   const params = getParams();
-
-  const [songList, setSongList] = useState([]);
-  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (params.playlist_id) {
@@ -60,17 +49,43 @@ const DeepDiveDriver = observer(({ }: Props) => {
   }, [params.playlist_id]);
 
   // get 5. 2 before, the current, 2 after
-  const getSongs = () => songList.slice(index - 2, index + 3);
+  const getSongs = (): Track[] | undefined => {
+    if (store.currentDeepDivePlaylistIndex) {
+      const index = store.currentDeepDivePlaylistIndex;
+      return store.currentJustGoodPlaylist?.deepDiveTracks.slice(index - 2, index + 3);
+    } else {
+      return undefined;
+    }
+  };
+
+  store.logStore();
+  if (store.currentJustGoodPlaylist === undefined || store.currentDeepDivePlaylistIndex === undefined) {
+    return <div>nop</div>;
+  }
 
   return (
-    <div className="deep-diver">
-      <div className="justify-content-between">
-        <button> {'<'} </button>
+    <div className="deep-dive-driver">
+      <div className="d-flex justify-content-between">
         <button> View Playlist in Spotify </button>
       </div>
-      <SongScroller songs={getSongs()} />
+      <div className="deep-dive-driver-track-scroller">
+        <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
+        <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
+        <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
+      </div>
+      <div className="deep-dive-driver-playlists">
+
+      </div>
+      <button className="primary-btn">
+        Configure Playlists
+      </button>
+      {/*<div className="song-scroller">*/}
+      {/*  { getSongs()?.map((song, i) => (*/}
+      {/*    <IconView item={song} i={i} />*/}
+      {/*  )) || 'not initialized correctly'}*/}
+      {/*</div>*/}
       <div>
-        <button onClick={store.updatePlayer}>
+        <button className="primary-btn" onClick={store.updatePlayer}>
           Update Player
         </button>
       </div>

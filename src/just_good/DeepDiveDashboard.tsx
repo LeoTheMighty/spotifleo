@@ -32,9 +32,24 @@ const Dashboard = observer(() => {
 
   return (
     <div className="deep-dive-dashboard">
-      <JustGoodScroller label="Finished Just Good Playlists" emptyLabel="haha no bitches" playlists={store.justGoodPlaylists} />
-      <JustGoodScroller label="In Progress Just Good Playlists" emptyLabel="haha no bitches" playlists={store.inProgressJustGoodPlaylists} />
-      <JustGoodScroller label="Planned Just Good Playlists" emptyLabel="haha no bitches" playlists={store.plannedJustGoodPlaylists} />
+      <JustGoodScroller
+        label="Finished Just Good Playlists"
+        emptyLabel="haha no bitches"
+        playlists={store.justGoodPlaylists}
+        view="view-deep-dive"
+      />
+      <JustGoodScroller
+        label="In Progress Just Good Playlists"
+        emptyLabel="haha no bitches"
+        playlists={store.inProgressJustGoodPlaylists}
+        view="deep-dive"
+      />
+      <JustGoodScroller
+        label="Planned Just Good Playlists"
+        emptyLabel="haha no bitches"
+        playlists={store.plannedJustGoodPlaylists}
+        view="edit-deep-dive"
+      />
     </div>
   );
 });

@@ -65,21 +65,22 @@ const DeepDiveCreator = observer(() => {
   return (
     <div className="d-flex flex-column align-items-center">
       <button className="primary-btn" onClick={() => setShowConfirm(true)}> Start the Deep Dive </button>
+      <h1> Select which albums you want to include in the deep dive: </h1>
       <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
         <h1 style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through'}}>
-          Albums:
+          Albums
         </h1>
       </button>
       { getGroupOfToggleAlbums(albums)}
       <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
         <h1 style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through'}}>
-          EPs/Singles:
+          EPs/Singles
         </h1>
       </button>
       { getGroupOfToggleAlbums(singles)}
       <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
         <h1 style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through'}}>
-          Appears On:
+          Appears On
         </h1>
       </button>
       { getGroupOfToggleAlbums(appears)}

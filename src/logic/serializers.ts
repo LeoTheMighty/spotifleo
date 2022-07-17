@@ -4,7 +4,7 @@ import {
   Artist,
   ArtistResponse, CachedPlaylist, FetchedAlbum,
   Playlist,
-  PlaylistResponse,
+  PlaylistResponse, PlaylistTrack, PlaylistTrackResponse,
   Track,
   TrackResponse
 } from '../types';
@@ -39,7 +39,15 @@ export const deserializeTrack = ({ id, name, album, popularity, uri, external_ur
   explicit,
 });
 
-export const deserializeAlbums = (albums: AlbumResponse[]): Album[] => albums.map(deserializeAlbum);
+export const deserializePlaylistTracks = (playlistTrackResponses: PlaylistTrackResponse[]): PlaylistTrack[] => playlistTrackResponses.map(deserializePlaylistTrack);
+export const deserializePlaylistTrack = (playlistTrackResponse: PlaylistTrackResponse, index: number): PlaylistTrack => ({
+  ...deserializeTrack(playlistTrackResponse.track),
+  playlistIndex: index,
+  addedAt: new Date(playlistTrackResponse.added_at),
+  isLocal: playlistTrackResponse.is_local,
+})
+
+  export const deserializeAlbums = (albums: AlbumResponse[]): Album[] => albums.map(deserializeAlbum);
 export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, images, album_group, album_type, release_date, total_tracks, artists }: AlbumResponse): Album => ({
   id,
   name,

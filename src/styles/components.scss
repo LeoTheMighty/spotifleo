@@ -80,3 +80,9 @@
   // height: 50vw;
   height: 100%;
 }
+
+.spotify-icon-img {
+  width: unset;
+  height: calc(100% - 2rem);
+  aspect-ratio: 1 / 1;
+}

@@ -37,11 +37,15 @@ const App = observer(() => {
                 <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
                 <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
                 <Route path="/spotifleo" element={<Dashboard />} />,
-                <Route path="/*" element={<NavToRoot />} />
+                // <Route path="/*" element={<NavToRoot />} />,
+                <Route path="/" element={<NavToRoot />} />
               ] : [
                 <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
-                <Route path="/*" element={<SpotifyAuthView />} />
+                <Route path="/spotifleo" element={<SpotifyAuthView />} />,
+                // <Route path="/*" element={<NavToRoot />} />,
+                // <Route path="/" element={<NavToRoot />} />
               ]}
+              <Route path="/" element={<NavToRoot />} />
             </Routes>
           </div>
           <BottomBar />

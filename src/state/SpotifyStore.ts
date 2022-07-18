@@ -60,6 +60,8 @@ export type Response = Promise<boolean>;
 // const respondError = (error: Error) => ({ success: false, error });
 const respondNoToken = () => { throw new Error('No Spotify Token') };
 
+// TODO: Use Maps instead of Javascript objects!
+
 export interface SpotifyStore {
   // Spotify Authentication
   token?: Token;
@@ -75,6 +77,7 @@ export interface SpotifyStore {
   userName?: string;
   userImg?: Images;
   userPlaylists?: CachedPlaylist[];
+  deepDiverPlaylistIndexes?: { [id: string]: number }; // which ones are activated
   justGoodPlaylists?: CachedJustGoodPlaylist[];
   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
@@ -84,7 +87,7 @@ export interface SpotifyStore {
   fetchUser: () => Response;
   setupUser: () => Promise<StoredUser>;
   saveUser: () => void;
-  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], justGoodPlaylists: CachedJustGoodPlaylist[]) => StoredUser;
+  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: { [id: string]: number }, justGoodPlaylists: CachedJustGoodPlaylist[]) => StoredUser;
   resetUser: () => Response;
   evictUser: () => void;
 
@@ -101,6 +104,7 @@ export interface SpotifyStore {
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
   createDeepDivePlaylist: () => Response;
   playCurrentDeepDivePlaylistTrack: () => Response;
+  togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Response;
 
   // High Level Spotify Edit Actions
   artistResults: Artist[];
@@ -135,6 +139,10 @@ export interface SpotifyStore {
   seekToPosition: (value: number) => Response;
   pretendToProceedPosition: () => void;
   updatePlayer: () => Response;
+  addCurrentTrackToPlaylist: (playlist: CachedPlaylist) => Response;
+  // Want to also figure out whether this track is already in all the playlists in the cached? Store all of the track ids
+  // inside memory? Load them in on load of app? Could be a lot, but don't want to make hella network requests either.
+  // addCurrentTrackToLiked: () => Response; TODO: Do we want to load all of a person's liked songs tho?
 
   logStore: () => void;
 }
@@ -208,6 +216,7 @@ const useSpotifyStore = () => {
       store.userName = user.userName;
       store.userImg = user.userImg;
       store.userPlaylists = user.userPlaylists;
+      store.deepDiverPlaylistIndexes = user.deepDiverPlaylistIndexes;
 
       store.justGoodPlaylistMap = {};
       store.justGoodPlaylistArtistMap = {};
@@ -310,9 +319,10 @@ const useSpotifyStore = () => {
       }
 
       store.userPlaylists = userPlaylists;
+      store.deepDiverPlaylistIndexes = {};
       // store.justGoodPlaylists = justGoodPlaylists;
 
-      const storedUser = store.storeUser(store.userId, store.userName, store.userImg, store.userPlaylists, justGoodPlaylists);
+      const storedUser = store.storeUser(store.userId, store.userName, store.userImg, store.userPlaylists, store.deepDiverPlaylistIndexes, justGoodPlaylists);
 
       store.setupLoading = false;
 
@@ -320,22 +330,25 @@ const useSpotifyStore = () => {
     }),
 
     saveUser: () => {
-      if (store.userId && store.userName && store.userImg && store.userPlaylists && store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) {
+      if (store.userId && store.userName && store.userImg && store.userPlaylists && store.deepDiverPlaylistIndexes && store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) {
+        console.log('saving user');
         store.storeUser(
           store.userId,
           store.userName,
           store.userImg,
           store.userPlaylists,
+          store.deepDiverPlaylistIndexes,
           [...store.justGoodPlaylists, ...store.inProgressJustGoodPlaylists, ...store.plannedJustGoodPlaylists]
         )
       }
     },
-    storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], justGoodPlaylists: CachedJustGoodPlaylist[]) => (
+    storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: { [id: string]: number }, justGoodPlaylists: CachedJustGoodPlaylist[]) => (
       storeUser({
         userId,
         userImg,
         userName,
         userPlaylists,
+        deepDiverPlaylistIndexes,
         justGoodPlaylists,
       })
     ),
@@ -566,6 +579,19 @@ const useSpotifyStore = () => {
 
       return true;
     }),
+    togglePlaylistInDeepDiverPlaylists: action(async (playlist: CachedPlaylist, i: number) => {
+      console.log('toggling playlist');
+      if (store.deepDiverPlaylistIndexes === undefined) return false;
+      const { id } = playlist;
+      if (store.deepDiverPlaylistIndexes[id] !== undefined) {
+        delete store.deepDiverPlaylistIndexes[id];
+      } else {
+        store.deepDiverPlaylistIndexes[id] = i;
+      }
+      store.deepDiverPlaylistIndexes = { ...store.deepDiverPlaylistIndexes };
+      store.saveUser();
+      return true;
+    }),
 
     clearSearchArtistResults: action(async () => {
       store.artistResults = [];
@@ -665,6 +691,10 @@ const useSpotifyStore = () => {
         // console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
       });
 
+      return true;
+    }),
+
+    addCurrentTrackToPlaylist: action(async (playlist: CachedPlaylist) => {
       return true;
     }),
 

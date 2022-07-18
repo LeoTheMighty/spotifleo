@@ -7,10 +7,12 @@ type Props = {
   state?: string;
 };
 
-const SpotifyAuthButton = ({ code, state }: Props) => (
-  <a className="spotify-auth-button" href={getRedirectURL(code, state)}>
-    Click to authorize Spotify
-  </a>
-);
+const SpotifyAuthButton = ({ code, state }: Props) => {
+  return(
+    <a className="spotify-auth-button" href={getRedirectURL(code, state)}>
+      Click to authorize Spotify
+    </a>
+  );
+};
 
 export default SpotifyAuthButton;

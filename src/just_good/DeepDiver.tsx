@@ -50,10 +50,15 @@ const DeepDiver = observer(() => {
   };
 
   return (
-    <div className="deep-diver">
+    <>
       { getPage() }
-    </div>
-  );
+    </>
+  )
+
+    // <div className="deep-diver">
+    //   { getPage() }
+    // </div>
+  // );
 });
 
 export default DeepDiver;

@@ -3,11 +3,12 @@ import IconView from './IconView';
 import { Track } from '../types';
 import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
-import { ProgressBar } from 'react-bootstrap';
+import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
 import { getParams } from '../logic/common';
 import Image from '../components/Image';
 import DefaultAvatar from '../images/default_avatar.jpeg';
+import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
 
 const TEST_PLAYLIST_ID = '';
 
@@ -38,6 +39,7 @@ Back button "<"                                 "View Playlist in Spotify"
 const DeepDiveDriver = observer(() => {
   const store = useStore();
   const params = getParams();
+  const [configurePlaylistsOpen, setConfigurePlaylistsOpen] = useState(false);
 
   useEffect(() => {
     if (params.playlist_id) {
@@ -72,23 +74,39 @@ const DeepDiveDriver = observer(() => {
         <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
         <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
         <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
+        <i className="deep-dive-driver-track-play-icon bi-play" />
+        <i className="deep-dive-driver-track-prev-icon bi-skip-start" />
+        <i className="deep-dive-driver-track-next-icon bi-skip-end" />
       </div>
-      <div className="deep-dive-driver-playlists">
-
+      <div className="deep-dive-driver-actions">
+        <div className="deep-dive-driver-playlists">
+          {store.deepDiverPlaylistIndexes && Object.values(store.deepDiverPlaylistIndexes).map((index) => {
+            const playlist = store.userPlaylists?.[index];
+            return (
+              <button className="primary-btn">
+                { playlist?.name }
+              </button>
+            );
+          })}
+        </div>
+        <button className="primary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
+          Configure Playlists
+        </button>
+        <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>
+          <ModalHeader closeButton><ModalTitle><h1>Configure Playlists</h1></ModalTitle></ModalHeader>
+          <ModalBody><ConfigureDeepDivePlaylists /></ModalBody>
+        </Modal>
       </div>
-      <button className="primary-btn">
-        Configure Playlists
-      </button>
       {/*<div className="song-scroller">*/}
       {/*  { getSongs()?.map((song, i) => (*/}
       {/*    <IconView item={song} i={i} />*/}
       {/*  )) || 'not initialized correctly'}*/}
       {/*</div>*/}
-      <div>
-        <button className="primary-btn" onClick={store.updatePlayer}>
-          Update Player
-        </button>
-      </div>
+      {/*<div>*/}
+      {/*  <button className="primary-btn" onClick={store.updatePlayer}>*/}
+      {/*    Update Player*/}
+      {/*  </button>*/}
+      {/*</div>*/}
     </div>
   );
 });

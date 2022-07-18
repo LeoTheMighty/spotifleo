@@ -1,0 +1,11 @@
+@import './variables';
+
+.spotify-auth-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spotify-auth-button {
+  color: $primary-text;
+}

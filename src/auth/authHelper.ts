@@ -10,6 +10,9 @@ const scopes = ['playlist-modify-public', 'user-library-modify', 'streaming', 'u
 const clientID = process.env.REACT_APP_CI!;
 const clientSecret = process.env.REACT_APP_CS!;
 
+const fakeCode = "iFXpTXVvHhVoEjITCnbIwRI6nsmbmfcIyYafV79PUDE";
+const fakeCodeVerifier = "04233199e0f00d16e60ea71a69f03974c9ee0b72678530e546c5300347443b30febc85b7085049c6e0a99c4e0c0f81b950204f662e5b0647b64b60e2ebd8110a66fea7032fab4ed07e9ea47038685ab05e5d979804938aa7c02b3c678a0a383fc1709696f951088c6970a036439d490925b44f50a2cbe33b082597398"
+
 console.log(clientID);
 
 
@@ -43,11 +46,24 @@ const base64urlencode = (a: ArrayBuffer): string => {
 const generateChallenge = async (verifier: string): Promise<string> => base64urlencode(await sha256(verifier));
 
 export const generateAndStoreCodes = async (): Promise<PCKECodes> => {
-  const codeVerifier = generateCodeVerifier();
-  return storePKCECodes({
-    codeVerifier,
-    code: await generateChallenge(codeVerifier),
-  });
+  try {
+    const codeVerifier = generateCodeVerifier();
+    return storePKCECodes({
+      codeVerifier,
+      code: await generateChallenge(codeVerifier),
+    });
+  } catch (e) {
+    console.error('Generating codes for Oauth unsupported in insecure context...');
+    if (process.env.ENVIRONMENT === 'development') {
+      console.log('faking the values');
+      return storePKCECodes({
+        codeVerifier: fakeCodeVerifier,
+        code: fakeCode,
+      });
+    } else {
+      throw e;
+    }
+  }
 }
 
 // URLs

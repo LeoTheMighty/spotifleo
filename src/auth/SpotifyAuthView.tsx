@@ -8,12 +8,15 @@ const SpotifyAuthView = () => {
   const [code, setCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    generateAndStoreCodes().then(codes => setCode(codes.code));
+    generateAndStoreCodes().then(codes => {
+      console.log(codes);
+      setCode(codes.code)
+    });
   }, []);
 
   // do some marketting of your thing as well
   return (
-    <div>
+    <div className="spotify-auth-view">
       {/*<SpotifyAuth*/}
       {/*  redirectUri={window.location.href}*/}
       {/*  clientID={SPOTIFY_APP_CLIENT_ID}*/}

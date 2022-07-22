@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
-import useSpotifyStore from '../state/SpotifyStore';
 import Slider from './SpotifySlider';
 import { observer } from 'mobx-react';
 import ToggleButton from '../components/ToggleButton';
 import defaultAvatar from '../images/default_avatar.jpeg';
+import { useStore } from '../state/SpotifyStoreProvider';
 
 const SHOULD_PRETEND = true;
 
 const BackgroundPlayer = observer(() => {
-  const store = useSpotifyStore();
+  const store = useStore();
 
   useEffect(() => {
     console.log('update player');
@@ -22,7 +22,7 @@ const BackgroundPlayer = observer(() => {
     if (store?.playing && SHOULD_PRETEND) {
       await store.pretendToProceedPosition();
 
-      if (store.currentTrackProgress >= store.currentTrackDuration) {
+      if (store.currentTrackProgress && store.currentTrackDuration && (store.currentTrackProgress >= store.currentTrackDuration)) {
         await store.updatePlayer();
       }
 
@@ -73,11 +73,12 @@ const BackgroundPlayer = observer(() => {
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
           <div className="background-player-good-button-container">
-            <ToggleButton
-              className="background-player-good-button"
-              on="Good"
-              off="Eh."
-            />
+            <button className="primary-btn"> Good </button>
+            {/*<ToggleButton*/}
+            {/*  className="background-player-good-button"*/}
+            {/*  on="Good"*/}
+            {/*  off="Eh."*/}
+            {/*/>*/}
           </div>
         </div>
         {/*<button className="background-player-good-button">*/}

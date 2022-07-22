@@ -124,10 +124,21 @@
 
 .deep-dive-driver-actions {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
 }
 
 .deep-dive-driver-playlists {
   height: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-around;
+  margin: 1rem;
 }
 
 .configure-deep-dive-playlists {
@@ -138,7 +149,7 @@
   align-items: center
 }
 
-.configure-playlist-button {
+.playlist-button {
   color: $primary-color;
 
   &:active, &:hover {
@@ -146,12 +157,12 @@
   }
 }
 
-.configure-playlist-button.on {
+.playlist-button.on {
   background-color: $primary-color;
   color: $primary-text;
 }
 
-.configure-playlist-button.off {
+.playlist-button.off {
   background-color: transparent;
   color: $primary-color;
 }

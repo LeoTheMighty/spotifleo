@@ -60,7 +60,6 @@ const DeepDiveDriver = observer(() => {
     }
   };
 
-  store.logStore();
   if (store.currentJustGoodPlaylist === undefined || store.currentDeepDivePlaylistIndex === undefined) {
     return <div>nop</div>;
   }
@@ -68,7 +67,8 @@ const DeepDiveDriver = observer(() => {
   return (
     <div className="deep-dive-driver">
       <div className="d-flex justify-content-between">
-        <button> View Playlist in Spotify </button>
+        <button className="primary-btn"> View Playlist in Spotify </button>
+        <button className="primary-btn"> Mark Playlist as Complete </button>
       </div>
       <div className="deep-dive-driver-track-scroller">
         <Image className="deep-dive-driver-img" src={store.currentJustGoodPlaylist.deepDiveTracks[store.currentDeepDivePlaylistIndex].img} alt="alt" large />
@@ -78,17 +78,26 @@ const DeepDiveDriver = observer(() => {
         <i className="deep-dive-driver-track-prev-icon bi-skip-start" />
         <i className="deep-dive-driver-track-next-icon bi-skip-end" />
       </div>
+      <div className="deep-dive-driver-track-info">
+        <p> { store.currentTrackName } </p>
+        <p> { store.currentTrackArtist } </p>
+      </div>
       <div className="deep-dive-driver-actions">
+        <button className="primary-btn" onClick={() => alert('its good')}>
+          Good
+        </button>
         <div className="deep-dive-driver-playlists">
           {store.deepDiverPlaylistIndexes && Object.values(store.deepDiverPlaylistIndexes).map((index) => {
             const playlist = store.userPlaylists?.[index];
+            const trackSet: Set<string> | undefined = playlist && store.deepDiverPlaylistTrackSets?.get(playlist.id);
             return (
-              <button className="primary-btn">
+              <button className={`primary-btn playlist-button ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}>
                 { playlist?.name }
               </button>
             );
           })}
         </div>
+        Track ID: { store.currentTrackID }
         <button className="primary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
           Configure Playlists
         </button>

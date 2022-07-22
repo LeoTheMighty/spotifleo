@@ -20,7 +20,7 @@ import {
   getAllArtistAlbums,
   createPlaylist,
   getAllArtistAlbumsWithTracks,
-  addTracksToPlaylist, addAllTracksToPlaylist, playPlaylistPlayback
+  addTracksToPlaylist, addAllTracksToPlaylist, playPlaylistPlayback, addTrackToPlaylist
 } from '../api/Spotify';
 import {
   artistString,
@@ -33,7 +33,7 @@ import {
   getDeepDivePlaylistName,
   getDeepDivePlaylistDescription,
   getJustGoodPlaylistName,
-  getInProgressJustGoodPlaylistName, getInProgressJustGoodPlaylistDescription
+  getInProgressJustGoodPlaylistName, getInProgressJustGoodPlaylistDescription, importMapOfSets, exportMapOfSets, sleep
 } from '../logic/common';
 import {
   Artist,
@@ -77,17 +77,18 @@ export interface SpotifyStore {
   userName?: string;
   userImg?: Images;
   userPlaylists?: CachedPlaylist[];
-  deepDiverPlaylistIndexes?: { [id: string]: number }; // which ones are activated
+  deepDiverPlaylistIndexes?: { [id: string]: number }; // which ones are activated TODO convert
+  deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the
   justGoodPlaylists?: CachedJustGoodPlaylist[];
   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
-  justGoodPlaylistMap?: { [id: string]: CachedJustGoodPlaylist },
-  justGoodPlaylistArtistMap?: { [artistId: string]: CachedJustGoodPlaylist },
+  justGoodPlaylistMap?: { [id: string]: CachedJustGoodPlaylist }, // TODO convert
+  justGoodPlaylistArtistMap?: { [artistId: string]: CachedJustGoodPlaylist }, // TODO convert
 
   fetchUser: () => Response;
   setupUser: () => Promise<StoredUser>;
   saveUser: () => void;
-  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: { [id: string]: number }, justGoodPlaylists: CachedJustGoodPlaylist[]) => StoredUser;
+  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: { [id: string]: number }, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => StoredUser;
   resetUser: () => Response;
   evictUser: () => void;
 
@@ -121,14 +122,16 @@ export interface SpotifyStore {
 
   // High Level Spotify Player
   playing: boolean;
-  currentTrackName: string;
-  currentTrackArtist: string;
+  currentTrackID?: string;
+  currentTrackURI?: string;
+  currentTrackName?: string;
+  currentTrackArtist?: string;
 
   // both milliseconds
-  currentTrackProgress: number;
-  currentTrackDuration: number;
-  currentTrackSmallImageURL: string,
-  currentTrackLargeImageURL: string,
+  currentTrackProgress?: number;
+  currentTrackDuration?: number;
+  currentTrackSmallImageURL?: string,
+  currentTrackLargeImageURL?: string,
 
   // Up next/prev previewer
   // TODO: currentContextTracks: Images[]; ?
@@ -217,6 +220,7 @@ const useSpotifyStore = () => {
       store.userImg = user.userImg;
       store.userPlaylists = user.userPlaylists;
       store.deepDiverPlaylistIndexes = user.deepDiverPlaylistIndexes;
+      store.deepDiverPlaylistTrackSets = importMapOfSets(user.deepDiverPlaylistTrackSets);
 
       store.justGoodPlaylistMap = {};
       store.justGoodPlaylistArtistMap = {};
@@ -320,9 +324,18 @@ const useSpotifyStore = () => {
 
       store.userPlaylists = userPlaylists;
       store.deepDiverPlaylistIndexes = {};
+      store.deepDiverPlaylistTrackSets = new Map();
       // store.justGoodPlaylists = justGoodPlaylists;
 
-      const storedUser = store.storeUser(store.userId, store.userName, store.userImg, store.userPlaylists, store.deepDiverPlaylistIndexes, justGoodPlaylists);
+      const storedUser = store.storeUser(
+        store.userId,
+        store.userName,
+        store.userImg,
+        store.userPlaylists,
+        store.deepDiverPlaylistIndexes,
+        store.deepDiverPlaylistTrackSets,
+        justGoodPlaylists,
+      );
 
       store.setupLoading = false;
 
@@ -330,7 +343,7 @@ const useSpotifyStore = () => {
     }),
 
     saveUser: () => {
-      if (store.userId && store.userName && store.userImg && store.userPlaylists && store.deepDiverPlaylistIndexes && store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) {
+      if (store.userId && store.userName && store.userImg && store.userPlaylists && store.deepDiverPlaylistIndexes && store.deepDiverPlaylistTrackSets && store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) {
         console.log('saving user');
         store.storeUser(
           store.userId,
@@ -338,17 +351,27 @@ const useSpotifyStore = () => {
           store.userImg,
           store.userPlaylists,
           store.deepDiverPlaylistIndexes,
+          store.deepDiverPlaylistTrackSets,
           [...store.justGoodPlaylists, ...store.inProgressJustGoodPlaylists, ...store.plannedJustGoodPlaylists]
         )
       }
     },
-    storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: { [id: string]: number }, justGoodPlaylists: CachedJustGoodPlaylist[]) => (
+    storeUser: (
+      userId: string,
+      userName: string,
+      userImg: Images,
+      userPlaylists: CachedPlaylist[],
+      deepDiverPlaylistIndexes: { [id: string]: number },
+      deepDiverPlaylistTrackSets: Map<string, Set<string>>,
+      justGoodPlaylists: CachedJustGoodPlaylist[],
+    ) => (
       storeUser({
         userId,
         userImg,
         userName,
         userPlaylists,
         deepDiverPlaylistIndexes,
+        deepDiverPlaylistTrackSets: exportMapOfSets(deepDiverPlaylistTrackSets),
         justGoodPlaylists,
       })
     ),
@@ -542,6 +565,8 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return false;
       if (!store.justGoodPlaylistArtistMap || store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) return false;
+
+      // TODO: ???????
       store.justGoodPlaylistArtistMap[artist.id] = {
         id: 'id',
         name: 'name',
@@ -580,13 +605,17 @@ const useSpotifyStore = () => {
       return true;
     }),
     togglePlaylistInDeepDiverPlaylists: action(async (playlist: CachedPlaylist, i: number) => {
-      console.log('toggling playlist');
+      const token = await store.useToken();
+      if (!token) return false;
+      if (store.deepDiverPlaylistTrackSets === undefined) return false;
+
       if (store.deepDiverPlaylistIndexes === undefined) return false;
       const { id } = playlist;
       if (store.deepDiverPlaylistIndexes[id] !== undefined) {
         delete store.deepDiverPlaylistIndexes[id];
       } else {
         store.deepDiverPlaylistIndexes[id] = i;
+        store.deepDiverPlaylistTrackSets.set(id, new Set((await getAllPlaylistTracks(id, token)).map(t => t.id)));
       }
       store.deepDiverPlaylistIndexes = { ...store.deepDiverPlaylistIndexes };
       store.saveUser();
@@ -615,12 +644,6 @@ const useSpotifyStore = () => {
     },
 
     playing: false,
-    currentTrackName: '',
-    currentTrackArtist: '',
-    currentTrackProgress: 0,
-    currentTrackDuration: 0,
-    currentTrackSmallImageURL: '',
-    currentTrackLargeImageURL: '',
 
     togglePlaying: action(async () => {
       const token = await store.useToken();
@@ -636,6 +659,8 @@ const useSpotifyStore = () => {
       if (!token) return false;
 
       await nextPlayback(token);
+
+      await sleep(3000);
 
       return await store.updatePlayer();
     }),
@@ -662,6 +687,7 @@ const useSpotifyStore = () => {
      * For when you want to update the playing bar without actually playing it
      */
     pretendToProceedPosition: action(() => {
+      if (store.currentTrackProgress === undefined) store.currentTrackProgress = 0;
       store.currentTrackProgress += 1000; // 1 second
     }),
 
@@ -673,28 +699,38 @@ const useSpotifyStore = () => {
 
       runInAction(() => {
         store.playing = playback.is_playing;
-        store.currentTrackName = playback.item?.name || '';
+        store.currentTrackID = playback.item?.id;
+        store.currentTrackURI = playback.item?.uri;
+        store.currentTrackName = playback.item?.name;
         store.currentTrackArtist = artistString(playback.item?.artists);
-        store.currentTrackProgress = playback.progress_ms || 0;
-        store.currentTrackDuration = playback.item?.duration_ms || 0;
+        store.currentTrackProgress = playback.progress_ms;
+        store.currentTrackDuration = playback.item?.duration_ms;
         const { small, large } = getImages(playback.item?.album?.images);
         store.currentTrackSmallImageURL = small;
         store.currentTrackLargeImageURL = large;
 
-        // console.log('CHECK PLAYER STATUS UPDATED TO:');
-        // console.log(`Playing: ${store.playing}`);
-        // console.log(`Track Name: ${store.currentTrackName}`);
-        // console.log(`Track Artist: ${store.currentTrackArtist}`);
-        // console.log(`Track Progress: ${store.currentTrackProgress}`);
-        // console.log(`Track Duration: ${store.currentTrackDuration}`);
-        // console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
-        // console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
+        console.log('CHECK PLAYER STATUS UPDATED TO:');
+        console.log(`Playing: ${store.playing}`);
+        console.log(`ID: ${store.currentTrackID}`);
+        console.log(`URI: ${store.currentTrackURI}`);
+        console.log(`Track Name: ${store.currentTrackName}`);
+        console.log(`Track Artist: ${store.currentTrackArtist}`);
+        console.log(`Track Progress: ${store.currentTrackProgress}`);
+        console.log(`Track Duration: ${store.currentTrackDuration}`);
+        console.log(`Small Image URL: ${store.currentTrackSmallImageURL}`);
+        console.log(`Large Image URL: ${store.currentTrackLargeImageURL}`);
       });
 
       return true;
     }),
 
     addCurrentTrackToPlaylist: action(async (playlist: CachedPlaylist) => {
+      const token = await store.useToken();
+      if (!token) return false;
+      if (store.currentTrackURI === undefined) return false;
+
+      await addTrackToPlaylist(playlist.id, store.currentTrackURI, token);
+
       return true;
     }),
 

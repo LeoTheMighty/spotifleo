@@ -24,6 +24,16 @@
   }
 }
 
+.primary-btn.selected {
+  background-color: $primary-color;
+  color: $primary-text;
+
+  &:hover, &:active {
+    background-color: unset;
+    color: unset;
+  }
+}
+
 .secondary-btn {
   color: $primary-text;
   border-color: $primary-text;

@@ -16,6 +16,7 @@ export type StoredUser = {
   userImg: Images;
   userPlaylists: CachedPlaylist[];
   deepDiverPlaylistIndexes: { [id: string]: number };
+  deepDiverPlaylistTrackSets: { [id: string]: string[] };
   justGoodPlaylists: CachedJustGoodPlaylist[];
 };
 
@@ -25,11 +26,11 @@ const parse = <T>(value?: string | null): T | undefined => {
 };
 
 export const storePKCECodes = (codes: PCKECodes): PCKECodes => {
-  localStorage.setItem(CODES_KEY, JSON.stringify(codes));
+  sessionStorage.setItem(CODES_KEY, JSON.stringify(codes));
   return codes;
 }
-export const getPKCECodes = (): PCKECodes | undefined => parse(localStorage.getItem(CODES_KEY));
-export const removePKCECodes = () => localStorage.removeItem(CODES_KEY);
+export const getPKCECodes = (): PCKECodes | undefined => parse(sessionStorage.getItem(CODES_KEY));
+export const removePKCECodes = () => sessionStorage.removeItem(CODES_KEY);
 
 export const storeToken = (token: Token): Token => {
   localStorage.setItem(TOKEN_KEY, JSON.stringify(token));

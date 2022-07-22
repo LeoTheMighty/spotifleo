@@ -1,4 +1,5 @@
 import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist, SpotifyItem } from '../types';
+import defaultAvatar from '../images/default_avatar.jpeg';
 
 export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
 export const IN_PROGRESS_INDICATOR = '(TESTING) [WIP] Just Good';
@@ -60,9 +61,9 @@ export const artistString = (artists?: ArtistResponse[]) => (
 );
 
 export const getImages = (images?: ImageResponse[]): Images => {
-  let minURL = '';
+  let minURL = defaultAvatar;
   let minHeight = Infinity;
-  let maxURL = '';
+  let maxURL = defaultAvatar;
   let maxHeight = -1;
 
   for (let i = 0; i < (images?.length || 0); i++) {
@@ -84,7 +85,8 @@ export const getGenre = (genres: string[]): string => genres.join(', ');
 
 export const getScope = (scopes: string[]): string => scopes.join(' ');
 
-export const formatMs = (ms: number) => {
+export const formatMs = (ms?: number) => {
+  ms ||= 0;
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   return `${minutes}:${(seconds % 60) < 10 ? '0' : ''}${seconds % 60}`
@@ -147,3 +149,25 @@ export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
 export const getUri = (type: string, id: string) => `spotify:${type}:${id}`;
 export const getPlaylistUri = (id: string) => getUri('playlist', id);
 
+export const exportSet = <T>(set: Set<T>): T[] => Array.from(set);
+export const importSet = <T>(array: T[]): Set<T> => new Set(array);
+export const exportMap = <V>(map: Map<string, V>): { [key: string]: V } => Object.fromEntries(map);
+export const importMap = <V>(object: { [key: string]: V }): Map<string, V> => new Map(Object.entries(object));
+export const exportMapOfSets = <T>(map: Map<string, Set<T>>): { [key: string]: T[] } => {
+  const final: { [key: string ]: T[] } = {};
+  const obj = exportMap(map);
+  Object.entries(obj).forEach(([key, set]) => {
+    final[key] = exportSet(set);
+  });
+  return final;
+}
+export const importMapOfSets = <T>(object: { [key: string]: T[] }): Map<string, Set<T>> => {
+  const final: Map<string, Set<T>> = new Map();
+  const m = importMap(object);
+  m.forEach((v, k) => {
+    final.set(k, importSet(v));
+  });
+  return final;
+}
+
+export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

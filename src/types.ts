@@ -51,6 +51,13 @@ export interface PlaylistTrack extends Track {
   isLocal: boolean;
 }
 
+export interface PlayingTrack extends Track {
+  context?: Album | Playlist; // ?
+  progress: number; // milliseconds
+}
+
+export interface PlayingPlaylistTrack extends PlaylistTrack, PlayingTrack {}
+
 export interface Artist extends SpotifyItem {
   genre: string;
   popularity: number;

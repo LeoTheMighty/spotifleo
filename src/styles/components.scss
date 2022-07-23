@@ -35,8 +35,9 @@
 }
 
 .secondary-btn {
-  color: $primary-text;
-  border-color: $primary-text;
+  color: $primary-color;
+  text-decoration: underline;
+  //border-color: $primary-text;
 
   &:hover, &:active { // good way to do hover and touch start
     background-color: unset;

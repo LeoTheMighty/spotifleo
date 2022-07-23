@@ -33,6 +33,7 @@ export const deserializeTrack = ({ id, name, album, popularity, uri, external_ur
   uri,
   artistIds: getArtistIds(artists),
   albumId: passedAlbum?.id || album?.id,
+  albumName: passedAlbum?.name || album?.name,
   discNumber: disc_number,
   trackNumber: track_number,
   duration: duration_ms,

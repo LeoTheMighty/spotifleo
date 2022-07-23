@@ -100,12 +100,14 @@
   width: 70%;
   aspect-ratio: 1 / 1;
   margin-inline: 1rem;
+  align-self: center;
 }
 
 .deep-dive-driver-track-play-icon {
   position: absolute;
   font-size: 4rem;
   top: calc(50% - 3rem);
+  pointer-events: none;
 }
 
 .deep-dive-driver-track-next-icon {
@@ -113,6 +115,7 @@
   right: 0.25rem;
   font-size: 1rem;
   top: calc(50% - 0.75rem);
+  pointer-events: none;
 }
 
 .deep-dive-driver-track-prev-icon {
@@ -120,6 +123,15 @@
   left: 0.25rem;
   font-size: 1rem;
   top: calc(50% - 0.75rem);
+  pointer-events: none;
+}
+
+.deep-dive-driver-track-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: auto;
+  margin: 1rem;
 }
 
 .deep-dive-driver-actions {

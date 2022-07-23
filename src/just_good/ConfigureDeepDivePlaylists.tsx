@@ -11,7 +11,7 @@ const ConfigureDeepDivePlaylists = observer(() => {
     <div className="configure-deep-dive-playlists">
       {store.userPlaylists?.map((playlist, i) => (
         <button
-          className={`primary-btn playlist-button ${store.deepDiverPlaylistIndexes?.[playlist.id] !== undefined ? 'on' : 'off'}`}
+          className={`primary-btn playlist-button ${store.deepDiverPlaylistIndexes?.has(playlist.id) ? 'on' : 'off'}`}
           onClick={() => store.togglePlaylistInDeepDiverPlaylists(playlist, i)}
         >
           { playlist.name }

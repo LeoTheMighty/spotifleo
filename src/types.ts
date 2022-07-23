@@ -38,6 +38,7 @@ export interface FetchedAlbum extends Album {
 export interface Track extends SpotifyItem {
   artistIds?: string[];
   albumId?: string;
+  albumName?: string;
   discNumber: number;
   trackNumber: number;
   popularity: number;
@@ -90,6 +91,7 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
   artistImg?: Images;
   artistName: string;
   inProgress: boolean;
+  progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedPlaylist;
 }
 

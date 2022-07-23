@@ -7,6 +7,7 @@ export const DEEP_DIVE_INDICATOR = '(TESTING) Deep Dive of';
 
 export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
   if (r.status === 204) return resolve(true);
+  if (r.headers.get('content-length') === '0') return resolve(true);
   r.json().then((resp) => {
     if (resp.error) {
       reject(resp.error);
@@ -18,15 +19,15 @@ export const formatResp = async (r: Response): Promise<any> => new Promise((reso
 
 export const getDeepDivePlaylistName = (artistName: string) => `${DEEP_DIVE_INDICATOR} ${artistName}`;
 export const getDeepDivePlaylistDescription = (artistName: string) => (
-  `The chosen parts of the artist's discography to go through and evaluate for the "${getJustGoodPlaylistName(artistName)}" playlist!`
+  `The chosen parts of the artist's discography to go through and evaluate for the "${getJustGoodPlaylistName(artistName)}" playlist! Created using Leo Belyi's Deep Diver :)`
 );
 export const getJustGoodPlaylistName = (artistName: string) => `${JUST_GOOD_INDICATOR} ${artistName}`;
 export const getJustGoodPlaylistDescription = (artistName: string) => (
-  `Only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist.`
+  `Only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist. Created using Leo Belyi's Deep Diver :)`
 );
 export const getInProgressJustGoodPlaylistName = (artistName: string) => `${IN_PROGRESS_INDICATOR} ${artistName}`;
 export const getInProgressJustGoodPlaylistDescription = (artistName: string) => (
-  `WORK IN PROGRESS!!! But will be only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist.`
+  `WORK IN PROGRESS!!! But will be only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist. Created using Leo Belyi's Deep Diver :)`
 );
 
 export const formatQueryList = (list: string[]) => list.join(',');
@@ -171,3 +172,5 @@ export const importMapOfSets = <T>(object: { [key: string]: T[] }): Map<string, 
 }
 
 export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const arrayGetWrap = <T>(array: T[], index: number) => array[(index % array.length + array.length) % array.length];

@@ -133,15 +133,14 @@ const DeepDiveViewer = observer(() => {
         Show Whole Deep Dive
       </button>
       {store.currentDeepDiveArtistDiscography?.map((album) => {
-        return null;
-        // return (
-        //   <AlbumViewer
-        //     album={album}
-        //     // navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}
-        //     viewNotGood={viewDiscography}
-        //     store={store}
-        //   />
-        // );
+        return (
+          <AlbumViewer
+            album={album}
+            navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}
+            viewNotGood={viewDiscography}
+            store={store}
+          />
+        );
       })}
     </div>
   );

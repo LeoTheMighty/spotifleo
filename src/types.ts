@@ -37,6 +37,7 @@ export interface FetchedAlbum extends Album {
 
 export interface Track extends SpotifyItem {
   artistIds?: string[];
+  artistName?: string;
   albumId?: string;
   albumName?: string;
   discNumber: number;

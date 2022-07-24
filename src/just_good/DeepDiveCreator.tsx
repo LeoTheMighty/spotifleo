@@ -6,6 +6,8 @@ import { observer } from 'mobx-react';
 import { Album, AlbumGroup } from '../types';
 import { ToggleButton } from 'react-bootstrap';
 import ConfirmModal from '../components/ConfirmModal';
+import { driveDeepDiver } from '../logic/common';
+import { useNavigate } from 'react-router-dom';
 
 /*
 
@@ -13,10 +15,13 @@ Handles the on-boarding process. First you load all of the albums for the artist
 to both toggle them on and off as well as drag and drop them around each other.
 
 Give sort options for chronological, split singles/eps and albums, and filter options for albums, singles, and eps.
+
+TODO: IF YOU'RE CURRENTLY LISTENING TO THE PLAYLIST THIS COULD GET WEIRD
 */
 
 const DeepDiveCreator = observer(() => {
   const store = useStore();
+  const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
 
   const toggleAlbum = (album: Album) => {
@@ -103,7 +108,10 @@ const DeepDiveCreator = observer(() => {
         show={showConfirm}
         title="Ready to Start the Deep Dive?"
         message="This will create a new playlist in your spotify with all of this artists songs you chose."
-        onConfirm={() => { store.createOrUpdateDeepDivePlaylist(); setShowConfirm(false) }}
+        onConfirm={async () => {
+          await store.createOrUpdateDeepDivePlaylist();
+          store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
+        }}
         onDecline={() => setShowConfirm(false)}
       />
     </div>

@@ -196,21 +196,16 @@ export const replacePlaylistItems = async (playlistID: string, trackURIs: string
 );
 
 export const replaceAllPlaylistItems = async (playlistID: string, trackURIs: string[], token: string) => {
-  const playlist = await getPlaylistDetails(playlistID, token);
-  const currentTotal = playlist.tracks.total;
-  let snapshotID = playlist.snapshot_id;
   const chunks = chunkList(trackURIs, MAX_ADD_TRACKS);
   for (let i = 0; i < chunks.length; i++) {
     // We want to await each individual one so that the order remains consistent
-    await replacePlaylistItems(playlistID, chunks[i], MAX_ADD_TRACKS * i, token);
+    // When it's the first one, we replace all existing, then we add on top
+    if (i === 0) {
+      await replacePlaylistItems(playlistID, chunks[i], MAX_ADD_TRACKS * i, token);
+    } else {
+      await addTracksToPlaylist(playlistID, chunks[i], token);
+    }
   }
-  // if (currentTotal > trackURIs.length) {
-  //   const positions = range(trackURIs.length, currentTotal).reverse();
-  //   const positionChunks = chunkList(positions, MAX_ADD_TRACKS)
-  //   for (let i = 0; i < positionChunks.length; i++) {
-  //     snapshotID = (await removePositionsFromPlaylist(playlistID, snapshotID, positionChunks[i], token)).snapshot_id;
-  //   }
-  // }
 };
 
 // export const replaceTracksInPlaylist = async (playlistID: string, trackURIs: string[], token: string) => {

@@ -209,6 +209,9 @@
 .deep-dive-track-view {
   margin: 0.5rem;
 }
+.deep-dive-track-view-play-button {
+  pointer-events: painted;
+}
 
 .deep-dive-track-view-add-button {
   font-size: 1.5rem;

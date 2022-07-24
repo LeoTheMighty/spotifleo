@@ -11,12 +11,8 @@ import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
 import SpotifySlider from './SpotifySlider';
 import { useNavigate } from 'react-router-dom';
-
-const TEST_PLAYLIST_ID = '';
-
-type Props = {
-
-};
+import LoadingIndicator from '../common/LoadingIndicator';
+import { toJS } from 'mobx';
 
 /*
 
@@ -37,6 +33,8 @@ Back button "<"                                 "View Playlist in Spotify"
  */
 
 // Prepare 5 components.
+// TODO: ADD MORE INFO FOR THE ALBUM (MAYBE HAVE A BUTTON TO OPEN EXTRA INFO)
+// TODO: ADD MORE ACTIONS LIKE GO TO 1/3 in and/or 2/3 in if you in a rush
 
 const DeepDiveDriver = observer(() => {
   const store = useStore();
@@ -63,21 +61,25 @@ const DeepDiveDriver = observer(() => {
   //   }
   // };
 
-  // TODO: Import the current liked tracks?
 
   if (store.currentJustGoodPlaylist === undefined || store.currentJustGoodPlaylist.progress === undefined || store.currentJustGoodPlaylist.deepDiveTracks === undefined || store.currentJustGoodPlaylist.trackIds === undefined) {
-    return <div>nop</div>;
+    return <LoadingIndicator />;
+  }
+  const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress];
+  if (!deepDiveTrack) {
+    return <LoadingIndicator />;
   }
 
+  console.log(toJS(store.currentJustGoodPlaylist.trackIds));
+
   const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress - 1).img;
-  const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress];
   const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress + 1).img;
-  const isGood = store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id)
+  const isGood = deepDiveTrack?.id && store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id)
 
   return (
     <div className="deep-dive-driver">
       <div className="d-flex justify-content-between w-100 m-1">
-        <a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>
+        {/*<a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>*/}
         {(store.currentJustGoodPlaylist.inProgress) ? (
           <button className="primary-btn" onClick={async () => {
             await store.markJustGoodPlaylistComplete();
@@ -86,6 +88,7 @@ const DeepDiveDriver = observer(() => {
         ) : (
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}> View Playlist </button>
         )}
+        <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}> View Playlist </button>
       </div>
       <h1 className="m-1"> Just Good <a>{ store.currentJustGoodPlaylist.artistName }</a> </h1>
       <div className="deep-dive-driver-track-scroller">

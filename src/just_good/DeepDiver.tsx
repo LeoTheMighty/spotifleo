@@ -26,8 +26,6 @@ const DeepDiver = observer(() => {
 
   useEffect(() => {
     if (params.playlist_id && ['edit-deep-dive', 'deep-dive', 'view-deep-dive', undefined].includes(params.view)) {
-
-      // TODO: Load the playlist details
       store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType | undefined).then(() => {
         console.log('Fully fetched the details');
       }).catch((error) => {
@@ -56,11 +54,6 @@ const DeepDiver = observer(() => {
       { getPage() }
     </>
   )
-
-    // <div className="deep-diver">
-    //   { getPage() }
-    // </div>
-  // );
 });
 
 export default DeepDiver;

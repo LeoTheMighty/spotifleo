@@ -1,4 +1,11 @@
-import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist } from '../types';
+import {
+  ArtistResponse,
+  CachedPlaylist,
+  ImageResponse,
+  Images,
+  CachedJustGoodPlaylist,
+  JustGoodPlaylist
+} from '../types';
 import defaultAvatar from '../images/default_avatar.jpeg';
 
 export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
@@ -58,7 +65,7 @@ export const getArtistIds = (artists?: ArtistResponse[]): string[] | undefined =
 );
 
 export const artistString = (artists?: ArtistResponse[]) => (
-  artists ? artists.map((artist) => artist.name).join(',') : ''
+  artists ? artists.map((artist) => artist.name).join(', ') : ''
 );
 
 export const getImages = (images?: ImageResponse[]): Images => {
@@ -186,3 +193,9 @@ export const deepDiver = (playlistID: string, view?: string) => ({
 export const viewDeepDiver = (playlistID: string) => deepDiver(playlistID, 'view-deep-dive');
 export const driveDeepDiver = (playlistID: string) => deepDiver(playlistID, 'deep-dive');
 export const editDeepDiver = (playlistID: string) => deepDiver(playlistID, 'edit-deep-dive');
+
+export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): JustGoodPlaylist => ({
+  ...justGoodPlaylist,
+  trackIds: undefined,
+  deepDiveTracks: undefined,
+});

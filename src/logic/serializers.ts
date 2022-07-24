@@ -8,7 +8,7 @@ import {
   Track,
   TrackResponse
 } from '../types';
-import { getArtistIds, getGenre, getImages } from './common';
+import { artistString, getArtistIds, getGenre, getImages } from './common';
 
 export const deserializeArtists = (artists: ArtistResponse[]): Artist[] => artists.map(deserializeArtist);
 export const deserializeArtist = ({ id, external_urls: { spotify }, images, uri, name, popularity, genres, }: ArtistResponse): Artist => ({
@@ -32,6 +32,7 @@ export const deserializeTrack = ({ id, name, album, popularity, uri, external_ur
   url: spotify,
   uri,
   artistIds: getArtistIds(artists),
+  artistName: artistString(artists),
   albumId: passedAlbum?.id || album?.id,
   albumName: passedAlbum?.name || album?.name,
   discNumber: disc_number,

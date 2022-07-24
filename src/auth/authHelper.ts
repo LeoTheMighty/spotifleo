@@ -4,7 +4,7 @@ import { storePKCECodes } from '../logic/storage';
 
 const oauthURL = 'https://accounts.spotify.com';
 const redirectUri = window.location.origin + '/spotifleo/callback'
-const scopes = ['playlist-modify-public', 'user-library-modify', 'streaming', 'user-read-playback-state'];
+const scopes = ['playlist-modify-public', 'user-library-read', 'user-library-modify', 'streaming', 'user-read-playback-state'];
 
 // technically supposed to be secret don't print out these bad boys
 const clientID = process.env.REACT_APP_CI!;

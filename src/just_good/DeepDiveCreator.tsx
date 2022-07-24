@@ -64,8 +64,14 @@ const DeepDiveCreator = observer(() => {
 
   return (
     <div className="d-flex flex-column align-items-center">
-      <button className="primary-btn" onClick={() => setShowConfirm(true)}> Start the Deep Dive </button>
-      <h1> Select which albums you want to include in the deep dive: </h1>
+      <button className="primary-btn" onClick={() => setShowConfirm(true)}>
+        {store.currentJustGoodPlaylist?.deepDivePlaylist ? (
+          'Edit the Deep Dive Playlist'
+        ) : (
+          'Start the Deep Dive'
+        )}
+      </button>
+      <h1 className="text-center m-1"> Select which albums you want to include in the deep dive: </h1>
       <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
         <h1 style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through'}}>
           Albums
@@ -97,7 +103,7 @@ const DeepDiveCreator = observer(() => {
         show={showConfirm}
         title="Ready to Start the Deep Dive?"
         message="This will create a new playlist in your spotify with all of this artists songs you chose."
-        onConfirm={() => { store.createDeepDivePlaylist(); setShowConfirm(false) }}
+        onConfirm={() => { store.createOrUpdateDeepDivePlaylist(); setShowConfirm(false) }}
         onDecline={() => setShowConfirm(false)}
       />
     </div>

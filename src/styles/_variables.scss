@@ -6,13 +6,14 @@ $primary-color: #1db954;
 
 
 $primary-text: #ffffff;
+$disabled-text: #5c5c5c;
 
 $search-bar-color: #042e01;
 $search-bar-highlight-color: $primary-color;
 
 
 $background-color: black;
-$gradient-to: $primary-color;
+$gradient-to: #00491a;
 $primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh),
 repeating-linear-gradient(245deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh);
 

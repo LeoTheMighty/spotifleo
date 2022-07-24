@@ -14,7 +14,7 @@ const TopBar = () => {
     <div className="top-bar">
       {store.token && (
         <>
-          <button onClick={() => navigate(-1)}>
+          <button onClick={() => navigate('/spotifleo')}>
             <i className="bi bi-caret-left top-bar-icon" />
           </button>
           <ArtistSearch />

@@ -1,5 +1,5 @@
 import {
-  Album, AlbumResponse,
+  Album, AlbumGroup, AlbumResponse,
   ArtistResponse,
   CachedPlaylist, FetchedAlbum,
   FetchResponse,
@@ -14,6 +14,10 @@ import {
   deserializeFetchedAlbums, deserializePlaylistTrack, deserializeTrack,
   deserializeTracks
 } from '../logic/serializers';
+import { range } from 'lodash';
+
+// Doesn't exactly matter what this is named, just has to be different than Spotify's IDs
+export const LIKED_INDICATOR = '*** LIKED ***';
 
 const SPOTIFY_API_BASE_URI = 'https://api.spotify.com/v1';
 const MAX_FETCH_ITEMS = 50;
@@ -25,7 +29,7 @@ const POST = 'POST'
 const PUT = 'PUT';
 const DELETE = 'DELETE';
 
-type Query = { [param: string]: string | number };
+type Query = { [param: string]: string | number | string[] };
 
 // What API calls do we need?
 
@@ -81,12 +85,23 @@ export const getAllArtistAlbums = async (artistID: string, token: string): Promi
 export const getAllArtistAlbumsWithTracks = async (artistId: string, token: string): Promise<FetchedAlbum[]> => {
   const albums: Album[] = await getAllArtistAlbums(artistId, token);
 
-  const albumIds = albums.map(a => a.id);
+  const albumIds = [];
+  const albumGroups: Map<string, AlbumGroup> = new Map();
+  for (let i = 0; i < albums.length; i++) {
+    albumIds.push(albums[i].id);
+    albumGroups.set(albums[i].id, albums[i].albumGroup);
+  }
 
   return deserializeFetchedAlbums(await getAllMultipleAlbums(albumIds, token)).map((album) => ({
     ...album,
-    tracks: album.tracks.filter((t) => t.artistIds?.includes(artistId))
-  }));
+    albumGroup: albumGroups.get(album.id) || album.albumGroup,
+    // If it is the artist's own album/single, don't filter any of the songs
+    tracks: (albumGroups.get(album.id) === 'appears_on') ?
+      album.tracks.filter((t) => (
+        t.artistIds?.includes(artistId))
+      ) :
+      album.tracks,
+}));
 }
 
 export const getAlbumTracks = async (albumID: string, token: string): Promise<FetchResponse<TrackResponse>> =>
@@ -123,6 +138,10 @@ export const createPlaylist = async (name: string, description: string, token: s
   })
 );
 
+export const getPlaylistDetails = async (playlistID: string, token: string): Promise<PlaylistResponse> => (
+  callSpotifyAPI(token, `/playlists/${playlistID}`, GET)
+);
+
 // Look into Fields to make this as efficient as possible. Not supported by everything don't worry about it
 export const getPlaylistTracks = async (playlistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistTrackResponse>> => (
   callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, GET, {
@@ -132,6 +151,11 @@ export const getPlaylistTracks = async (playlistID: string, limit: number, offse
     offset,
   })
 );
+
+export const getFirstPlaylistTrack = async (playlistID: string, token: string): Promise<PlaylistTrack | undefined> => {
+  const { total, items } = await getPlaylistTracks(playlistID, 1, 0, token);
+  return total === 0 ? undefined : deserializePlaylistTrack(items[0], 0);
+};
 
 export const getAllPlaylistTracks = async (playlistId: string, token: string): Promise<PlaylistTrack[]> => {
   return fetchAll((o) => getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, o, token), deserializePlaylistTrack);
@@ -163,12 +187,57 @@ export const addAllTracksToPlaylist = async (playlistID: string, trackURIs: stri
   }
 }
 
+export const replacePlaylistItems = async (playlistID: string, trackURIs: string[], insertBefore: number, token: string) => (
+  callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, PUT, {
+    uris: trackURIs,
+  }, {
+    insert_before: insertBefore,
+  })
+);
+
+export const replaceAllPlaylistItems = async (playlistID: string, trackURIs: string[], token: string) => {
+  const playlist = await getPlaylistDetails(playlistID, token);
+  const currentTotal = playlist.tracks.total;
+  let snapshotID = playlist.snapshot_id;
+  const chunks = chunkList(trackURIs, MAX_ADD_TRACKS);
+  for (let i = 0; i < chunks.length; i++) {
+    // We want to await each individual one so that the order remains consistent
+    await replacePlaylistItems(playlistID, chunks[i], MAX_ADD_TRACKS * i, token);
+  }
+  // if (currentTotal > trackURIs.length) {
+  //   const positions = range(trackURIs.length, currentTotal).reverse();
+  //   const positionChunks = chunkList(positions, MAX_ADD_TRACKS)
+  //   for (let i = 0; i < positionChunks.length; i++) {
+  //     snapshotID = (await removePositionsFromPlaylist(playlistID, snapshotID, positionChunks[i], token)).snapshot_id;
+  //   }
+  // }
+};
+
+// export const replaceTracksInPlaylist = async (playlistID: string, trackURIs: string[], token: string) => {
+//
+// };
+
+export const removePositionsFromPlaylist = async (playlistID: string, snapshotID: string, positions: number[], token: string): Promise<{ snapshot_id: string }> => (
+  callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, DELETE, undefined, {
+    positions: positions,
+    snapshot_id: snapshotID,
+  })
+);
+
 export const removeTrackFromPlaylist = async (trackURI: string, playlistID: string, token: string) => (
   callSpotifyAPI(token, `/playlists/${playlistID}/tracks`, DELETE, undefined, {
     tracks: [{
       uri: trackURI,
     }]
   })
+);
+
+export const addTrackToLiked = async (trackID: string, token: string) => (
+  callSpotifyAPI(token, '/me/tracks', PUT, { ids: [ trackID ]})
+);
+
+export const removeTrackFromLiked = async (trackID: string, token: string) => (
+  callSpotifyAPI(token, '/me/tracks', DELETE, { ids: [ trackID ]})
 );
 
 export const changePlaylistDetails = async (playlistID: string, name: string | undefined, description: string | undefined, token: string) => (
@@ -205,6 +274,16 @@ export const getCurrentUserPlaylists = async (limit: number, offset: number, tok
     offset,
   })
 );
+
+export const getAllCurrentUserLikedSongs = async (token: string): Promise<Track[]> => (
+  fetchAll((offset) => getCurrentUserLikedSongs(MAX_FETCH_ITEMS, offset, token), deserializePlaylistTrack)
+)
+export const getCurrentUserLikedSongs = async (limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistTrackResponse>> => (
+  callSpotifyAPI(token, '/me/tracks', GET, {
+    limit,
+    offset,
+  })
+)
 
 /**
  * TODO: TEST

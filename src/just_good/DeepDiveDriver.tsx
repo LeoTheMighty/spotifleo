@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
-import { arrayGetWrap, getParams } from '../logic/common';
+import { arrayGetWrap, getParams, viewDeepDiver } from '../logic/common';
 import Image from '../components/Image';
 import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
@@ -63,21 +63,29 @@ const DeepDiveDriver = observer(() => {
   //   }
   // };
 
-  if (store.currentJustGoodPlaylist === undefined || store.currentJustGoodPlaylist.progress === undefined) {
+  // TODO: Import the current liked tracks?
+
+  if (store.currentJustGoodPlaylist === undefined || store.currentJustGoodPlaylist.progress === undefined || store.currentJustGoodPlaylist.deepDiveTracks === undefined || store.currentJustGoodPlaylist.trackIds === undefined) {
     return <div>nop</div>;
   }
 
   const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress - 1).img;
   const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress];
   const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress + 1).img;
+  const isGood = store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id)
 
   return (
     <div className="deep-dive-driver">
       <div className="d-flex justify-content-between w-100 m-1">
         <a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>
-        <button className="primary-btn" onClick={async () => {
-          await store.markJustGoodPlaylistComplete();
-        }}> Mark Playlist Complete </button>
+        {(store.currentJustGoodPlaylist.inProgress) ? (
+          <button className="primary-btn" onClick={async () => {
+            await store.markJustGoodPlaylistComplete();
+            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+          }}> Mark Playlist Complete </button>
+        ) : (
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}> View Playlist </button>
+        )}
       </div>
       <h1 className="m-1"> Just Good <a>{ store.currentJustGoodPlaylist.artistName }</a> </h1>
       <div className="deep-dive-driver-track-scroller">
@@ -107,8 +115,8 @@ const DeepDiveDriver = observer(() => {
         ) : (
           <i className="deep-dive-driver-track-play-icon bi-play" />
         )}
-        <i className="deep-dive-driver-track-prev-icon bi-skip-start" />
-        <i className="deep-dive-driver-track-next-icon bi-skip-end" />
+        <i className="deep-dive-driver-track-prev-icon bi-caret-left-fill" />
+        <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
       </div>
       <div className="deep-dive-driver-track-info">
         <div className="d-flex justify-content-between flex-column text-center">
@@ -122,21 +130,25 @@ const DeepDiveDriver = observer(() => {
           className={`w-100 primary-btn playlist-button ${store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id) ? 'on' : 'off'}`}
           onClick={() => store.toggleCurrentTrackInJustGood()}
         >
-          <h1>Good</h1>
+          <h1 className="m-2 p-0 d-flex flex-row justify-content-center w-100">Good {isGood ? <i className="m-1 bi bi-hand-thumbs-up" /> : <i className="m-1 bi bi-hand-thumbs-down" />}</h1>
         </button>
         <div className="deep-dive-driver-playlists">
-          {store.deepDiverPlaylistIndexes && Array.from(store.deepDiverPlaylistIndexes).map(([id, _]) => {
+          {store.deepDiverPlaylistIndexes && Array.from(store.deepDiverPlaylistIndexes).map(([id, i]) => {
+
             const playlist = store.userPlaylists?.[store.deepDiverPlaylistIndexes?.get(id) || 0];
             const trackSet: Set<string> | undefined = playlist && store.deepDiverPlaylistTrackSets?.get(playlist.id);
-            return (
-              <button className={`primary-btn playlist-button ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}>
+            return playlist && i !== 0 ? (
+              <button
+                className={`primary-btn playlist-button ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}
+                onClick={() => store.toggleCurrentTrackInPlaylist(playlist) }
+              >
                 { playlist?.name }
               </button>
-            );
+            ) : undefined;
           })}
         </div>
         <button className="secondary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
-          Configure Playlists
+          Configure Additional Playlists
         </button>
         <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>
           <ModalHeader closeButton><ModalTitle><h1>Configure Playlists</h1></ModalTitle></ModalHeader>

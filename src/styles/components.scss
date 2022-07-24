@@ -97,3 +97,7 @@
   height: calc(100% - 2rem);
   aspect-ratio: 1 / 1;
 }
+
+.disabled {
+  color: $disabled-text;
+}

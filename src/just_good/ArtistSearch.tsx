@@ -59,7 +59,7 @@ const ArtistSearch = observer(() => {
             onClickAction={() => onClick(artist)}
           />
         ))}
-        <button className="primary-btn border-none" > More... </button>
+        {/*<button className="primary-btn border-none" > More... </button>*/}
       </div>
     </div>
   );

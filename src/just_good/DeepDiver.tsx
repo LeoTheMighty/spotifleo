@@ -7,6 +7,7 @@ import DeepDiveViewer from './DeepDiveViewer';
 import DeepDiveCreator from './DeepDiveCreator';
 import DeepDiveDriver from './DeepDiveDriver';
 import LoadingIndicator from '../common/LoadingIndicator';
+import { useLocation } from 'react-router-dom';
 
 /*
 
@@ -21,12 +22,13 @@ From the params you get the playlist ID. Then you have three options.
 const DeepDiver = observer(() => {
   const store = useStore();
   const params = getParams();
+  const location = useLocation();
 
   useEffect(() => {
-    if (params.playlist_id && ['edit-deep-dive', 'deep-dive', 'view-deep-dive'].includes(params.view)) {
+    if (params.playlist_id && ['edit-deep-dive', 'deep-dive', 'view-deep-dive', undefined].includes(params.view)) {
 
       // TODO: Load the playlist details
-      store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType).then(() => {
+      store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType | undefined).then(() => {
         console.log('Fully fetched the details');
       }).catch((error) => {
         console.error(error);
@@ -34,7 +36,7 @@ const DeepDiver = observer(() => {
     } else {
       console.error('No playlist provided');
     }
-  }, [params.playlist_id]);
+  }, [location]);
 
   const getPage = (): React.ReactNode => {
     const { currentDeepDiveView } = store;

@@ -4,10 +4,13 @@ import { observer } from 'mobx-react';
 import ToggleButton from '../components/ToggleButton';
 import defaultAvatar from '../images/default_avatar.jpeg';
 import { useStore } from '../state/SpotifyStoreProvider';
+import { useNavigate } from 'react-router-dom';
+import { deepDiver, driveDeepDiver } from '../logic/common';
 
 const SHOULD_PRETEND = true;
 
 const BackgroundPlayer = observer(() => {
+  const navigate = useNavigate();
   const store = useStore();
 
   useEffect(() => {
@@ -72,14 +75,44 @@ const BackgroundPlayer = observer(() => {
         </div>
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
-          <div className="background-player-good-button-container">
-            <button className="primary-btn"> Good </button>
+          <button onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+            { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
+              <i className="bi bi-heart-fill" />
+            ) : (
+              <i className="bi bi-heart" />
+            )}
+          </button>
+          {(store.currentPlayingJustGoodPlaylist && store.currentJustGoodPlaylist && store.currentJustGoodPlaylist.trackIds !== undefined && (store.currentPlayingJustGoodPlaylist?.id === store.currentJustGoodPlaylist?.id)) ? (
+            <button onClick={() => store.toggleCurrentTrackInJustGood()}>
+              {(store.currentTrackID && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrackID)) ? (
+                <i className="bi bi-hand-thumbs-up-fill" />
+              ) : (
+                <i className="bi bi-hand-thumbs-up" />
+              )}
+            </button>
+          ) : (
+            (store.currentPlayingJustGoodPlaylist === undefined) ? ( // jesus. nested ternaries ;/
+              <button onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>
+                <i className="bi bi-person-plus position-relative" >
+                  <i className="bi bi-hand-thumbs-up floated-corner-icon"/>
+                </i>
+              </button>
+            ) : (
+              <button onClick={() => navigate(deepDiver(store.currentPlayingJustGoodPlaylist!.id))}>
+                <i className="bi bi-eye position-relative">
+                  <i className="bi bi-hand-thumbs-up floated-corner-icon"/>
+                </i>
+              </button>
+            )
+          )}
+          {/*<div className="background-player-good-button-container">*/}
+          {/*  <button className="primary-btn"> Good </button>*/}
             {/*<ToggleButton*/}
             {/*  className="background-player-good-button"*/}
             {/*  on="Good"*/}
             {/*  off="Eh."*/}
             {/*/>*/}
-          </div>
+          {/*</div>*/}
         </div>
         {/*<button className="background-player-good-button">*/}
         {/*  Good*/}

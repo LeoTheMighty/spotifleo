@@ -10,8 +10,13 @@ const Settings = () => {
       <ModalHeader closeButton> <ModalTitle> Settings </ModalTitle> </ModalHeader>
       <ModalBody>
         <div className="d-flex justify-content-center">
-          <button className="reset-user-button" onClick={() => store.resetUser()}>
+          <button className="reset-user-button primary-btn" onClick={() => store.resetUser()}>
             Re-setup user
+          </button>
+        </div>
+        <div className="d-flex justify-content-center">
+          <button className="reset-user-button primary-btn" onClick={() => store.deauthorize()}>
+            Sign Out
           </button>
         </div>
       </ModalBody>

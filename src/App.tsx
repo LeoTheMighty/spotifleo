@@ -13,6 +13,7 @@ import DeepDiver from './just_good/DeepDiver';
 import TopBar from './just_good/TopBar';
 import BottomBar from './just_good/BottomBar';
 import SpotifyAuthLogout from './auth/SpotifyAuthLogout';
+import LoadingIndicator from './common/LoadingIndicator';
 
 const NavToRoot = () => {
   const navigate = useNavigate();
@@ -31,22 +32,24 @@ const App = observer(() => {
         <BrowserRouter>
           <TopBar />
           <div className="app-content">
-            <Routes>
-              { store.token ? [
-                <Route path="/spotifleo/welcome" element="hey :)"/>,
-                <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
-                <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
-                <Route path="/spotifleo" element={<Dashboard />} />,
-                // <Route path="/*" element={<NavToRoot />} />,
+            { store.setupLoading ? <LoadingIndicator /> : (
+              <Routes>
+                { store.token ? [
+                  <Route path="/spotifleo/welcome" element="hey :)"/>,
+                  <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
+                  <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
+                  <Route path="/spotifleo" element={<Dashboard />} />,
+                  // <Route path="/*" element={<NavToRoot />} />,
+                  <Route path="/" element={<NavToRoot />} />
+                ] : [
+                  <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
+                  <Route path="/spotifleo" element={<SpotifyAuthView />} />,
+                  <Route path="/*" element={<NavToRoot />} />,
+                  // <Route path="/" element={<NavToRoot />} />
+                ]}
                 <Route path="/" element={<NavToRoot />} />
-              ] : [
-                <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
-                <Route path="/spotifleo" element={<SpotifyAuthView />} />,
-                // <Route path="/*" element={<NavToRoot />} />,
-                // <Route path="/" element={<NavToRoot />} />
-              ]}
-              <Route path="/" element={<NavToRoot />} />
-            </Routes>
+              </Routes>
+            )}
           </div>
           <BottomBar />
         </BrowserRouter>

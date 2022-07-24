@@ -1,4 +1,4 @@
-import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist, SpotifyItem } from '../types';
+import { ArtistResponse, CachedPlaylist, ImageResponse, Images, CachedJustGoodPlaylist } from '../types';
 import defaultAvatar from '../images/default_avatar.jpeg';
 
 export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
@@ -147,8 +147,11 @@ export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
   };
 }
 
+export const getID = (uri: string) => uri.split(':').at(-1);
 export const getUri = (type: string, id: string) => `spotify:${type}:${id}`;
+export const getUrl = (type: string, id: string) => `https://open.spotify.com/${type}/${id}`;
 export const getPlaylistUri = (id: string) => getUri('playlist', id);
+export const getPlaylistUrl = (id: string) => getUrl('playlist', id);
 
 export const exportSet = <T>(set: Set<T>): T[] => Array.from(set);
 export const importSet = <T>(array: T[]): Set<T> => new Set(array);
@@ -174,3 +177,12 @@ export const importMapOfSets = <T>(object: { [key: string]: T[] }): Map<string, 
 export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const arrayGetWrap = <T>(array: T[], index: number) => array[(index % array.length + array.length) % array.length];
+
+// Navigate To
+export const deepDiver = (playlistID: string, view?: string) => ({
+  pathname: '/spotifleo/deepdiver',
+  search: `?playlist_id=${playlistID}${view ? `&view=${view}` : ''}`,
+});
+export const viewDeepDiver = (playlistID: string) => deepDiver(playlistID, 'view-deep-dive');
+export const driveDeepDiver = (playlistID: string) => deepDiver(playlistID, 'deep-dive');
+export const editDeepDiver = (playlistID: string) => deepDiver(playlistID, 'edit-deep-dive');

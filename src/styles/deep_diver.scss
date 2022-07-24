@@ -136,6 +136,8 @@
 
 .deep-dive-driver-actions {
   height: 100%;
+  width: 90%;
+  margin: 1rem;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -177,5 +179,38 @@
 .playlist-button.off {
   background-color: transparent;
   color: $primary-color;
+}
+
+.deep-dive-viewer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.deep-dive-album-view {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.deep-dive-album-view-img {
+  width: 30%;
+  aspect-ratio: 1 / 1;
+  margin-inline: 1rem;
+  align-self: center;
+}
+
+.deep-dive-album-info-view {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.deep-dive-track-view {
+  margin: 0.5rem;
+}
+
+.deep-dive-track-view-add-button {
+  font-size: 1.5rem;
 }
 

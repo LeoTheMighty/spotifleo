@@ -4,6 +4,7 @@ import LoadingIndicator from '../common/LoadingIndicator';
 import { CachedJustGoodPlaylist } from '../types';
 import { useNavigate } from 'react-router-dom';
 import Image from '../components/Image';
+import { deepDiver } from '../logic/common';
 
 type Props = {
   label?: string;
@@ -24,10 +25,7 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
             <button
               type="button"
               className="horizontal-menu-item d-block"
-              onClick={() => navigate({
-                pathname: '/spotifleo/deepdiver',
-                search: `?playlist_id=${playlist.id}&view=${view}`,
-              })}>
+              onClick={() => navigate(deepDiver(playlist.id, view))}>
               {playlist.artistImg && <Image className="just-good-scroller-image" src={playlist.artistImg} alt="test" large />}
               <p> {playlist.name} </p>
             </button>

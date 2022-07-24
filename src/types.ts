@@ -96,8 +96,8 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
 }
 
 export interface JustGoodPlaylist extends CachedJustGoodPlaylist {
-  trackIds: Set<string>;
-  deepDiveTracks: Track[];
+  trackIds?: Set<string>;
+  deepDiveTracks?: Track[];
 }
 
 // Auth

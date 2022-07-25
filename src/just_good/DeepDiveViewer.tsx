@@ -18,12 +18,15 @@ Views the deep dive, by album.
 type TrackViewerProps = {
   track: Track;
   index: number;
+  isPlaying: boolean;
+  isLiked: boolean;
   isGood: boolean;
   viewNotGood: boolean;
   onClick: () => void;
   onToggleAdd: () => void;
+  onToggleLike: () => void;
 };
-const TrackViewer = ({ track, index, isGood, viewNotGood, onClick, onToggleAdd }: TrackViewerProps) => {
+const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, onClick, onToggleAdd, onToggleLike }: TrackViewerProps) => {
   const [hoverName, setHoverName] = useState(false);
 
   if (!isGood && !viewNotGood) return null;
@@ -38,11 +41,11 @@ const TrackViewer = ({ track, index, isGood, viewNotGood, onClick, onToggleAdd }
           onClick={onClick}
         >
           <div className="d-flex flex-row align-items-start">
-            <div className="mx-2">
+            <div className="deep-dive-track-view-number mx-2">
               {(hoverName) ? (
                 <i className="bi bi-play-fill"/>
               ) : (
-                `${index + 1}.`
+                (isPlaying) ? <i className="bi bi-pause"/> : `${index + 1}.`
               )}
             </div>
             <div className="d-flex flex-column">
@@ -58,10 +61,12 @@ const TrackViewer = ({ track, index, isGood, viewNotGood, onClick, onToggleAdd }
           <div className="mx-2">
             {formatMs(track.duration)}
           </div>
-          <button className="deep-dive-track-view-add-button"
-                  onClick={onToggleAdd}>
-            {isGood ? <i className="bi bi-x-circle"/> : <i className="bi bi-plus"/>}
+          <button className="deep-dive-track-view-add-button m-0 p-0" onClick={onToggleAdd}>
+            {isGood ? <i className="bi bi-hand-thumbs-up-fill"/> : <i className="bi bi-hand-thumbs-up"/>}
           </button>
+          {/*<button className="deep-dive-track-view-add-button m-0 p-1 mt-1" onClick={onToggleLike}>*/}
+          {/*  {isLiked ? <i className="bi bi-heart-fill"/> : <i className="bi bi-heart"/>}*/}
+          {/*</button>*/}
         </div>
       </div>
     </div>
@@ -91,13 +96,16 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: { 
           <TrackViewer
             track={track}
             index={index}
+            isPlaying={store.currentTrackID === track.id}
             isGood={isGood}
+            isLiked={store.likedTrackSet?.has(track.id) || false}
             viewNotGood={viewNotGood}
             onClick={async () => {
               await store.playTrackInDeepDivePlaylist(track);
               navigateToDrive?.();
             }}
             onToggleAdd={() => store.toggleTrackInJustGood(track)}
+            onToggleLike={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist)}
           />
         );
       })}
@@ -120,14 +128,14 @@ const DeepDiveViewer = observer(() => {
       </div>
       <h1 className="text-center"> Just Good { store.currentJustGoodPlaylist?.artistName }</h1>
       <a
-        className="text-center secondary-btn"
+        className="text-center secondary-btn mb-2"
         href={(store.currentJustGoodPlaylist?.id) ?
           getPlaylistUrl(store.currentJustGoodPlaylist.id) :
           'https://open.spotify.com'
         }
       > <i className="text-center mb-1"> View playlist in Spotify </i> </a>
       <button
-        className={`m-2 primary-btn playlist-button ${viewDiscography ? 'on' : 'off'}`}
+        className={`m-4 primary-btn playlist-button ${viewDiscography ? 'on' : 'off'}`}
         onClick={() => setViewDiscography(v => !v) }
       >
         Show Whole Deep Dive

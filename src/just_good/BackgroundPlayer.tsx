@@ -44,7 +44,13 @@ const BackgroundPlayer = observer(() => {
       </div>
       <div className="background-player-action-panel">
         <div className="background-player-action-panel-left">
-          <img className="background-player-album" src={store.currentTrackSmallImageURL || defaultAvatar} alt="test" />
+          {(store.currentTrackSmallImageURL) ? (
+            <img className="background-player-album" src={store.currentTrackSmallImageURL} alt="test" />
+          ) : (
+            <button className="background-player-album-refresh" onClick={store.updatePlayer}>
+              <i className="bi bi-arrow-clockwise bi-small" />
+            </button>
+          )}
           <div className="background-player-description">
             <div className="h-100 m-1 d-flex align-items-start wrap overflow-hidden">
               <b>

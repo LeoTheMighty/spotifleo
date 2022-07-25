@@ -69,9 +69,9 @@ export const artistString = (artists?: ArtistResponse[]) => (
 );
 
 export const getImages = (images?: ImageResponse[]): Images => {
-  let minURL = defaultAvatar;
+  let minURL = undefined;
   let minHeight = Infinity;
-  let maxURL = defaultAvatar;
+  let maxURL = undefined;
   let maxHeight = -1;
 
   for (let i = 0; i < (images?.length || 0); i++) {

@@ -1,8 +1,8 @@
 export type SpotifyItemType = 'album' | 'artist' | 'playlist' | 'track' | 'show' | 'episode' | 'user';
 
 export type Images = {
-  small: string;
-  large: string;
+  small?: string;
+  large?: string;
 }
 
 export interface SpotifyItem {

@@ -75,7 +75,7 @@ const BackgroundPlayer = observer(() => {
         </div>
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
-          <button onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+          <button className="m-0 p-1" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
             { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
               <i className="bi bi-heart-fill" />
             ) : (
@@ -92,7 +92,7 @@ const BackgroundPlayer = observer(() => {
             </button>
           ) : (
             (store.currentPlayingJustGoodPlaylist === undefined) ? ( // jesus. nested ternaries ;/
-              <button onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>
+              <button className="m-0 p-2" onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>
                 <i className="bi bi-person-plus position-relative" >
                   <i className="bi bi-hand-thumbs-up floated-corner-icon"/>
                 </i>

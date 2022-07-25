@@ -11,6 +11,8 @@ const SpotifyAuthView = () => {
     generateAndStoreCodes().then(codes => {
       console.log(codes);
       setCode(codes.code)
+    }).catch((error) => {
+      alert(error);
     });
   }, []);
 

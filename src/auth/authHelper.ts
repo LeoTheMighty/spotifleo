@@ -54,8 +54,8 @@ export const generateAndStoreCodes = async (): Promise<PCKECodes> => {
     });
   } catch (e) {
     console.error('Generating codes for Oauth unsupported in insecure context...');
-    if (process.env.ENVIRONMENT === 'development') {
-      console.log('faking the values');
+    if (process.env.NODE_ENV === 'development') {
+      alert('Development in insecure context: faking the values');
       return storePKCECodes({
         codeVerifier: fakeCodeVerifier,
         code: fakeCode,

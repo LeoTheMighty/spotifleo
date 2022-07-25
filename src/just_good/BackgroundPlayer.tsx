@@ -75,7 +75,7 @@ const BackgroundPlayer = observer(() => {
         </div>
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
-          <button className="m-0 p-1" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+          <button className="p-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
             { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
               <i className="bi bi-heart-fill" />
             ) : (
@@ -83,7 +83,7 @@ const BackgroundPlayer = observer(() => {
             )}
           </button>
           {(store.currentPlayingJustGoodPlaylist && store.currentJustGoodPlaylist && store.currentJustGoodPlaylist.trackIds !== undefined && (store.currentPlayingJustGoodPlaylist?.id === store.currentJustGoodPlaylist?.id)) ? (
-            <button onClick={() => store.toggleCurrentTrackInJustGood()}>
+            <button className="px-1" onClick={() => store.toggleCurrentTrackInJustGood()}>
               {(store.currentTrackID && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrackID)) ? (
                 <i className="bi bi-hand-thumbs-up-fill" />
               ) : (
@@ -92,13 +92,13 @@ const BackgroundPlayer = observer(() => {
             </button>
           ) : (
             (store.currentPlayingJustGoodPlaylist === undefined) ? ( // jesus. nested ternaries ;/
-              <button className="m-0 p-2" onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>
+              <button className="px-1" onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>
                 <i className="bi bi-person-plus position-relative" >
                   <i className="bi bi-hand-thumbs-up floated-corner-icon"/>
                 </i>
               </button>
             ) : (
-              <button onClick={() => navigate(deepDiver(store.currentPlayingJustGoodPlaylist!.id))}>
+              <button className="px-1" onClick={() => navigate(deepDiver(store.currentPlayingJustGoodPlaylist!.id))}>
                 <i className="bi bi-eye position-relative">
                   <i className="bi bi-hand-thumbs-up floated-corner-icon"/>
                 </i>

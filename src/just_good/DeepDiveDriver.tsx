@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
-import { arrayGetWrap, getParams, viewDeepDiver } from '../logic/common';
+import { arrayGetWrap, editDeepDiver, getParams, viewDeepDiver } from '../logic/common';
 import Image from '../components/Image';
 import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
@@ -78,17 +78,27 @@ const DeepDiveDriver = observer(() => {
 
   return (
     <div className="deep-dive-driver">
-      <div className="d-flex justify-content-between w-100 m-1">
-        {/*<a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>*/}
+      <div className="d-flex flex-column w-100">
+        <div className="d-flex justify-content-between mx-2 mt-2">
+          {/*<a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>*/}
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}>
+            View Playlist
+          </button>
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>
+            Edit Dive
+          </button>
+        </div>
         {(store.currentJustGoodPlaylist.inProgress) ? (
-          <button className="primary-btn" onClick={async () => {
+          <button className="primary-btn mx-2 my-3" onClick={async () => {
             await store.markJustGoodPlaylistComplete();
             if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-          }}> Mark Playlist Complete </button>
+          }}> Mark Complete </button>
         ) : (
-          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}> View Playlist </button>
+          <button className="primary-btn mx-2 my-3" onClick={async () => {
+            await store.markJustGoodPlaylistComplete();
+            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+          }}> Mark in Progress </button>
         )}
-        <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}> View Playlist </button>
       </div>
       <h1 className="m-1"> Just Good <a>{ store.currentJustGoodPlaylist.artistName }</a> </h1>
       <div className="deep-dive-driver-track-scroller">

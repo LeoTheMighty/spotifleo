@@ -3,7 +3,7 @@ import ListViewer from './ListViewer';
 import { useStore } from '../state/SpotifyStoreProvider';
 import Image from '../components/Image';
 import { useNavigate } from 'react-router-dom';
-import { driveDeepDiver, editDeepDiver, formatMs, getPlaylistUrl } from '../logic/common';
+import { driveDeepDiver, editDeepDiver, formatMs, getPlaylistUrl, viewDeepDiver } from '../logic/common';
 import { observer } from 'mobx-react';
 import { Album, FetchedAlbum, Track } from '../types';
 import { SpotifyStore } from '../state/SpotifyStore';
@@ -41,11 +41,11 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
           onClick={onClick}
         >
           <div className="d-flex flex-row align-items-start">
-            <div className="deep-dive-track-view-number mx-2">
-              {(hoverName) ? (
-                <i className="bi bi-play-fill"/>
+            <div className="deep-dive-track-view-number text-center">
+              {(isPlaying) ? (
+                <i className="bi bi-pause bi-small" />
               ) : (
-                (isPlaying) ? <i className="bi bi-pause"/> : `${index + 1}.`
+                (hoverName) ? <i className="bi bi-play-fill bi-small"/> : `${index + 1}.`
               )}
             </div>
             <div className="d-flex flex-column">
@@ -96,13 +96,13 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: { 
           <TrackViewer
             track={track}
             index={index}
-            isPlaying={store.currentTrackID === track.id}
+            isPlaying={store.playing && (store.currentTrackID === track.id)}
             isGood={isGood}
             isLiked={store.likedTrackSet?.has(track.id) || false}
             viewNotGood={viewNotGood}
             onClick={async () => {
               await store.playTrackInDeepDivePlaylist(track);
-              navigateToDrive?.();
+              // navigateToDrive?.();
             }}
             onToggleAdd={() => store.toggleTrackInJustGood(track)}
             onToggleLike={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist)}
@@ -121,10 +121,26 @@ const DeepDiveViewer = observer(() => {
 
   return (
     <div className="deep-dive-viewer">
-      <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}> Mark Playlist Complete </button>
-      <div className="d-flex flex-row justify-content-between m-3">
-        <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in</button>
-        <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>Edit Discography</button>
+      <div className="d-flex flex-column w-100">
+        <div className="d-flex flex-row justify-content-between mx-2 mt-2">
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>
+            Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in
+          </button>
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>
+            Edit Dive
+          </button>
+        </div>
+        {(store.currentJustGoodPlaylist?.inProgress) ? (
+          <button className="primary-btn mx-2 my-3" onClick={async () => {
+            await store.markJustGoodPlaylistComplete();
+            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+          }}> Mark Complete </button>
+        ) : (
+          <button className="primary-btn mx-2 my-3" onClick={async () => {
+            await store.markJustGoodPlaylistComplete();
+            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+          }}> Mark in Progress </button>
+        )}
       </div>
       <h1 className="text-center"> Just Good { store.currentJustGoodPlaylist?.artistName }</h1>
       <a

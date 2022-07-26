@@ -5,7 +5,15 @@ import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
-import { arrayGetWrap, editDeepDiver, getParams, sleep, viewDeepDiver, wrapIndex } from '../logic/common';
+import {
+  arrayGetWrap,
+  editDeepDiver,
+  getParams,
+  getPlaylistUrl, newTab,
+  sleep,
+  viewDeepDiver,
+  wrapIndex
+} from '../logic/common';
 import Image from '../components/Image';
 import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
@@ -127,7 +135,12 @@ const DeepDiveDriver = observer(() => {
           }}> Mark in Progress </button>
         )}
       </div>
-      <h1 className="m-1"> Just Good <a>{ store.currentJustGoodPlaylist.artistName }</a> </h1>
+      <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
+        getPlaylistUrl(store.currentJustGoodPlaylist.id) :
+        'https://open.spotify.com'
+      } {...newTab}>
+        Just Good { store.currentJustGoodPlaylist?.artistName }
+      </a></h1>
       <div className="deep-dive-driver-track-scroller">
         <div className={`deep-dive-driver-image-container ${skipNext ? 'skip-next' : (skipPrev ? 'skip-prev' : '')}`}>
           <Image

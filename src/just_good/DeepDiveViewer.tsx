@@ -3,7 +3,7 @@ import ListViewer from './ListViewer';
 import { useStore } from '../state/SpotifyStoreProvider';
 import Image from '../components/Image';
 import { useNavigate } from 'react-router-dom';
-import { driveDeepDiver, editDeepDiver, formatMs, getPlaylistUrl, viewDeepDiver } from '../logic/common';
+import { driveDeepDiver, editDeepDiver, formatMs, getPlaylistUrl, newTab, viewDeepDiver } from '../logic/common';
 import { observer } from 'mobx-react';
 import { Album, FetchedAlbum, Track } from '../types';
 import { SpotifyStore } from '../state/SpotifyStore';
@@ -142,14 +142,12 @@ const DeepDiveViewer = observer(() => {
           }}> Mark in Progress </button>
         )}
       </div>
-      <h1 className="text-center"> Just Good { store.currentJustGoodPlaylist?.artistName }</h1>
-      <a
-        className="text-center secondary-btn mb-2"
-        href={(store.currentJustGoodPlaylist?.id) ?
+      <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
           getPlaylistUrl(store.currentJustGoodPlaylist.id) :
           'https://open.spotify.com'
-        }
-      > <i className="text-center mb-1"> View playlist in Spotify </i> </a>
+      } {...newTab}>
+        Just Good { store.currentJustGoodPlaylist?.artistName }
+      </a></h1>
       <button
         className={`m-4 primary-btn playlist-button ${viewDiscography ? 'on' : 'off'}`}
         onClick={() => setViewDiscography(v => !v) }

@@ -202,3 +202,5 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): JustGoodPl
   trackIds: undefined,
   deepDiveTracks: undefined,
 });
+
+export const newTab = { target: "_blank", rel: "noreferrer noopener" };

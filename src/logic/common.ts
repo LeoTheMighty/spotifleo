@@ -154,7 +154,9 @@ export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
   };
 }
 
-export const getID = (uri: string) => uri.split(':').at(-1);
+// export const getID = (uri: string) => uri.split(':').at(-1);
+export const getID = (uri: string) => arrayGetWrap(uri.split(':'), -1);
+// export const getID = (uri: string) => arrayGetWrap(uri.split(':'), -1);
 export const getUri = (type: string, id: string) => `spotify:${type}:${id}`;
 export const getUrl = (type: string, id: string) => `https://open.spotify.com/${type}/${id}`;
 export const getPlaylistUri = (id: string) => getUri('playlist', id);

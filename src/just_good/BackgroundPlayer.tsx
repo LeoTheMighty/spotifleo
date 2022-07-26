@@ -81,7 +81,7 @@ const BackgroundPlayer = observer(() => {
         </div>
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
-          <button className="p-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+          <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
             { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
               <i className="bi bi-heart-fill" />
             ) : (
@@ -111,18 +111,7 @@ const BackgroundPlayer = observer(() => {
               </button>
             )
           )}
-          {/*<div className="background-player-good-button-container">*/}
-          {/*  <button className="primary-btn"> Good </button>*/}
-            {/*<ToggleButton*/}
-            {/*  className="background-player-good-button"*/}
-            {/*  on="Good"*/}
-            {/*  off="Eh."*/}
-            {/*/>*/}
-          {/*</div>*/}
         </div>
-        {/*<button className="background-player-good-button">*/}
-        {/*  Good*/}
-        {/*</button>*/}
       </div>
       <Slider store={store} />
     </div>

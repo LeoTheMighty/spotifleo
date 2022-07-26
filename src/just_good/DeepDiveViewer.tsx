@@ -85,7 +85,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: { 
     <div className="deep-dive-album-view">
       <div className="d-flex flex-row my-1">
         <Image className="deep-dive-album-view-img" src={album.img} alt={album.name} large/>
-        <div className="d-flex flex-column">
+        <div className="d-flex flex-column overflow-hidden">
           <h1><b> {album.name} </b></h1>
           <i> {album.albumGroup} · {album.releaseDate.getFullYear()} · {album.tracks.length} song{album.tracks.length !== 1 ? 's' : ''}</i>
         </div>

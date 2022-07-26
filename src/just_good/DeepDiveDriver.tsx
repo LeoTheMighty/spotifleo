@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
 import BackgroundPlayer from './BackgroundPlayer';
-import { arrayGetWrap, editDeepDiver, getParams, viewDeepDiver } from '../logic/common';
+import { arrayGetWrap, editDeepDiver, getParams, sleep, viewDeepDiver, wrapIndex } from '../logic/common';
 import Image from '../components/Image';
 import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
@@ -38,42 +38,69 @@ Back button "<"                                 "View Playlist in Spotify"
 
 const DeepDiveDriver = observer(() => {
   const store = useStore();
-  const params = getParams();
   const navigate = useNavigate();
   const [configurePlaylistsOpen, setConfigurePlaylistsOpen] = useState(false);
 
-  useEffect(() => {
-    if (params.playlist_id) {
-      console.log('Lmao');
-      console.log(params.playlist_id);
-    } else {
-      console.error('No playlist provided');
-    }
-  }, [params.playlist_id]);
+  // const [tracks, setTracks] = useState<Track[] | undefined>(undefined);
+  // const [skip, setSkip] = useState(0);
+  const [skipNext, setSkipNext] = useState(false);
+  const [skipPrev, setSkipPrev] = useState(false);
+  const [trackIndex, setTrackIndex] = useState(0);
 
-  // get 5. 2 before, the current, 2 after
-  // const getSongs = (): Track[] | undefined => {
-  //   if (store.currentDeepDivePlaylistIndex) {
-  //     const index = store.currentDeepDivePlaylistIndex;
-  //     return store.currentJustGoodPlaylist?.deepDiveTracks.slice(index - 2, index + 3);
-  //   } else {
-  //     return undefined;
+  // const skipNext = () => {
+  //   setSkip(i => i + 1);
+  //   store.skipNext();
+  // }
+  //
+  // const skipPrev = () => {
+  //   setSkip(i => i - 1);
+  //   store.skipPrevious();
+  // }
+  //
+  // setInterval(() => {
+  //   console.log('Current skip = ')
+  //   if (skip !== 0) {
+  //     // Get it closer to 0 by 1
+  //     setSkip(s => (s === 0 ? 0 : (s - (s / Math.abs(s)))));
   //   }
-  // };
+  // }, 1000);
 
+  useEffect(() => {
+    if (store.currentJustGoodPlaylist) {
+      const { deepDiveTracks, progress } = store.currentJustGoodPlaylist;
+      if (progress !== undefined && deepDiveTracks) {
+        setTrackIndex(progress);
+        const prevWrapIndex = wrapIndex(trackIndex - 1, deepDiveTracks.length);
+        const nextWrapIndex = wrapIndex(trackIndex + 1, deepDiveTracks.length);
+        if (progress === prevWrapIndex) {
+          setSkipPrev(true);
+          setTimeout(() => {
+            setSkipPrev(false);
+          }, 1000);
+        } else if (progress === nextWrapIndex) {
+          setSkipNext(true);
+          setTimeout(() => {
+            setSkipNext(false);
+          }, 1000);
+        }
+      }
+    }
+  }, [store.currentJustGoodPlaylist?.progress]);
 
   if (store.currentJustGoodPlaylist === undefined || store.currentJustGoodPlaylist.progress === undefined || store.currentJustGoodPlaylist.deepDiveTracks === undefined || store.currentJustGoodPlaylist.trackIds === undefined) {
     return <LoadingIndicator />;
   }
-  const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress];
+  const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[trackIndex];
   if (!deepDiveTrack) {
     return <LoadingIndicator />;
   }
 
   console.log(toJS(store.currentJustGoodPlaylist.trackIds));
 
-  const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress - 1).img;
-  const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, store.currentJustGoodPlaylist.progress + 1).img;
+  const prevPrevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 2).img;
+  const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 1).img;
+  const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 1).img;
+  const nextNextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 2).img;
   const isGood = deepDiveTrack?.id && store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id)
 
   return (
@@ -102,27 +129,41 @@ const DeepDiveDriver = observer(() => {
       </div>
       <h1 className="m-1"> Just Good <a>{ store.currentJustGoodPlaylist.artistName }</a> </h1>
       <div className="deep-dive-driver-track-scroller">
-        <Image
-          className="deep-dive-driver-img"
-          src={prevTrackImg}
-          alt="alt"
-          large
-          onClick={() => store.skipPrevious()}
-        />
-        <Image
-          className="deep-dive-driver-img"
-          src={deepDiveTrack.img}
-          alt="alt"
-          large
-          onClick={() => store.playCurrentDeepDivePlaylistTrack()}
-        />
-        <Image
-          className="deep-dive-driver-img"
-          src={nextTrackImg}
-          alt="alt"
-          large
-          onClick={() => store.skipNext()}
-        />
+        <div className={`deep-dive-driver-image-container ${skipNext ? 'skip-next' : (skipPrev ? 'skip-prev' : '')}`}>
+          <Image
+            className="deep-dive-driver-img"
+            src={prevPrevTrackImg}
+            alt="alt"
+            large
+          />
+          <Image
+            className="deep-dive-driver-img"
+            src={prevTrackImg}
+            alt="alt"
+            large
+            onClick={() => store.skipPrevious()}
+          />
+          <Image
+            className="deep-dive-driver-img"
+            src={deepDiveTrack.img}
+            alt="alt"
+            large
+            onClick={() => store.playCurrentDeepDivePlaylistTrack()}
+          />
+          <Image
+            className="deep-dive-driver-img"
+            src={nextTrackImg}
+            alt="alt"
+            large
+            onClick={() => store.skipNext()}
+          />
+          <Image
+            className="deep-dive-driver-img"
+            src={nextNextTrackImg}
+            alt="alt"
+            large
+          />
+        </div>
         { (store.playing && store.currentTrackID === deepDiveTrack.id) ? (
           <i className="deep-dive-driver-track-play-icon bi-pause" />
         ) : (

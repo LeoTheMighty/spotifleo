@@ -94,13 +94,41 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
+  width: 100vw;
 }
 
 .deep-dive-driver-img {
-  width: 70%;
+  width: 70vw;
+  max-width: 640px; // Hard limit
   aspect-ratio: 1 / 1;
   margin-inline: 1rem;
   align-self: center;
+}
+
+@keyframes skip-next-driver {
+  from { transform: translate3d(20%, 0, 0) }
+  //to { transform: translate3d(calc(#{$deep-dive-driver-img-width} + #{$deep-dive-driver-margin-width}), 0, 0) }
+  to { transform: translate3d(0, 0, 0) }
+}
+
+@keyframes skip-prev-driver {
+  from { transform: translate3d(calc(-20%), 0, 0) }
+  //to { transform: translate3d(calc(-1 * (#{$deep-dive-driver-img-width} + #{$deep-dive-driver-margin-width})), 0, 0) }
+  to { transform: translate3d(0, 0, 0) }
+}
+
+.deep-dive-driver-image-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.deep-dive-driver-image-container.skip-next {
+  animation: skip-next-driver 0.4s ease-in-out;
+}
+
+.deep-dive-driver-image-container.skip-prev {
+  animation: skip-prev-driver 0.4s ease-in-out;
 }
 
 .deep-dive-driver-track-play-icon {

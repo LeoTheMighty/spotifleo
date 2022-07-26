@@ -50,7 +50,7 @@ import {
   CachedJustGoodPlaylist,
   Token,
   Track,
-  JustGoodPlaylist, DeepDiverViewType, Album, AlbumGroup, FetchedAlbum
+  JustGoodPlaylist, DeepDiverViewType, Album, AlbumGroup, FetchedAlbum, Progress
 } from '../types';
 import { deserializeArtists } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
@@ -119,6 +119,9 @@ export interface SpotifyStore {
   currentTrackLargeImageURL?: string,
   currentContextID?: string,
 
+  // Loading Logic
+  progress?: Progress; // Not loading if undefined
+
   // Up next/prev previewer
   // TODO: currentContextTracks: Images[]; ?
 
@@ -169,6 +172,10 @@ export interface SpotifyStore {
   pretendToProceedPosition: () => void;
   updatePlayer: () => Promise<void>;
   toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
+
+  // Loading Logic
+  startProgress: (current?: string) => void;
+  updateProgress: (progress?: Progress) => void;
 
   // ============ DEBUGGING ================
   logStore: () => void;
@@ -996,6 +1003,14 @@ const useSpotifyStore = () => {
 
       await store.saveUser();
     }),
+
+    /** starts the loading for a process */
+    startProgress: action((current?: string) => (store.progress = { progress: 0, current: current || 'Loading...', })),
+
+    /**
+     *
+     */
+    updateProgress: action((progress?: Progress) => (store.progress = progress)),
 
     // really slow
     logStore: () => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),

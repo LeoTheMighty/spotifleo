@@ -327,6 +327,7 @@ export interface Progress {
   progress: number; // <float> 0.0 - 1.0;
   current: string; // description of what is currently happening
 }
+
 export type progressCallback = () => Progress;
 
 // export interface IconViewable extends SpotifyItem {

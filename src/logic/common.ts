@@ -183,7 +183,8 @@ export const importMapOfSets = <T>(object: { [key: string]: T[] }): Map<string, 
 
 export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const arrayGetWrap = <T>(array: T[], index: number) => array[(index % array.length + array.length) % array.length];
+export const wrapIndex = (index: number, length: number) => (index % length + length) % length;
+export const arrayGetWrap = <T>(array: T[], index: number) => array[wrapIndex(index, array.length)];
 
 // Navigate To
 export const deepDiver = (playlistID: string, view?: string) => ({

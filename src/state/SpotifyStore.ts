@@ -550,7 +550,7 @@ const useSpotifyStore = () => {
 
         } else {
           // set:
-          store.currentPlayingJustGoodPlaylist = playlist;
+          store.currentJustGoodPlaylist = playlist;
 
           store.currentArtistDeepDiveAlbumIds = new Set(response.map(a => a.id));
         }

@@ -70,14 +70,16 @@ const DeepDiveCreator = observer(() => {
   return (
     <div className="d-flex flex-column align-items-center">
       <div className="d-flex flex-column w-100">
-        <div className="d-flex justify-content-between mx-2 mt-2">
-          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist?.id))}>
-            View Playlist
-          </button>
-          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist?.id))}>
-            Dive in
-          </button>
-        </div>
+        {(store.currentJustGoodPlaylist?.deepDivePlaylist) && (
+          <div className="d-flex justify-content-between mx-2 mt-2">
+            <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist?.id))}>
+              View Playlist
+            </button>
+            <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist?.id))}>
+              Dive in
+            </button>
+          </div>
+        )}
         <button className="primary-btn mx-2 my-3" onClick={() => setShowConfirm(true)}>
           {store.currentJustGoodPlaylist?.deepDivePlaylist ? (
             'Save Deep Dive Playlist'

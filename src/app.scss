@@ -56,6 +56,7 @@ img {
 
 .app-content {
   min-height: calc(100vh - 12.5rem);
+  //min-height: 100vh;
   //min-height: calc(100vh - 11.5rem);
   display: flex;
   color: $primary-text;

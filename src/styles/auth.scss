@@ -4,8 +4,48 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  flex-direction: column;
 }
 
 .spotify-auth-button {
+  //color: $primary-text;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-weight: 200;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  color: transparent;
+  background-color: transparent;
+  //background-color: $primary-color;
+  //border: 1px solid $primary-color;
+  padding: 0.375rem 0.75rem;
+  font-size: 1.4rem;
+  border-radius: 1.5rem;
+  transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.spotify-auth-button.show {
+  background: $primary-color;
   color: $primary-text;
+}
+
+.hardly-know-her {
+  color: transparent;
+  transition:  0.5s ease-in-out color;
+}
+
+.hardly-know-her.show {
+  color: $primary-text;
+}
+
+.emoji {
+  font-family: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Android Emoji, EmojiSymbols, EmojiOne Mozilla, Twemoji Mozilla, Segoe UI Symbol';
+  font-weight: 400;
 }

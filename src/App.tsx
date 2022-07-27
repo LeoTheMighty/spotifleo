@@ -14,6 +14,8 @@ import TopBar from './just_good/TopBar';
 import BottomBar from './just_good/BottomBar';
 import SpotifyAuthLogout from './auth/SpotifyAuthLogout';
 import LoadingIndicator from './common/LoadingIndicator';
+import LoadingScreen from './components/LoadingScreen';
+import { Modal } from 'react-bootstrap';
 
 const NavToRoot = () => {
   const navigate = useNavigate();
@@ -52,6 +54,9 @@ const App = observer(() => {
             )}
           </div>
           <BottomBar />
+          <Modal show={store.progress !== undefined}>
+            <LoadingScreen />
+          </Modal>
         </BrowserRouter>
       </StoreProvider>
     </div>

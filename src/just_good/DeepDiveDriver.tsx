@@ -206,7 +206,7 @@ const DeepDiveDriver = observer(() => {
             const trackSet: Set<string> | undefined = playlist && store.deepDiverPlaylistTrackSets?.get(playlist.id);
             return playlist && i !== 0 ? (
               <button
-                className={`primary-btn playlist-button ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}
+                className={`primary-btn playlist-button m-1 ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}
                 onClick={() => store.toggleCurrentTrackInPlaylist(playlist) }
               >
                 { playlist?.name }
@@ -215,11 +215,11 @@ const DeepDiveDriver = observer(() => {
           })}
         </div>
         <button className="secondary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
-          Configure Additional Playlists
+          Add/Remove Additional Playlists
         </button>
         <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>
-          <ModalHeader closeButton><ModalTitle><h1>Configure Playlists</h1></ModalTitle></ModalHeader>
-          <ModalBody><ConfigureDeepDivePlaylists /></ModalBody>
+          <ModalHeader closeButton><ModalTitle><h1>Add/Remove Playlist</h1></ModalTitle></ModalHeader>
+          <ModalBody><ConfigureDeepDivePlaylists hide={() => setConfigurePlaylistsOpen(false)}/></ModalBody>
         </Modal>
       </div>
       {/*<div className="song-scroller">*/}

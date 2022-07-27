@@ -6,7 +6,7 @@ const BottomBar = () => {
   const store = useStore();
 
   return (
-    <div className="bottom-bar">
+    <div className={`bottom-bar ${store.token ? 'show' : ''}`}>
       { store.token && <BackgroundPlayer /> }
     </div>
   );

@@ -121,6 +121,7 @@ const DeepDiveCreator = observer(() => {
         title="Ready to Start the Deep Dive?"
         message="This will create a new playlist in your spotify with all of this artists songs you chose."
         onConfirm={async () => {
+          setShowConfirm(false);
           await store.createOrUpdateDeepDivePlaylist();
           store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
         }}

@@ -26,6 +26,9 @@ const SpotifyAuthCallback = () => {
           removePKCECodes();
 
           console.log('done');
+
+          store.fetchToken();
+
           navigate('/spotifleo');
         }).catch((error) => {
           console.debug('Ignoring failure');

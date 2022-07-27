@@ -22,7 +22,13 @@ const SpotifyAuthView = () => {
   // do some marketting of your thing as well
   return (
     <div className="spotify-auth-view">
-      <h1> Deep Diver <span className="emoji" role="img" aria-label="interrobang">⁉️</span></h1>
+      <h1 className="d-flex flex-row align-items-center">
+        <i className="bi bi-person-hearts mx-2 position-relative">
+          <i className="bi bi-spotify floated-other-corner-icon" />
+        </i>
+        Deep Diver
+        <span className="mx-1 emoji" role="img" aria-label="interrobang">⁉️</span>
+      </h1>
       <i className={`mb-3 ${showHardlyKnowHer ? 'hardly-know-her show' : 'hardly-know-her'}`}> I hardly know her </i>
       <SpotifyAuthButton code={code} show={!!code}/>
     </div>

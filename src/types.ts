@@ -329,7 +329,7 @@ export interface Progress {
   current: string; // description of what is currently happening
 }
 
-export type progressCallback = () => Progress;
+export type ProgressCallback = (progress: number, current?: string) => void;
 
 // export interface IconViewable extends SpotifyItem {
 //   img: string; // src/url of img

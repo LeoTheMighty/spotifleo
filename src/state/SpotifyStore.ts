@@ -40,7 +40,7 @@ import {
   getInProgressJustGoodPlaylistDescription,
   importMapOfSets,
   exportMapOfSets,
-  getJustGoodPlaylistDescription, importMap, exportMap, getPlaylistUri, getID, justGoodToCached
+  getJustGoodPlaylistDescription, importMap, exportMap, getPlaylistUri, getID, justGoodToCached, nestProgress
 } from '../logic/common';
 import {
   Artist,
@@ -414,7 +414,9 @@ const useSpotifyStore = () => {
         id: LIKED_INDICATOR,
         name: 'Liked Songs',
       };
-      const trackSet = new Set((await getAllCurrentUserLikedSongs(token)).map((t) => t.id));
+
+      const cb = (progress: number) => store.updateProgress(nestProgress(progress, 0.6, 0.9));
+      const trackSet = new Set((await getAllCurrentUserLikedSongs(token, cb)).map((t) => t.id));
 
       store.deepDiverPlaylistIndexes = new Map();
       store.deepDiverPlaylistTrackSets = new Map();

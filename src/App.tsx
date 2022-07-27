@@ -34,7 +34,11 @@ const App = observer(() => {
         <BrowserRouter>
           <TopBar />
           <div className="app-content">
-            { store.setupLoading ? <></> : (
+            { store.setupLoading ? (
+              <div className="d-flex justify-content-center align-items-center text-center w-100">
+                <i className="text-center text-bigger m-3"> Loading all current user data... This may take a while </i>
+              </div>
+            ) : (
               <Routes>
                 { store.token ? [
                   <Route path="/spotifleo/welcome" element="hey :)"/>,

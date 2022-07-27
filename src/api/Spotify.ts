@@ -4,7 +4,7 @@ import {
   CachedPlaylist, FetchedAlbum,
   FetchResponse,
   PlaybackResponse,
-  PlaylistResponse, PlaylistTrack, PlaylistTrackResponse, SpotifyItemResponse, Track, TrackResponse,
+  PlaylistResponse, PlaylistTrack, PlaylistTrackResponse, ProgressCallback, SpotifyItemResponse, Track, TrackResponse,
   UserProfileResponse,
 } from '../types';
 import { chunkList, formatQueryList, formatResp } from '../logic/common';
@@ -270,8 +270,14 @@ export const getCurrentUserPlaylists = async (limit: number, offset: number, tok
   })
 );
 
-export const getAllCurrentUserLikedSongs = async (token: string): Promise<Track[]> => (
-  fetchAll((offset) => getCurrentUserLikedSongs(MAX_FETCH_ITEMS, offset, token), deserializePlaylistTrack)
+export const getAllCurrentUserLikedSongs = async (token: string, pcb?: ProgressCallback): Promise<Track[]> => (
+  fetchAll(
+    (offset) => getCurrentUserLikedSongs(MAX_FETCH_ITEMS, offset, token),
+    deserializePlaylistTrack,
+    undefined,
+    undefined,
+    pcb,
+  )
 )
 export const getCurrentUserLikedSongs = async (limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistTrackResponse>> => (
   callSpotifyAPI(token, '/me/tracks', GET, {
@@ -287,12 +293,14 @@ export const getCurrentUserLikedSongs = async (limit: number, offset: number, to
  * @param deserialize
  * @param filter
  * @param uniqueKey
+ * @param progressCallback
  */
 const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse), U>(
   fetch: (offset: number) => Promise<FetchResponse<T>>,
   deserialize: (response: T, index: number) => U,
   filter: (response: T) => boolean = () => true,
   uniqueKey?: (response: T) => string,
+  progressCallback?: ProgressCallback,
 ): Promise<U[]> => {
   const items: U[] = [];
   let total = 1;
@@ -313,6 +321,8 @@ const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse),
 
     offset += response.items.length;
     total = response.total
+
+    progressCallback?.(offset / total);
   }
   return items;
 };

@@ -204,3 +204,5 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): JustGoodPl
 });
 
 export const newTab = { target: "_blank", rel: "noreferrer noopener" };
+
+export const nestProgress = (value: number, min: number, max: number) => (min + (value * (max - min)));

@@ -105,3 +105,21 @@
 .bi-small {
   font-size: 1.5rem !important;
 }
+
+.loading-container {
+  height: 0.25rem;
+  width: 100%;
+}
+
+.loading-bar {
+  height: 100%;
+  background-color: transparent;
+  border: 1px solid rgba($primary-color, 0.1);
+  transition: opacity 0.3s ease-in-out;
+}
+
+.progress-bar {
+  background-color: $primary-color;
+}
+
+

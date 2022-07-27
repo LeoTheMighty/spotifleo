@@ -34,7 +34,7 @@ const App = observer(() => {
         <BrowserRouter>
           <TopBar />
           <div className="app-content">
-            { store.setupLoading ? <LoadingIndicator /> : (
+            { store.setupLoading ? <></> : (
               <Routes>
                 { store.token ? [
                   <Route path="/spotifleo/welcome" element="hey :)"/>,
@@ -54,9 +54,9 @@ const App = observer(() => {
             )}
           </div>
           <BottomBar />
-          <Modal show={store.progress !== undefined}>
-            <LoadingScreen />
-          </Modal>
+          {/*<Modal show={store.progress !== undefined}>*/}
+          {/*  <LoadingScreen />*/}
+          {/*</Modal>*/}
         </BrowserRouter>
       </StoreProvider>
     </div>

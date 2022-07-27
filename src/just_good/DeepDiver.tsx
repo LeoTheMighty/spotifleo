@@ -45,7 +45,7 @@ const DeepDiver = observer(() => {
     } else if (currentDeepDiveView === 'view-deep-dive') {
       return (<DeepDiveViewer />)
     } else {
-      return <LoadingIndicator />
+      return <></>
     }
   };
 

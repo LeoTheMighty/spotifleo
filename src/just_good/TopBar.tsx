@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal, ModalHeader } from 'react-bootstrap';
 import Settings from './Settings';
 import { useStore } from '../state/SpotifyStoreProvider';
+import LoadingBar from '../components/LoadingBar';
 
 const TopBar = () => {
   const store = useStore();
@@ -13,7 +14,7 @@ const TopBar = () => {
   return (
     <div className="top-bar">
       {store.token && (
-        <>
+        <div className="d-flex justify-content-between align-items-center h-100">
           <button onClick={() => navigate('/spotifleo')}>
             <i className="bi bi-caret-left top-bar-icon" />
           </button>
@@ -24,8 +25,11 @@ const TopBar = () => {
           <Modal show={showSettings} onHide={() => setShowSettings(false)}>
             <Settings />
           </Modal>
-        </>
+        </div>
       )}
+      <div className="loading-container">
+        <LoadingBar />
+      </div>
     </div>
   );
 };

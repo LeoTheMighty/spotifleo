@@ -21,6 +21,7 @@ import SpotifySlider from './SpotifySlider';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
 import { toJS } from 'mobx';
+import useSwipe from '../components/SwipeHook';
 
 /*
 
@@ -54,6 +55,11 @@ const DeepDiveDriver = observer(() => {
   const [skipNext, setSkipNext] = useState(false);
   const [skipPrev, setSkipPrev] = useState(false);
   const [trackIndex, setTrackIndex] = useState(0);
+
+  useSwipe({
+    onLeft: () => store.skipPrevious(),
+    onRight: () => store.skipNext(),
+  })
 
   // const skipNext = () => {
   //   setSkip(i => i + 1);

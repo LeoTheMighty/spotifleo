@@ -24,17 +24,18 @@ export const formatResp = async (r: Response): Promise<any> => new Promise((reso
   });
 });
 
+const myTag = 'Created using Leo Belyi\'s Deep Diver :)';
 export const getDeepDivePlaylistName = (artistName: string) => `${DEEP_DIVE_INDICATOR} ${artistName}`;
 export const getDeepDivePlaylistDescription = (artistName: string) => (
-  `The chosen parts of the artist's discography to go through and evaluate for the "${getJustGoodPlaylistName(artistName)}" playlist! Created using Leo Belyi's Deep Diver :)`
+  `The playlist of the artist's discography to make the "${getJustGoodPlaylistName(artistName)}" playlist! ${myTag}`
 );
 export const getJustGoodPlaylistName = (artistName: string) => `${JUST_GOOD_INDICATOR} ${artistName}`;
 export const getJustGoodPlaylistDescription = (artistName: string) => (
-  `Only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist. Created using Leo Belyi's Deep Diver :)`
+  `Only the good songs from the "${getDeepDivePlaylistName(artistName)}" playlist. ${myTag}`
 );
 export const getInProgressJustGoodPlaylistName = (artistName: string) => `${IN_PROGRESS_INDICATOR} ${artistName}`;
 export const getInProgressJustGoodPlaylistDescription = (artistName: string) => (
-  `WORK IN PROGRESS!!! But will be only the good songs in ${artistName}'s discography (in my opinion). Driven from my "${getDeepDivePlaylistName(artistName)}" playlist. Created using Leo Belyi's Deep Diver :)`
+  `!!! NOT FINISHED !!! Will be just the good songs from the "${getDeepDivePlaylistName(artistName)}" playlist. ${myTag}`
 );
 
 export const formatQueryList = (list: string[]) => list.join(',');

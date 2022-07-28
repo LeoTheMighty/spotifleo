@@ -33,27 +33,27 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
   return (
     <div
       className={`deep-dive-track-view ${isGood ? '' : 'disabled'}`}>
-      <div className="d-flex flex-row justify-content-between">
+      <div className="d-flex flex-row justify-content-between overflow-hidden">
         <div
-          className="deep-dive-track-view-play-button d-flex flex-row pointer-event"
+          className="deep-dive-track-view-play-button d-flex flex-row pointer-event align-items-start overflow-hidden"
           onMouseEnter={() => setHoverName(true)}
           onMouseLeave={() => setHoverName(false)}
           onClick={onClick}
         >
-          <div className="d-flex flex-row align-items-start">
-            <div className="deep-dive-track-view-number text-center">
-              {(isPlaying) ? (
-                <i className="bi bi-pause bi-small" />
-              ) : (
-                (hoverName) ? <i className="bi bi-play-fill bi-small"/> : `${index + 1}.`
-              )}
-            </div>
-            <div className="d-flex flex-column">
+          <div className="deep-dive-track-view-number text-center">
+            {(isPlaying) ? (
+              <i className="bi bi-pause bi-small" />
+            ) : (
+              (hoverName) ? <i className="bi bi-play-fill bi-small"/> : `${index + 1}.`
+            )}
+          </div>
+          <div className="d-flex flex-column overflow-hidden no-wrap">
+            <div className="ellipses">
               {track.name}
-              <div className="d-flex flex-row align-items-start">
-                {track.explicit ? <i className="bi bi-explicit-fill m-1"/> : ''}
-                <i> {track.artistName} </i>
-              </div>
+            </div>
+            <div className="d-flex flex-row align-items-start">
+              {track.explicit ? <i className="explicit-icon bi bi-explicit-fill my-1"/> : ''}
+              <i className={`ellipses ${isGood ? '' : 'disabled'}`}> {track.artistName} </i>
             </div>
           </div>
         </div>

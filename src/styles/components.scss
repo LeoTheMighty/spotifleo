@@ -98,6 +98,14 @@
   aspect-ratio: 1 / 1;
 }
 
+.text-1 {
+  color: $primary-text;
+}
+
+.text-2 {
+  color: $secondary-text;
+}
+
 .disabled {
   color: $disabled-text;
 }
@@ -124,6 +132,11 @@
 
 .progress-bar {
   background-color: $primary-color;
+}
+
+.ellipses {
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 

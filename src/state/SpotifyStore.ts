@@ -50,9 +50,9 @@ import {
   CachedJustGoodPlaylist,
   Token,
   Track,
-  JustGoodPlaylist, DeepDiverViewType, Album, AlbumGroup, FetchedAlbum, Progress
+  JustGoodPlaylist, DeepDiverViewType, Album, AlbumGroup, FetchedAlbum, Progress, FetchedCachedPlaylist, PlayingTrack
 } from '../types';
-import { deserializeArtists } from '../logic/serializers';
+import { deserializeArtists, deserializePlayingTrack, deserializeTrack } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
@@ -107,6 +107,8 @@ export interface SpotifyStore {
 
   // High Level Spotify Player
   // TODO: CHANGE TO A PLAYINGTRACK OBJECT?
+  currentPlayingTrack?: PlayingTrack;
+
   playing: boolean;
   currentTrackID?: string;
   currentTrackURI?: string;
@@ -171,7 +173,11 @@ export interface SpotifyStore {
   seekToPosition: (value: number) => Promise<void>;
   pretendToProceedPosition: () => void;
   updatePlayer: () => Promise<void>;
+  toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
   toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
+
+  // Low Level Helpers
+  toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
 
   // Loading Logic
   startProgress: (task?: string) => void;
@@ -793,13 +799,15 @@ const useSpotifyStore = () => {
       const playlistId = store.currentJustGoodPlaylist?.id;
       if (playlistId === undefined || !track) return fail('Tracks not initialized');
 
-      if (store.currentJustGoodPlaylist?.trackIds.has(track.id)) {
-        await removeTrackFromPlaylist(track.uri, playlistId, token);
-        store.currentJustGoodPlaylist?.trackIds.delete(track.id);
-      } else {
-        await addTrackToPlaylist(playlistId, track.uri, token);
-        store.currentJustGoodPlaylist?.trackIds.add(track.id);
-      }
+      return store.toggleTrackInFetchedPlaylist(track, store.currentJustGoodPlaylist);
+      //
+      // if (store.currentJustGoodPlaylist?.trackIds.has(track.id)) {
+      //   await removeTrackFromPlaylist(track.uri, playlistId, token);
+      //   store.currentJustGoodPlaylist?.trackIds.delete(track.id);
+      // } else {
+      //   await addTrackToPlaylist(playlistId, track.uri, token);
+      //   store.currentJustGoodPlaylist?.trackIds.add(track.id);
+      // }
     }),
 
     /**
@@ -908,7 +916,6 @@ const useSpotifyStore = () => {
 
       await nextPlayback(token);
 
-      // await sleep(3000);
       setTimeout(() => store.updatePlayer(), 500);
 
       return await store.updatePlayer();
@@ -952,6 +959,10 @@ const useSpotifyStore = () => {
       const playback = await getPlayback(token);
 
       runInAction(() => {
+        store.currentPlayingTrack = playback.item && deserializePlayingTrack(playback);
+
+        console.log(toJS(store.currentPlayingTrack));
+
         store.playing = playback.is_playing;
         store.currentTrackID = playback.item?.id;
         store.currentTrackURI = playback.item?.uri;
@@ -1001,6 +1012,44 @@ const useSpotifyStore = () => {
 
         store.logStore();
       });
+    }),
+
+    toggleTrackInDeepDiverPlaylist: action(async (track: Track, playlist: CachedPlaylist) => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!track || !playlist || !playlist.id) return notInitialized();
+
+      return store.toggleTrackInFetchedPlaylist(track, {
+        ...playlist,
+        trackIds: store.deepDiverPlaylistTrackSets?.get(playlist.id),
+      });
+    }),
+
+    toggleTrackInFetchedPlaylist: action(async (track?: Track, playlist?: FetchedCachedPlaylist) => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!track || !playlist || !playlist.trackIds || !track.id || !track.uri || !playlist.id) return notInitialized();
+
+      const { id, uri } = track;
+      const { id: playlistID, trackIds } = playlist;
+
+      if (trackIds.has(id)) {
+        if (playlistID === LIKED_INDICATOR) {
+          await removeTrackFromLiked(id, token);
+        } else {
+          await removeTrackFromPlaylist(uri, playlistID, token);
+        }
+        trackIds.delete(id);
+      } else {
+        if (playlistID === LIKED_INDICATOR) {
+          await addTrackToLiked(id, token);
+        } else {
+          await addTrackToPlaylist(playlist.id, uri, token);
+        }
+        trackIds.add(id);
+      }
+
+      await store.saveUser();
     }),
 
     /**

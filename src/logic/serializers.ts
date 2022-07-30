@@ -2,13 +2,13 @@ import {
   Album,
   AlbumResponse,
   Artist,
-  ArtistResponse, CachedPlaylist, FetchedAlbum,
+  ArtistResponse, CachedPlaylist, FetchedAlbum, PlaybackResponse, PlayingTrack,
   Playlist,
   PlaylistResponse, PlaylistTrack, PlaylistTrackResponse,
   Track,
   TrackResponse
 } from '../types';
-import { artistString, getArtistIds, getGenre, getImages } from './common';
+import { artistString, getArtistIds, getGenre, getID, getImages } from './common';
 
 export const deserializeArtists = (artists: ArtistResponse[]): Artist[] => artists.map(deserializeArtist);
 export const deserializeArtist = ({ id, external_urls: { spotify }, images, uri, name, popularity, genres, }: ArtistResponse): Artist => ({
@@ -73,6 +73,17 @@ export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => (
 
 export const deserializeCachedPlaylists = (playlists: PlaylistResponse[]): CachedPlaylist[] => playlists.map(deserializeCachedPlaylist);
 export const deserializeCachedPlaylist = ({ id, name }: PlaylistResponse): CachedPlaylist => ({ id, name });
+
+export const deserializePlayingTrack = (playbackResponse: PlaybackResponse): PlayingTrack => ({
+  ...deserializeTrack(playbackResponse.item),
+  playing: playbackResponse.is_playing,
+  context: playbackResponse.context && {
+    type: playbackResponse.context.type,
+    id: getID(playbackResponse.context.uri),
+    uri: playbackResponse.context.uri,
+  },
+  progress: playbackResponse.progress_ms || 0,
+});
 
 // export const deserializePlaylists = (playlists: PlaylistResponse[]): Playlist[] => playlists.map(deserializePlaylist);
 // export const deserializePlaylist = ({ id }: PlaylistResponse): Playlist => ({

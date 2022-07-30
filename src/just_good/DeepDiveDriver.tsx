@@ -49,9 +49,8 @@ const DeepDiveDriver = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
   const [configurePlaylistsOpen, setConfigurePlaylistsOpen] = useState(false);
+  const [moreInfoOpen, setMoreInfoOpen] = useState(false);
 
-  // const [tracks, setTracks] = useState<Track[] | undefined>(undefined);
-  // const [skip, setSkip] = useState(0);
   const [skipNext, setSkipNext] = useState(false);
   const [skipPrev, setSkipPrev] = useState(false);
   const [trackIndex, setTrackIndex] = useState(0);
@@ -60,24 +59,6 @@ const DeepDiveDriver = observer(() => {
     onLeft: () => store.skipPrevious(),
     onRight: () => store.skipNext(),
   })
-
-  // const skipNext = () => {
-  //   setSkip(i => i + 1);
-  //   store.skipNext();
-  // }
-  //
-  // const skipPrev = () => {
-  //   setSkip(i => i - 1);
-  //   store.skipPrevious();
-  // }
-  //
-  // setInterval(() => {
-  //   console.log('Current skip = ')
-  //   if (skip !== 0) {
-  //     // Get it closer to 0 by 1
-  //     setSkip(s => (s === 0 ? 0 : (s - (s / Math.abs(s)))));
-  //   }
-  // }, 1000);
 
   useEffect(() => {
     if (store.currentJustGoodPlaylist) {
@@ -88,14 +69,10 @@ const DeepDiveDriver = observer(() => {
         const nextWrapIndex = wrapIndex(trackIndex + 1, deepDiveTracks.length);
         if (progress === prevWrapIndex) {
           setSkipPrev(true);
-          setTimeout(() => {
-            setSkipPrev(false);
-          }, 1000);
+          setTimeout(() => setSkipPrev(false), 1000);
         } else if (progress === nextWrapIndex) {
           setSkipNext(true);
-          setTimeout(() => {
-            setSkipNext(false);
-          }, 1000);
+          setTimeout(() => setSkipNext(false), 1000);
         }
       }
     }
@@ -145,7 +122,7 @@ const DeepDiveDriver = observer(() => {
         getPlaylistUrl(store.currentJustGoodPlaylist.id) :
         'https://open.spotify.com'
       } {...newTab}>
-        Just Good { store.currentJustGoodPlaylist?.artistName }
+        { store.currentJustGoodPlaylist?.artistName } Deep Dive
       </a></h1>
       <div className="deep-dive-driver-track-scroller">
         <div className={`deep-dive-driver-image-container ${skipNext ? 'skip-next' : (skipPrev ? 'skip-prev' : '')}`}>
@@ -192,19 +169,37 @@ const DeepDiveDriver = observer(() => {
         <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
       </div>
       <div className="deep-dive-driver-track-info">
-        <div className="d-flex justify-content-between flex-column text-center">
-          <h1> { deepDiveTrack.name } </h1>
-          <h4> { deepDiveTrack.albumName } </h4>
-        </div>
-        {/*<SpotifySlider store={store} />*/}
-      </div>
-      <div className="deep-dive-driver-actions">
-        <button
-          className={`w-100 primary-btn playlist-button ${store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id) ? 'on' : 'off'}`}
-          onClick={() => store.toggleCurrentTrackInJustGood()}
-        >
-          <h1 className="m-2 p-0 d-flex flex-row justify-content-center w-100">Good {isGood ? <i className="m-1 bi bi-hand-thumbs-up" /> : <i className="m-1 bi bi-hand-thumbs-down" />}</h1>
+        <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+          { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
+            <i className="bi bi-heart-fill" />
+          ) : (
+            <i className="bi bi-heart" />
+          )}
         </button>
+        <div className="d-flex justify-content-between flex-column text-start mx-3">
+          <h4> { deepDiveTrack.name } </h4>
+          <i className="bi-small"> { deepDiveTrack.albumName } </i>
+        </div>
+        <button className="p-0 m-0" onClick={() => store.toggleCurrentTrackInJustGood()}>
+          {(store.currentTrackID && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrackID)) ? (
+            <i className="bi bi-hand-thumbs-up-fill" />
+          ) : (
+            <i className="bi bi-hand-thumbs-up position-relative">
+              <i className="bi bi-plus floated-corner-icon" />
+            </i>
+          )}
+        </button>
+      </div>
+      <button className="secondary-btn m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>
+        {moreInfoOpen ? 'Less info' : 'More info'}
+      </button>
+      <div className="deep-dive-driver-actions">
+        {/*<button*/}
+        {/*  className={`w-100 primary-btn playlist-button ${store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id) ? 'on' : 'off'}`}*/}
+        {/*  onClick={() => store.toggleCurrentTrackInJustGood()}*/}
+        {/*>*/}
+        {/*  <h1 className="m-2 p-0 d-flex flex-row justify-content-center w-100">Good {isGood ? <i className="m-1 bi bi-hand-thumbs-up" /> : <i className="m-1 bi bi-hand-thumbs-down" />}</h1>*/}
+        {/*</button>*/}
         <div className="deep-dive-driver-playlists">
           {store.deepDiverPlaylistIndexes && Array.from(store.deepDiverPlaylistIndexes).map(([id, i]) => {
 

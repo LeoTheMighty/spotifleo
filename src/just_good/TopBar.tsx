@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ArtistSearch from './ArtistSearch';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Modal, ModalHeader } from 'react-bootstrap';
 import Settings from './Settings';
 import { useStore } from '../state/SpotifyStoreProvider';

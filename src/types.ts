@@ -54,8 +54,13 @@ export interface PlaylistTrack extends Track {
 }
 
 export interface PlayingTrack extends Track {
-  context?: Album | Playlist; // ?
+  playing?: boolean;
   progress: number; // milliseconds
+  context?: { // where it's playing from
+    type: 'album' | 'show' | 'artist' | 'playlist';
+    id: string;
+    uri: string;
+  }
 }
 
 export interface PlayingPlaylistTrack extends PlaylistTrack, PlayingTrack {}
@@ -85,6 +90,10 @@ export interface Playback {
 export interface CachedPlaylist {
   name: string;
   id: string;
+}
+
+export interface FetchedCachedPlaylist extends CachedPlaylist {
+  trackIds?: Set<string>;
 }
 
 export interface CachedJustGoodPlaylist extends CachedPlaylist {
@@ -281,6 +290,15 @@ export interface PlaylistResponse extends SpotifyItemResponse {
   tracks: FetchResponse<PlaylistTrackResponse>;
 }
 
+export interface ContextResponse { // Where it's playing from
+  type: 'artist' | 'playlist' | 'album' | 'show';
+  href: string;
+  external_uris: {
+    spotify: string;
+  };
+  uri: string;
+}
+
 export interface PlaybackResponse {
   device: {
     id: string;
@@ -293,14 +311,7 @@ export interface PlaybackResponse {
   };
   repeat_state: 'off' | 'track' | 'context';
   shuffle_state: string; // not boolean?? "if shuffle is on or off"
-  context?: {
-    type: 'artist' | 'playlist' | 'album' | 'show';
-    href: string;
-    external_uris: {
-      spotify: string;
-    };
-    uri: string;
-  };
+  context?: ContextResponse;
   timestamp: number; // Unix milliseocnd timestamp when data was fetched
   progress_ms?: number; // progress into the currently playing track or episode
   is_playing: boolean;

@@ -157,10 +157,12 @@
 
 .deep-dive-driver-track-info {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: auto;
-  margin: 1rem;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 2rem;
+  padding: 1rem;
 }
 
 .deep-dive-driver-actions {

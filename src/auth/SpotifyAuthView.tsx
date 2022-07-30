@@ -3,6 +3,7 @@ import { SpotifyAuth } from 'react-spotify-auth';
 import SpotifyAuthButton from './SpotifyAuthButton';
 import { generateAndStoreCodes } from './authHelper';
 import { Fade } from 'react-bootstrap';
+import JustGoodLogo from '../just_good/JustGoodLogo';
 
 
 const SpotifyAuthView = () => {
@@ -23,9 +24,7 @@ const SpotifyAuthView = () => {
   return (
     <div className="spotify-auth-view">
       <h1 className="d-flex flex-row align-items-center">
-        <i className="bi bi-person-hearts mx-2 position-relative">
-          <i className="bi bi-spotify floated-other-corner-icon" />
-        </i>
+        <JustGoodLogo className="mx-2" />
         Deep Diver
         <span className="mx-1 emoji" role="img" aria-label="interrobang">⁉️</span>
       </h1>

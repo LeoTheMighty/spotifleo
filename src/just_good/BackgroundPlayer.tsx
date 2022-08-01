@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import Slider from './SpotifySlider';
 import { observer } from 'mobx-react';
-import ToggleButton from '../components/ToggleButton';
-import defaultAvatar from '../images/default_avatar.jpeg';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { useNavigate } from 'react-router-dom';
 import { deepDiver, driveDeepDiver } from '../logic/common';
+import Image from '../components/Image';
 
 const SHOULD_PRETEND = true;
 
@@ -16,25 +15,22 @@ const BackgroundPlayer = observer(() => {
   useEffect(() => {
     console.log('update player');
     store.updatePlayer();
-    if (store.playing && SHOULD_PRETEND) {
+    if (store.currentTrack?.playing && SHOULD_PRETEND) {
       setTimeout(pretendSeekCallback, 1000);
     }
-  }, [store, store.playing]);
+  }, [store, store.currentTrack?.playing]);
 
   const pretendSeekCallback = async () => { // TODO a lot of times we get into a double loop of this. fix
-    if (store?.playing && SHOULD_PRETEND) {
+    if (store.currentTrack?.playing && SHOULD_PRETEND) {
       await store.pretendToProceedPosition();
 
-      if (store.currentTrackProgress && store.currentTrackDuration && (store.currentTrackProgress >= store.currentTrackDuration)) {
+      if (store.currentTrack?.progress && store.currentTrack.duration && (store.currentTrack.progress >= store.currentTrack.duration)) {
         await store.updatePlayer();
       }
 
       setTimeout(pretendSeekCallback, 1000);
     }
   }
-
-  useEffect(() => {
-  }, [store, store.playing])
 
   return ( // if you drag, then it goes back?
     <div className="background-player">
@@ -44,8 +40,9 @@ const BackgroundPlayer = observer(() => {
       </div>
       <div className="background-player-action-panel">
         <div className="background-player-action-panel-left">
-          {(store.currentTrackSmallImageURL) ? (
-            <img className="background-player-album" src={store.currentTrackSmallImageURL} alt="test" />
+          {(store.currentTrack?.img) ? (
+            <Image className="background-player-album" src={store.currentTrack.img} alt={store.currentTrack.name} />
+            // <img className="background-player-album" src={store.currentTrackSmallImageURL} alt="test" />
           ) : (
             <button className="background-player-album-refresh" onClick={store.updatePlayer}>
               <i className="bi bi-arrow-clockwise bi-small" />
@@ -54,12 +51,12 @@ const BackgroundPlayer = observer(() => {
           <div className="background-player-description">
             <div className="h-100 m-1 d-flex align-items-start wrap overflow-hidden">
               <b>
-                { store.currentTrackName }
+                { store.currentTrack?.name }
               </b>
             </div>
             <div className="h-100 m-1 d-flex align-items-start wrap overflow-hidden">
               <p>
-                { store.currentTrackArtist }
+                { store.currentTrack?.artistName }
               </p>
             </div>
           </div>
@@ -69,7 +66,7 @@ const BackgroundPlayer = observer(() => {
             <i className="bi bi-skip-start-fill" />
           </button>
           <button className="play-button p-1" onClick={store.togglePlaying}>
-            { store.playing ? (
+            { store.currentTrack?.playing ? (
               <i className="bi bi-pause-circle-fill" />
             ) : (
               <i className="bi bi-play-circle-fill" />
@@ -82,7 +79,7 @@ const BackgroundPlayer = observer(() => {
         {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
           <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
-            { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
+            { store.currentTrack?.id && store.likedTrackSet?.has(store.currentTrack?.id) ? (
               <i className="bi bi-heart-fill" />
             ) : (
               <i className="bi bi-heart" />
@@ -90,7 +87,7 @@ const BackgroundPlayer = observer(() => {
           </button>
           {(store.currentPlayingJustGoodPlaylist && store.currentJustGoodPlaylist && store.currentJustGoodPlaylist.trackIds !== undefined && (store.currentPlayingJustGoodPlaylist?.id === store.currentJustGoodPlaylist?.id)) ? (
             <button className="px-1" onClick={() => store.toggleCurrentTrackInJustGood()}>
-              {(store.currentTrackID && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrackID)) ? (
+              {(store.currentTrack?.id && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrack.id)) ? (
                 <i className="bi bi-hand-thumbs-up-fill" />
               ) : (
                 <i className="bi bi-hand-thumbs-up" />

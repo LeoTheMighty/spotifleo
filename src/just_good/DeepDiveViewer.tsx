@@ -96,7 +96,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: { 
           <TrackViewer
             track={track}
             index={index}
-            isPlaying={store.playing && (store.currentTrackID === track.id)}
+            isPlaying={store.playing && (store.currentTrack?.id === track.id)}
             isGood={isGood}
             isLiked={store.likedTrackSet?.has(track.id) || false}
             viewNotGood={viewNotGood}

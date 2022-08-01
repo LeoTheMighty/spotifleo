@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import IconView from './IconView';
 import { Track } from '../types';
 import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
-import BackgroundPlayer from './BackgroundPlayer';
 import {
   arrayGetWrap,
   editDeepDiver,
-  getParams,
   getPlaylistUrl, newTab,
-  sleep,
   viewDeepDiver,
   wrapIndex
 } from '../logic/common';
 import Image from '../components/Image';
-import DefaultAvatar from '../images/default_avatar.jpeg';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
-import SpotifySlider from './SpotifySlider';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
 import { toJS } from 'mobx';
@@ -160,7 +154,7 @@ const DeepDiveDriver = observer(() => {
             large
           />
         </div>
-        { (store.playing && store.currentTrackID === deepDiveTrack.id) ? (
+        { (store.currentTrack?.playing && store.currentTrack.id === deepDiveTrack.id) ? (
           <i className="deep-dive-driver-track-play-icon bi-pause" />
         ) : (
           <i className="deep-dive-driver-track-play-icon bi-play" />
@@ -170,7 +164,7 @@ const DeepDiveDriver = observer(() => {
       </div>
       <div className="deep-dive-driver-track-info">
         <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
-          { store.currentTrackID && store.likedTrackSet?.has(store.currentTrackID) ? (
+          { store.currentTrack?.id && store.likedTrackSet?.has(store.currentTrack.id) ? (
             <i className="bi bi-heart-fill" />
           ) : (
             <i className="bi bi-heart" />
@@ -181,7 +175,7 @@ const DeepDiveDriver = observer(() => {
           <i className="bi-small"> { deepDiveTrack.albumName } </i>
         </div>
         <button className="p-0 m-0" onClick={() => store.toggleCurrentTrackInJustGood()}>
-          {(store.currentTrackID && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrackID)) ? (
+          {(store.currentTrack?.id && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrack.id)) ? (
             <i className="bi bi-hand-thumbs-up-fill" />
           ) : (
             <i className="bi bi-hand-thumbs-up position-relative">
@@ -202,12 +196,11 @@ const DeepDiveDriver = observer(() => {
         {/*</button>*/}
         <div className="deep-dive-driver-playlists">
           {store.deepDiverPlaylistIndexes && Array.from(store.deepDiverPlaylistIndexes).map(([id, i]) => {
-
             const playlist = store.userPlaylists?.[store.deepDiverPlaylistIndexes?.get(id) || 0];
             const trackSet: Set<string> | undefined = playlist && store.deepDiverPlaylistTrackSets?.get(playlist.id);
             return playlist && i !== 0 ? (
               <button
-                className={`primary-btn playlist-button m-1 ${store.currentTrackID && trackSet?.has(store.currentTrackID) ? 'on' : 'off'}`}
+                className={`primary-btn playlist-button m-1 ${store.currentTrack?.id && trackSet?.has(store.currentTrack.id) ? 'on' : 'off'}`}
                 onClick={() => store.toggleCurrentTrackInPlaylist(playlist) }
               >
                 { playlist?.name }

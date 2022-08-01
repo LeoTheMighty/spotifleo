@@ -12,14 +12,14 @@ const SpotifySlider = observer(({ store }: Props) => {
 
   return (
     <div className="spotify-slider">
-      { formatMs(store.currentTrackProgress) }
+      { formatMs(store.currentTrack?.progress) }
       <Slider
         onAfterChange={store.seekToPosition}
         min={0}
-        max={store.currentTrackDuration}
-        value={store.currentTrackProgress}
+        max={store.currentTrack?.duration}
+        value={store.currentTrack?.progress}
       />
-      { formatMs(store.currentTrackDuration) }
+      { formatMs(store.currentTrack?.duration) }
     </div>
   );
 });

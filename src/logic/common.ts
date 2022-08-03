@@ -198,10 +198,15 @@ export const viewDeepDiver = (playlistID: string) => deepDiver(playlistID, 'view
 export const driveDeepDiver = (playlistID: string) => deepDiver(playlistID, 'deep-dive');
 export const editDeepDiver = (playlistID: string) => deepDiver(playlistID, 'edit-deep-dive');
 
-export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): JustGoodPlaylist => ({
-  ...justGoodPlaylist,
-  trackIds: undefined,
-  deepDiveTracks: undefined,
+export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): CachedJustGoodPlaylist => ({
+  id: justGoodPlaylist.id,
+  name: justGoodPlaylist.name,
+  artistName: justGoodPlaylist.artistName,
+  artistImg: justGoodPlaylist.artistImg,
+  deepDivePlaylist: justGoodPlaylist.deepDivePlaylist,
+  inProgress: justGoodPlaylist.inProgress,
+  progress: justGoodPlaylist.progress,
+  artistId: justGoodPlaylist.artistId,
 });
 
 export const newTab = { target: "_blank", rel: "noreferrer noopener" };

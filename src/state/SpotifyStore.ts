@@ -159,6 +159,8 @@ export interface SpotifyStore {
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
   toggleCurrentTrackInJustGood: () => Promise<void>;
   toggleTrackInJustGood: (track: Track) => Promise<void>;
+  toggleTrackInPlayingJustGood: (track: Track) => Promise<void>;
+  toggleCurrentTrackInPlayingJustGood: () => Promise<void>;
   markJustGoodPlaylistComplete: () => Promise<void>;
   togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Promise<void>;
   updateJustGoodPlaylistFromCurrent: () => void;
@@ -301,7 +303,8 @@ const useSpotifyStore = () => {
       store.deepDiverPlaylistTrackSets = importMapOfSets(user.deepDiverPlaylistTrackSets);
 
       // Remove any extraneous info that might have been loaded in
-      user.justGoodPlaylists = user.justGoodPlaylists.map(justGoodToCached);
+      // TODO We should not save it in the first place...
+      // user.justGoodPlaylists = user.justGoodPlaylists.map(justGoodToCached);
 
       store.justGoodPlaylistMap = {};
       store.justGoodPlaylistArtistMap = {};
@@ -575,7 +578,10 @@ const useSpotifyStore = () => {
 
         } else {
           // set:
-          store.currentJustGoodPlaylist = playlist;
+          store.currentJustGoodPlaylist = {
+            ...playlist,
+            trackIds: new Set<string>(),
+          };
 
           store.currentArtistDeepDiveAlbumIds = new Set(response.map(a => a.id));
         }
@@ -814,6 +820,17 @@ const useSpotifyStore = () => {
       // }
     }),
 
+    toggleTrackInPlayingJustGood: action(async (track: Track) => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!store.currentPlayingJustGoodPlaylist?.trackIds) return notInitialized();
+
+      const playlistId = store.currentPlayingJustGoodPlaylist?.id;
+      if (playlistId === undefined || !track) return fail('Tracks not initialized');
+
+      return store.toggleTrackInFetchedPlaylist(track, store.currentPlayingJustGoodPlaylist);
+    }),
+
     /**
      * TODO
      */
@@ -821,6 +838,12 @@ const useSpotifyStore = () => {
       if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
 
       return store.toggleTrackInJustGood(store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress])
+    }),
+
+    toggleCurrentTrackInPlayingJustGood: action(async () => {
+      if (store.currentTrack === undefined) return notInitialized();
+
+      return store.toggleTrackInPlayingJustGood(store.currentTrack);
     }),
 
     /**
@@ -976,9 +999,15 @@ const useSpotifyStore = () => {
             console.log(allJustGoodPlaylists.length);
             for (let i = 0; i < allJustGoodPlaylists.length; i++) {
               const justGoodPlaylist = allJustGoodPlaylists[i];
-              if (justGoodPlaylist.id === store.currentTrack.context.id || justGoodPlaylist.deepDivePlaylist?.id === store.currentTrack.context.id) {
+              if (justGoodPlaylist.deepDivePlaylist?.id === store.currentTrack.context.id) {
                 // TODO: Does this mess up anything else? without fetching the details?
-                store.currentPlayingJustGoodPlaylist = justGoodPlaylist;
+                console.log('Fetching playing just good details');
+                runInAction(async () => {
+                  store.currentPlayingJustGoodPlaylist = {
+                    ...justGoodPlaylist,
+                    trackIds: justGoodPlaylist.trackIds || (new Set((await getAllPlaylistTracks(justGoodPlaylist.id, token)).map(t => t.id))),
+                  };
+                });
                 break;
               }
               if (i === (allJustGoodPlaylists.length - 1)) {
@@ -1076,6 +1105,7 @@ const useSpotifyStore = () => {
 
       await store.saveUser();
     }),
+
 
     startProgress: action((task?: string) => {
       store.progress = { task: (task || ''), current: '', progress: 0 };

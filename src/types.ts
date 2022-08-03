@@ -103,10 +103,11 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
   inProgress: boolean;
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedPlaylist;
+  trackIds?: Set<string>;
 }
 
 export interface JustGoodPlaylist extends CachedJustGoodPlaylist {
-  trackIds?: Set<string>;
+  trackIds: Set<string>;
   deepDiveTracks?: Track[];
 }
 

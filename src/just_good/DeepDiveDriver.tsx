@@ -80,7 +80,7 @@ const DeepDiveDriver = observer(() => {
     return <LoadingIndicator />;
   }
 
-  console.log(toJS(store.currentJustGoodPlaylist.trackIds));
+  // console.log(toJS(store.currentJustGoodPlaylist.trackIds));
 
   const prevPrevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 2).img;
   const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 1).img;
@@ -163,8 +163,8 @@ const DeepDiveDriver = observer(() => {
         <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
       </div>
       <div className="deep-dive-driver-track-info">
-        <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
-          { store.currentTrack?.id && store.likedTrackSet?.has(store.currentTrack.id) ? (
+        <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, store.likedPlaylist) }>
+          { deepDiveTrack.id && store.likedTrackSet?.has(deepDiveTrack.id) ? (
             <i className="bi bi-heart-fill" />
           ) : (
             <i className="bi bi-heart" />
@@ -175,7 +175,7 @@ const DeepDiveDriver = observer(() => {
           <i className="bi-small"> { deepDiveTrack.albumName } </i>
         </div>
         <button className="p-0 m-0" onClick={() => store.toggleCurrentTrackInJustGood()}>
-          {(store.currentTrack?.id && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrack.id)) ? (
+          {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (
             <i className="bi bi-hand-thumbs-up-fill" />
           ) : (
             <i className="bi bi-hand-thumbs-up position-relative">

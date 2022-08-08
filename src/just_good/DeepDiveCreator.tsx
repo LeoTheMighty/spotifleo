@@ -19,9 +19,21 @@ Give sort options for chronological, split singles/eps and albums, and filter op
 TODO: IF YOU'RE CURRENTLY LISTENING TO THE PLAYLIST THIS COULD GET WEIRD
 */
 
+const compareAlbumsAlpha = (a: Album, b: Album) => a.name.localeCompare(b.name);
+
+const compareAlbumsAlphaReverse = (a: Album, b: Album) => b.name.localeCompare(a.name);
+
+const compareAlbumsChrono = (a: Album, b: Album) => b.releaseDate.getTime() - a.releaseDate.getTime();
+
+const compareAlbumsChronoReverse = (a: Album, b: Album) => a.releaseDate.getTime() - b.releaseDate.getTime();
+
 const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
+  const [grouped, setGrouped] = useState(false);
+  const [sortAlpha, setSortAlpha] = useState(false);
+  const [sortAlphaForward, setSortAlphaForward] = useState(true);
+  const [sortChronoForward, setSortChronoForward] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const toggleAlbum = (album: Album) => {
@@ -43,9 +55,34 @@ const DeepDiveCreator = observer(() => {
   // album will always be first
   const s = store.currentDeepDiveArtistDiscography?.findIndex((a) => a.albumGroup === 'single');
   const a = store.currentDeepDiveArtistDiscography?.findIndex((a) => a.albumGroup === 'appears_on');
+  const all = store.currentDeepDiveArtistDiscography?.slice(0);
   const albums = store.currentDeepDiveArtistDiscography?.slice(0, s);
   const singles = store.currentDeepDiveArtistDiscography?.slice(s, a);
   const appears = store.currentDeepDiveArtistDiscography?.slice(a);
+
+  if (sortAlpha) {
+    if (sortAlphaForward) {
+      all?.sort(compareAlbumsAlpha);
+      albums?.sort(compareAlbumsAlpha)
+      singles?.sort(compareAlbumsAlpha)
+      appears?.sort(compareAlbumsAlpha)
+    } else {
+      all?.sort(compareAlbumsAlphaReverse);
+      albums?.sort(compareAlbumsAlphaReverse)
+      singles?.sort(compareAlbumsAlphaReverse)
+      appears?.sort(compareAlbumsAlphaReverse)
+    }
+  } else {
+    // Split already sorted chronologically
+    if (sortChronoForward) {
+      all?.sort(compareAlbumsChrono);
+    } else {
+      all?.sort(compareAlbumsChronoReverse);
+      albums?.sort(compareAlbumsChronoReverse)
+      singles?.sort(compareAlbumsChronoReverse)
+      appears?.sort(compareAlbumsChronoReverse)
+    }
+  }
 
   const hasAlbumGroup = (albumGroup: AlbumGroup) => {
     let group: Album[] | undefined = undefined;
@@ -88,25 +125,74 @@ const DeepDiveCreator = observer(() => {
           )}
         </button>
       </div>
-      <h1 className="text-center m-1"> Select which albums you want to include in the deep dive: </h1>
-      <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
-        <h1 style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through'}}>
-          Albums
-        </h1>
-      </button>
-      { getGroupOfToggleAlbums(albums)}
-      <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
-        <h1 style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through'}}>
-          EPs/Singles
-        </h1>
-      </button>
-      { getGroupOfToggleAlbums(singles)}
-      <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
-        <h1 style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through'}}>
-          Appears On
-        </h1>
-      </button>
-      { getGroupOfToggleAlbums(appears)}
+      <h1 className="text-center m-1"> Select which albums you want to exclude from the deep dive: </h1>
+      <div className="d-flex justify-content-between w-100">
+        <div className="d-flex justify-content-start my-2">
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
+              Albums
+            </p>
+          </button>
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through' }}>
+              Singles
+            </p>
+          </button>
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through' }}>
+              Features
+            </p>
+          </button>
+        </div>
+        <div className="d-flex justify-content-end my-2">
+          <button className="p-0 m-0 mx-1" onClick={() => setGrouped(g => !g)}>
+            <i className={`bi bi-collection bi-small mx-1 p-0 ${grouped ? '' : 'disabled'}`} />
+          </button>
+          <button className="p-0 m-0 mx-1" onClick={() => sortAlpha ? setSortAlphaForward(a => !a) : setSortAlpha(true)}>
+            <i className={`bi bi-sort-alpha-${sortAlphaForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortAlpha ? '' : 'disabled'}`} />
+          </button>
+          <button className="p-0 m-0 mx-1" onClick={() => sortAlpha ? setSortAlpha(false) : setSortChronoForward(a => !a)}>
+            <i className={`bi bi-sort-numeric-${sortChronoForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortAlpha ? 'disabled' : ''}`} />
+          </button>
+        </div>
+      </div>
+      { grouped ? (
+        <>
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Albums: </h2> </div>
+          {getGroupOfToggleAlbums(albums)}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Singles/EPs: </h2> </div>
+          {getGroupOfToggleAlbums(singles)}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Appears On: </h2> </div>
+          {getGroupOfToggleAlbums(appears)}
+        </>
+      ) : (
+        getGroupOfToggleAlbums(all)
+      )}
+      {/*{ getAlbums() }*/}
+      {/*{ grouped ? (*/}
+      {/*  <>*/}
+      {/*    <button className="primary-btn m-2 px-3 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>*/}
+      {/*      <h1 style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through'}}>*/}
+      {/*        Albums*/}
+      {/*      </h1>*/}
+      {/*    </button>*/}
+      {/*    { getGroupOfToggleAlbums(albums)}*/}
+      {/*    <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>*/}
+      {/*      <h1 style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through'}}>*/}
+      {/*        EPs/Singles*/}
+      {/*      </h1>*/}
+      {/*    </button>*/}
+      {/*    { getGroupOfToggleAlbums(singles)}*/}
+      {/*    <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>*/}
+      {/*      <h1 style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through'}}>*/}
+      {/*        Appears On*/}
+      {/*      </h1>*/}
+      {/*    </button>*/}
+      {/*    { getGroupOfToggleAlbums(appears)}*/}
+      {/*  </>*/}
+      {/*) : (*/}
+      {/*  getGroupOfToggleAlbums(store.currentDeepDiveArtistDiscography)*/}
+      {/*)}*/}
       {/*<div className="d-flex justify-content-center flex-wrap w-100">*/}
       {/*  {store.currentDeepDiveArtistDiscography?.filter(a => a.albumGroup === 'album').map((album) => (*/}
       {/*    <ToggleAlbum*/}
@@ -122,8 +208,12 @@ const DeepDiveCreator = observer(() => {
         message="This will create a new playlist in your spotify with all of this artists songs you chose."
         onConfirm={async () => {
           setShowConfirm(false);
-          await store.createOrUpdateDeepDivePlaylist();
-          store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
+          if ((grouped && albums && singles && appears) || all) {
+            await store.createOrUpdateDeepDivePlaylist(grouped ? [...albums!, ...singles!, ...appears!] : all!);
+            store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
+          } else {
+            console.error('oops');
+          }
         }}
         onDecline={() => setShowConfirm(false)}
       />

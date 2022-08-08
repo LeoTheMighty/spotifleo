@@ -30,13 +30,12 @@
 
   &:hover, &:active {
     background-color: unset;
-    color: unset;
   }
 }
 
 .secondary-btn {
-  color: $primary-color;
-  text-decoration: underline;
+  color: $primary-color !important;
+  //text-decoration: underline;
   //border-color: $primary-text;
 
   &:hover, &:active { // good way to do hover and touch start
@@ -107,7 +106,7 @@
 }
 
 .disabled {
-  color: $disabled-text;
+  color: $disabled-text !important;
 }
 
 .bi-small {

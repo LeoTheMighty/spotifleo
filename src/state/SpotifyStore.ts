@@ -156,7 +156,7 @@ export interface SpotifyStore {
   fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
   toggleAlbumForDeepDive: (albumId: string) => void;
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-  createOrUpdateDeepDivePlaylist: () => Promise<void>;
+  createOrUpdateDeepDivePlaylist: (albums: FetchedAlbum[]) => Promise<void>;
   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
   toggleCurrentTrackInJustGood: () => Promise<void>;
@@ -648,7 +648,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    createOrUpdateDeepDivePlaylist: action(async () => {
+    createOrUpdateDeepDivePlaylist: action(async (albums: FetchedAlbum[]) => {
       console.log('STARTING DEEP DIVE');
       store.startProgress(`${store.currentJustGoodPlaylist?.deepDivePlaylist ? 'Updating' : 'Creating'} Deep Dive Playlist`);
       store.logStore();
@@ -679,10 +679,10 @@ const useSpotifyStore = () => {
       // 2. Get all album tracks (in order) (let's go through the disco playlist)
       // 3. Get all appears on tracks (filter for only those that have the artist in them).
       // TODO: Use already fetched list
-      const albums = (await getAllArtistAlbumsWithTracks(artistId, token)).filter((a) => store.currentArtistDeepDiveAlbumIds?.has(a.id));
+      const filteredAlbums = albums.filter((a) => store.currentArtistDeepDiveAlbumIds?.has(a.id));
       const trackURIs: string[] = [];
       const tracks: Track[] = [];
-      albums.forEach((a) => a.tracks.forEach((t) => {
+      filteredAlbums.forEach((a) => a.tracks.forEach((t) => {
         tracks.push(t);
         trackURIs.push(t.uri)
       }));

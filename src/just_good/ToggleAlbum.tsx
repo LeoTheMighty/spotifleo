@@ -1,6 +1,7 @@
 import React from 'react';
 import { Album } from '../types';
 import Image from '../components/Image';
+import { albumGroupString } from '../logic/common';
 
 type Props = {
   album: Album;
@@ -18,7 +19,7 @@ const ToggleAlbum = ({ value, album: { img, name, albumGroup, trackCount, releas
         <Image className="toggle-album-img" src={img} alt={name} large />
       </div>
       <b style={{ textDecoration: value ? '' : 'line-through' }} className="no-wrap overflow-hidden">{ name }</b>
-      <i>({releaseDate.getFullYear()}) {isAppearsOn ? '' : '(' + trackCount + ' track' + (trackCount === 1 ? '' : 's') + ')'}</i>
+      <i>({albumGroupString(albumGroup)}) ({releaseDate.getFullYear()}) {isAppearsOn ? '' : '(' + trackCount + ' track' + (trackCount === 1 ? '' : 's') + ')'}</i>
     </div>
   );
 };

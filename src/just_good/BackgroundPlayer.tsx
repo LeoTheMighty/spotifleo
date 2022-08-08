@@ -20,7 +20,7 @@ const BackgroundPlayer = observer(() => {
   const store = useStore();
 
   useEffect(() => {
-    console.log('update player');
+    // console.log('update player');
     store.updatePlayer();
     if (store.currentTrack?.playing && SHOULD_PRETEND) {
       setTimeout(pretendSeekCallback, 1000);
@@ -31,7 +31,7 @@ const BackgroundPlayer = observer(() => {
     if (store.currentTrack?.playing && SHOULD_PRETEND) {
       await store.pretendToProceedPosition();
 
-      if (store.currentTrack?.progress && store.currentTrack.duration && (store.currentTrack.progress >= store.currentTrack.duration)) {
+      if (store.currentTrack?.progress !== undefined && store.currentTrack.duration !== undefined && (store.currentTrack.progress >= store.currentTrack.duration)) {
         await store.updatePlayer();
       }
 
@@ -59,14 +59,20 @@ const BackgroundPlayer = observer(() => {
         <div className="background-player-action-panel-left">
           <button className="background-player-album-button" onClick={clickAlbum}>
             {(store.currentTrack?.img) ? (
-              <Image className="background-player-album" src={store.currentTrack.img} alt={store.currentTrack.name} />
+              <>
+                <Image className="background-player-album" src={store.currentTrack.img} alt={store.currentTrack.name} />
+                {(store.currentPlayingJustGoodPlaylist && (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id)) ? (
+                  <i className="bi bi-box-arrow-up-right background-player-album-just-good-link">
+                    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />
+                  </i>
+                ) : (
+                  <i className="bi bi-plus-circle background-player-album-just-good-link">
+                    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />
+                  </i>
+                )}
+              </>
             ) : (
               <i className="bi bi-arrow-clockwise bi-small" />
-            )}
-            { store.currentPlayingJustGoodPlaylist && (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id) && (
-              <i className="bi bi-box-arrow-up-right background-player-album-just-good-link">
-                <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />
-              </i>
             )}
           </button>
           <div className="background-player-description">

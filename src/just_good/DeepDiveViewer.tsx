@@ -3,7 +3,15 @@ import ListViewer from './ListViewer';
 import { useStore } from '../state/SpotifyStoreProvider';
 import Image from '../components/Image';
 import { useNavigate } from 'react-router-dom';
-import { driveDeepDiver, editDeepDiver, formatMs, getPlaylistUrl, newTab, viewDeepDiver } from '../logic/common';
+import {
+  albumGroupString,
+  driveDeepDiver,
+  editDeepDiver,
+  formatMs,
+  getPlaylistUrl,
+  newTab,
+  viewDeepDiver
+} from '../logic/common';
 import { observer } from 'mobx-react';
 import { Album, FetchedAlbum, Track } from '../types';
 import { SpotifyStore } from '../state/SpotifyStore';
@@ -87,7 +95,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: { 
         <Image className="deep-dive-album-view-img" src={album.img} alt={album.name} large/>
         <div className="d-flex flex-column overflow-hidden">
           <h1><b> {album.name} </b></h1>
-          <i> {album.albumGroup} · {album.releaseDate.getFullYear()} · {album.tracks.length} song{album.tracks.length !== 1 ? 's' : ''}</i>
+          <i> {albumGroupString(album.albumGroup)} · {album.releaseDate.getFullYear()} · {album.tracks.length} song{album.tracks.length !== 1 ? 's' : ''}</i>
         </div>
       </div>
       {album.tracks.map((track, index) => {
@@ -123,24 +131,28 @@ const DeepDiveViewer = observer(() => {
     <div className="deep-dive-viewer">
       <div className="d-flex flex-column w-100">
         <div className="d-flex flex-row justify-content-between mx-2 mt-2">
-          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>
-            Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in
-          </button>
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>
             Edit Dive
           </button>
+          <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>
+            Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in
+          </button>
         </div>
-        {(store.currentJustGoodPlaylist?.inProgress) ? (
-          <button className="primary-btn mx-2 my-3" onClick={async () => {
-            await store.markJustGoodPlaylistComplete();
-            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-          }}> Mark Complete </button>
-        ) : (
-          <button className="primary-btn mx-2 my-3" onClick={async () => {
-            await store.markJustGoodPlaylistComplete();
-            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-          }}> Mark in Progress </button>
-        )}
+        <button className="primary-btn mx-2 my-3" onClick={async () => {
+          await store.toggleJustGoodPlaylistComplete();
+          if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+        }}> Mark { store.currentJustGoodPlaylist?.inProgress ? 'Complete' : 'in Progress'} </button>
+        {/*{(store.currentJustGoodPlaylist?.inProgress) ? (*/}
+        {/*  <button className="primary-btn mx-2 my-3" onClick={async () => {*/}
+        {/*    await store.markJustGoodPlaylistComplete();*/}
+        {/*    if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));*/}
+        {/*  }}> Mark Complete </button>*/}
+        {/*) : (*/}
+        {/*  <button className="primary-btn mx-2 my-3" onClick={async () => {*/}
+        {/*    await store.markJustGoodPlaylistComplete();*/}
+        {/*    if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));*/}
+        {/*  }}> Mark in Progress </button>*/}
+        {/*)}*/}
       </div>
       <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
           getPlaylistUrl(store.currentJustGoodPlaylist.id) :
@@ -152,7 +164,7 @@ const DeepDiveViewer = observer(() => {
         className={`m-4 primary-btn playlist-button ${viewDiscography ? 'on' : 'off'}`}
         onClick={() => setViewDiscography(v => !v) }
       >
-        Show Whole Deep Dive
+        Show{viewDiscography ? 'ing' : ''} Whole Deep Dive
       </button>
       {store.currentDeepDiveArtistDiscography?.map((album) => {
         return (

@@ -8,7 +8,7 @@ const LoadingBar = observer(() => {
   const [lastValue, setLastValue] = useState(0);
 
   useEffect(() => {
-    if (store.progress?.progress) {
+    if (store.progress?.progress !== undefined) {
       setLastValue(store.progress.progress);
     } else {
       setTimeout(() => setLastValue(0), 1000);

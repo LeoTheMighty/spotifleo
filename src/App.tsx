@@ -13,9 +13,10 @@ import DeepDiver from './just_good/DeepDiver';
 import TopBar from './just_good/TopBar';
 import BottomBar from './just_good/BottomBar';
 import SpotifyAuthLogout from './auth/SpotifyAuthLogout';
-import LoadingIndicator from './common/LoadingIndicator';
-import LoadingScreen from './components/LoadingScreen';
-import { Modal } from 'react-bootstrap';
+// import LoadingIndicator from './common/LoadingIndicator';
+// import LoadingScreen from './components/LoadingScreen';
+import { Modal, ModalHeader } from 'react-bootstrap';
+import HelpView from './just_good/HelpView';
 
 const NavToRoot = () => {
   const navigate = useNavigate();
@@ -41,23 +42,27 @@ const App = observer(() => {
             ) : (
               <Routes>
                 { store.token ? [
-                  <Route path="/spotifleo/welcome" element="hey :)"/>,
-                  <Route path="/spotifleo/deepdiver" element={<DeepDiver />} />,
-                  <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} />,
-                  <Route path="/spotifleo" element={<Dashboard />} />,
+                  <Route path="/spotifleo/welcome" element="hey :)" key={1} />,
+                  <Route path="/spotifleo/deepdiver" element={<DeepDiver />} key={2} />,
+                  <Route path="/spotifleo/logout" element={<SpotifyAuthLogout />} key={3} />,
+                  <Route path="/spotifleo" element={<Dashboard />} key={4} />,
                   // <Route path="/*" element={<NavToRoot />} />,
-                  <Route path="/" element={<NavToRoot />} />
+                  <Route path="/" element={<NavToRoot />} key={5} />
                 ] : [
-                  <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} />,
-                  <Route path="/spotifleo" element={<SpotifyAuthView />} />,
-                  <Route path="/*" element={<NavToRoot />} />,
+                  <Route path="/spotifleo/callback" element={<SpotifyAuthCallback />} key={1} />,
+                  <Route path="/spotifleo" element={<SpotifyAuthView />} key={2} />,
+                  <Route path="/*" element={<NavToRoot />} key={3} />,
                   // <Route path="/" element={<NavToRoot />} />
                 ]}
-                <Route path="/" element={<NavToRoot />} />
+                <Route path="/" element={<NavToRoot />} key={0} />
               </Routes>
             )}
           </div>
           <BottomBar />
+          <Modal show={store.showHelpScreen} onHide={() => store.setShowHelpScreen(false)}>
+            <ModalHeader closeButton> <h1> How to Use </h1> </ModalHeader>
+            <HelpView />
+          </Modal>
           {/*<Modal show={store.progress !== undefined}>*/}
           {/*  <LoadingScreen />*/}
           {/*</Modal>*/}

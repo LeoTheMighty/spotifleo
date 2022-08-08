@@ -18,11 +18,12 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
 
   return (
     <div className="just-good-scroller">
-      <p> <h2> { label || 'Just Good Playlists' } </h2> </p>
+      <h2> { label || 'Just Good Playlists' } </h2>
       {playlists?.length ? (
         <HorizontalScrollView>
           {playlists?.map((playlist) => (
             <button
+              key={playlist.id}
               type="button"
               className="horizontal-menu-item d-block"
               onClick={() => navigate(deepDiver(playlist.id, view))}>

@@ -4,9 +4,10 @@ import {
   ImageResponse,
   Images,
   CachedJustGoodPlaylist,
-  JustGoodPlaylist
+  JustGoodPlaylist, AlbumType, AlbumGroup
 } from '../types';
 import defaultAvatar from '../images/default_avatar.jpeg';
+import { capitalize } from 'lodash';
 
 export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
 export const IN_PROGRESS_INDICATOR = '(TESTING) [WIP] Just Good';
@@ -212,3 +213,5 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): CachedJust
 export const newTab = { target: "_blank", rel: "noreferrer noopener" };
 
 export const nestProgress = (value: number, min: number, max: number) => (min + (value * (max - min)));
+
+export const albumGroupString = (type: AlbumGroup): string => type.split('_').map(capitalize).join(' '); // overkill but sick

@@ -29,7 +29,7 @@ const POST = 'POST'
 const PUT = 'PUT';
 const DELETE = 'DELETE';
 
-type Query = { [param: string]: string | number | string[] };
+type Query = { [param: string]: string | number | string[] | boolean };
 
 // What API calls do we need?
 
@@ -353,6 +353,12 @@ export const playPlaylistPlayback = async (playlistUri: string, index: number, t
     position: index, // the index of the context to play
     // uri: '',     // the uri of the track to play
   }
+});
+export const toggleShuffle = async (shuffle: boolean, token: string) => callSpotifyAPI(token, '/me/player/shuffle', PUT, {
+  state: shuffle,
+});
+export const setRepeatMode = async (state: 'track' | 'context' | 'off', token: string) => callSpotifyAPI(token, '/me/player/repeat', PUT, {
+  state,
 });
 export const pausePlayback = async (token: string) => callSpotifyAPI(token, '/me/player/pause', PUT);
 export const nextPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/next', POST);

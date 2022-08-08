@@ -17,10 +17,13 @@ $background-color: black;
 $gradient-to: #00491a;
 $primary-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh),
 repeating-linear-gradient(245deg, rgba($gradient-to, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($background-color, 0.5), rgba($gradient-to, 0.5) 200vh);
+$primary-solid-gradient: repeating-linear-gradient(338deg, rgba($gradient-to, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($background-color, 1), rgba($gradient-to, 1), rgba($gradient-to, 1), rgba($gradient-to, 1), rgba($gradient-to, 1), rgba($gradient-to, 1) 300vh);
 
 // Measurements
 
 $top-bar-height: 5.5rem;
 $search-bar-height: 4rem;
+
+$btn-close-color: #ffffff;
 
 $white: #002b0e;

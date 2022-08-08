@@ -118,6 +118,14 @@
   font-size: 1.25rem !important;
 }
 
+.text-regular {
+  font-size: 1rem !important;
+}
+
+.text-smaller {
+  font-size: 0.75rem !important;
+}
+
 .loading-container {
   height: 0.25rem;
   width: 100%;
@@ -137,6 +145,10 @@
 .ellipses {
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.rest-space {
+  flex: 1;
 }
 
 

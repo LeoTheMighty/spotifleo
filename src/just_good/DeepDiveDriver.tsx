@@ -100,17 +100,10 @@ const DeepDiveDriver = observer(() => {
             Edit Dive
           </button>
         </div>
-        {(store.currentJustGoodPlaylist.inProgress) ? (
-          <button className="primary-btn mx-2 my-3" onClick={async () => {
-            await store.markJustGoodPlaylistComplete();
-            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-          }}> Mark Complete </button>
-        ) : (
-          <button className="primary-btn mx-2 my-3" onClick={async () => {
-            await store.markJustGoodPlaylistComplete();
-            if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-          }}> Mark in Progress </button>
-        )}
+        <button className="primary-btn mx-2 my-3" onClick={async () => {
+          await store.toggleJustGoodPlaylistComplete();
+          if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
+        }}> Mark { store.currentJustGoodPlaylist.inProgress ? 'Complete' : 'in Progress'} </button>
       </div>
       <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
         getPlaylistUrl(store.currentJustGoodPlaylist.id) :
@@ -131,7 +124,7 @@ const DeepDiveDriver = observer(() => {
             src={prevTrackImg}
             alt="alt"
             large
-            onClick={() => store.skipPrevious()}
+            onClick={() => store.prevDeepDiveTrack()}
           />
           <Image
             className="deep-dive-driver-img"
@@ -145,7 +138,7 @@ const DeepDiveDriver = observer(() => {
             src={nextTrackImg}
             alt="alt"
             large
-            onClick={() => store.skipNext()}
+            onClick={() => store.nextDeepDiveTrack()}
           />
           <Image
             className="deep-dive-driver-img"
@@ -170,9 +163,12 @@ const DeepDiveDriver = observer(() => {
             <i className="bi bi-heart" />
           )}
         </button>
-        <div className="d-flex justify-content-between flex-column text-start mx-3">
-          <h4> { deepDiveTrack.name } </h4>
-          <i className="bi-small"> { deepDiveTrack.albumName } </i>
+        <div className="d-flex justify-content-between flex-column text-start mx-3 rest-space">
+          <div className="d-flex flex-row justify-content-between">
+            <h1> { deepDiveTrack.name } </h1>
+          </div>
+          <i className="text-bigger"> { deepDiveTrack.albumName } </i>
+          <i className="text-smaller"> { deepDiveTrack.artistName } </i>
         </div>
         <button className="p-0 m-0" onClick={() => store.toggleCurrentTrackInJustGood()}>
           {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (
@@ -184,9 +180,9 @@ const DeepDiveDriver = observer(() => {
           )}
         </button>
       </div>
-      <button className="secondary-btn m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>
-        {moreInfoOpen ? 'Less info' : 'More info'}
-      </button>
+      {/*<button className="secondary-btn m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>*/}
+      {/*  {moreInfoOpen ? 'Less info' : 'More info'}*/}
+      {/*</button>*/}
       <div className="deep-dive-driver-actions">
         {/*<button*/}
         {/*  className={`w-100 primary-btn playlist-button ${store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id) ? 'on' : 'off'}`}*/}

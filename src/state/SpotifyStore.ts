@@ -1038,7 +1038,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      await store.checkPlayer(async (t: string) => seekPlayback(value, t), token);
+      await store.checkPlayer(async (t: string) => seekPlayback(Math.trunc(value), t), token);
 
       return await store.updatePlayer();
     }),

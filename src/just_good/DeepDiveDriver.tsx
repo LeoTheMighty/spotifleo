@@ -14,6 +14,7 @@ import Image from '../components/Image';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
+import SpotifySlider from './SpotifySlider';
 import { toJS } from 'mobx';
 import useSwipe from '../components/SwipeHook';
 
@@ -154,6 +155,17 @@ const DeepDiveDriver = observer(() => {
         )}
         <i className="deep-dive-driver-track-prev-icon bi-caret-left-fill" />
         <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
+      </div>
+      <div className="d-flex flex-row w-100 justify-content-between my-1">
+        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(0)}>
+          0 / 3
+        </button>
+        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition((store.currentTrack?.duration || 0) / 3)}>
+          1 / 3
+        </button>
+        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(2 * (store.currentTrack?.duration || 0) / 3)}>
+          2 / 3
+        </button>
       </div>
       <div className="deep-dive-driver-track-info">
         <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, store.likedPlaylist) }>

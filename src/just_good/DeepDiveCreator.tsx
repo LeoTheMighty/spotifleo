@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import ToggleAlbum from './ToggleAlbum';
-import DefaultAvatar from '../images/default_avatar.jpeg';
 import { observer } from 'mobx-react';
 import { Album, AlbumGroup } from '../types';
-import { ToggleButton } from 'react-bootstrap';
 import ConfirmModal from '../components/ConfirmModal';
 import { driveDeepDiver, viewDeepDiver } from '../logic/common';
 import { useNavigate } from 'react-router-dom';
@@ -20,20 +18,17 @@ TODO: IF YOU'RE CURRENTLY LISTENING TO THE PLAYLIST THIS COULD GET WEIRD
 */
 
 const compareAlbumsAlpha = (a: Album, b: Album) => a.name.localeCompare(b.name);
-
 const compareAlbumsAlphaReverse = (a: Album, b: Album) => b.name.localeCompare(a.name);
-
 const compareAlbumsChrono = (a: Album, b: Album) => b.releaseDate.getTime() - a.releaseDate.getTime();
-
 const compareAlbumsChronoReverse = (a: Album, b: Album) => a.releaseDate.getTime() - b.releaseDate.getTime();
 
 const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
-  const [grouped, setGrouped] = useState(false);
+  const [grouped, setGrouped] = useState(true);
   const [sortAlpha, setSortAlpha] = useState(false);
   const [sortAlphaForward, setSortAlphaForward] = useState(true);
-  const [sortChronoForward, setSortChronoForward] = useState(true);
+  const [sortChronoForward, setSortChronoForward] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const toggleAlbum = (album: Album) => {
@@ -168,40 +163,6 @@ const DeepDiveCreator = observer(() => {
       ) : (
         getGroupOfToggleAlbums(all)
       )}
-      {/*{ getAlbums() }*/}
-      {/*{ grouped ? (*/}
-      {/*  <>*/}
-      {/*    <button className="primary-btn m-2 px-3 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>*/}
-      {/*      <h1 style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through'}}>*/}
-      {/*        Albums*/}
-      {/*      </h1>*/}
-      {/*    </button>*/}
-      {/*    { getGroupOfToggleAlbums(albums)}*/}
-      {/*    <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>*/}
-      {/*      <h1 style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through'}}>*/}
-      {/*        EPs/Singles*/}
-      {/*      </h1>*/}
-      {/*    </button>*/}
-      {/*    { getGroupOfToggleAlbums(singles)}*/}
-      {/*    <button className="primary-btn secondary-btn m-2" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>*/}
-      {/*      <h1 style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through'}}>*/}
-      {/*        Appears On*/}
-      {/*      </h1>*/}
-      {/*    </button>*/}
-      {/*    { getGroupOfToggleAlbums(appears)}*/}
-      {/*  </>*/}
-      {/*) : (*/}
-      {/*  getGroupOfToggleAlbums(store.currentDeepDiveArtistDiscography)*/}
-      {/*)}*/}
-      {/*<div className="d-flex justify-content-center flex-wrap w-100">*/}
-      {/*  {store.currentDeepDiveArtistDiscography?.filter(a => a.albumGroup === 'album').map((album) => (*/}
-      {/*    <ToggleAlbum*/}
-      {/*      value={!!store.currentArtistDeepDiveAlbumIds?.has(album.id)}*/}
-      {/*      album={album}*/}
-      {/*      onClick={() => { toggleAlbum(album); }}*/}
-      {/*    />*/}
-      {/*  ))}*/}
-      {/*</div>*/}
       <ConfirmModal
         show={showConfirm}
         title="Ready to Start the Deep Dive?"

@@ -89,8 +89,10 @@ export interface SpotifyStore {
   justGoodPlaylists?: CachedJustGoodPlaylist[];
   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
-  justGoodPlaylistMap?: { [id: string]: CachedJustGoodPlaylist }, // TODO convert
-  justGoodPlaylistArtistMap?: { [artistId: string]: CachedJustGoodPlaylist }, // TODO convert
+  justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
+  // justGoodPlaylistMap?: { [id: string]: CachedJustGoodPlaylist }, // TODO convert
+  justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
+  // justGoodPlaylistArtistMap?: { [artistId: string]: CachedJustGoodPlaylist }, // TODO convert
 
   // Deep Diver
   currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
@@ -318,13 +320,13 @@ const useSpotifyStore = () => {
       // TODO We should not save it in the first place...
       // user.justGoodPlaylists = user.justGoodPlaylists.map(justGoodToCached);
 
-      store.justGoodPlaylistMap = {};
-      store.justGoodPlaylistArtistMap = {};
+      store.justGoodPlaylistMap = new Map();
+      store.justGoodPlaylistArtistMap = new Map();
       for (let i = 0; i < user.justGoodPlaylists.length; i++) {
         const playlist = user.justGoodPlaylists[i];
-        store.justGoodPlaylistMap[playlist.id] = playlist;
+        store.justGoodPlaylistMap.set(playlist.id, playlist);
         if (playlist.artistId) {
-          store.justGoodPlaylistArtistMap[playlist.artistId] = playlist;
+          store.justGoodPlaylistArtistMap.set(playlist.artistId, playlist);
         }
       }
 
@@ -553,7 +555,7 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
 
       console.log(`searching for playlist with id = ${playlistId}`);
-      const playlist = store.justGoodPlaylistMap && store.justGoodPlaylistMap[playlistId];
+      const playlist = store.justGoodPlaylistMap && store.justGoodPlaylistMap.get(playlistId);
       if (!playlist || !playlist.artistId) return notInitialized();
 
       store.currentDeepDiveView = undefined;
@@ -743,16 +745,16 @@ const useSpotifyStore = () => {
     createJustGoodPlaylist: action(async (artist: Artist) => {
       const token = await store.useToken();
       if (!token) return noToken();
-      if (!store.justGoodPlaylistArtistMap || store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) return fail('artist map not intialized');
+      if (!store.justGoodPlaylistMap || !store.justGoodPlaylistArtistMap || store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) return fail('artist map not intialized');
 
-      // TODO: ???????
-      store.justGoodPlaylistArtistMap[artist.id] = {
+      // TODO: ??????? sstill no idea lmfao
+      store.justGoodPlaylistArtistMap.set(artist.id, {
         id: 'id',
         name: 'name',
         artistName: 'aristn',
         inProgress: true,
         progress: 0,
-      };
+      });
 
       const name = getInProgressJustGoodPlaylistName(artist.name);
       const description = getInProgressJustGoodPlaylistDescription(artist.name);
@@ -769,7 +771,8 @@ const useSpotifyStore = () => {
       }
 
       store.plannedJustGoodPlaylists = [justGoodPlaylist, ...(store.plannedJustGoodPlaylists || [])];
-      if (store.justGoodPlaylistArtistMap) store.justGoodPlaylistArtistMap[artist.id] = justGoodPlaylist;
+      store.justGoodPlaylistMap.set(response.id, justGoodPlaylist);
+      store.justGoodPlaylistArtistMap.set(artist.id, justGoodPlaylist);
 
       await store.saveUser();
     }),
@@ -819,7 +822,7 @@ const useSpotifyStore = () => {
     nextDeepDiveTrack: action(async () => {
       const token = await store.useToken();
       if (!token) return noToken();
-      if (!store.currentJustGoodPlaylist?.progress || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
+      if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
 
       if (store.isPlayingCurrentDeepDivePlaylist) {
         await store.skipNext();

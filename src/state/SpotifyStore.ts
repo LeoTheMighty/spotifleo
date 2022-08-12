@@ -11,7 +11,6 @@ import {
   getAllCurrentUserPlaylists,
   getCurrentUserProfile,
   getAllPlaylistTracks,
-  getAllArtistAlbums,
   createPlaylist,
   getAllArtistAlbumsWithTracks,
   addAllTracksToPlaylist,
@@ -26,7 +25,6 @@ import {
   replaceAllPlaylistItems, toggleShuffle, setRepeatMode
 } from '../api/Spotify';
 import {
-  artistString,
   DEEP_DIVE_INDICATOR,
   getImages,
   JUST_GOOD_INDICATOR,
@@ -372,7 +370,8 @@ const useSpotifyStore = () => {
       console.log('Fetching all user playlists...')
       store.updateProgress(0.1, 'Fetching all user playlists')
 
-      const playlists = await getAllCurrentUserPlaylists(token);
+      const cb1 = (p: number) => store.updateProgress(nestProgress(p, 0.1, 0.3));
+      const playlists = await getAllCurrentUserPlaylists(token, cb1);
 
       console.log('Fetched.');
       console.log(playlists);
@@ -430,6 +429,8 @@ const useSpotifyStore = () => {
 
           console.log('Finished just good playlist.');
           console.log(justGoodPlaylists[justGoodPlaylists.length - 1]);
+
+          store.updateProgress(nestProgress(justGoodPlaylists.length / (justJustGoodPlaylists.length + inProgressJustGoodPlaylists.length), 0.3, 0.6));
         }
       }
 
@@ -442,8 +443,8 @@ const useSpotifyStore = () => {
         name: 'Liked Songs',
       };
 
-      const cb = (progress: number) => store.updateProgress(nestProgress(progress, 0.6, 0.9));
-      const trackSet = new Set((await getAllCurrentUserLikedSongs(token, cb)).map((t) => t.id));
+      const cb2 = (progress: number) => store.updateProgress(nestProgress(progress, 0.6, 0.9));
+      const trackSet = new Set((await getAllCurrentUserLikedSongs(token, cb2)).map((t) => t.id));
 
       store.deepDiverPlaylistIndexes = new Map();
       store.deepDiverPlaylistTrackSets = new Map();
@@ -561,7 +562,8 @@ const useSpotifyStore = () => {
         store.startProgress(`Fetching Just Good ${playlist.artistName}`);
         store.updateProgress(0.1, 'Getting all albums and tracks for the artist');
         console.log('Fetching all artist albums');
-        const response = await getAllArtistAlbumsWithTracks(playlist.artistId, token);
+        const cb1 = (p: number) => store.updateProgress(nestProgress(p, 0.1, 0.7));
+        const response = await getAllArtistAlbumsWithTracks(playlist.artistId, token, cb1);
         console.log(response);
 
         store.currentDeepDiveArtistDiscography = response;
@@ -569,9 +571,11 @@ const useSpotifyStore = () => {
         if (playlist.deepDivePlaylist) {
           store.updateProgress(0.7, 'Fetching all just good playlist tracks');
           console.log('loading deep dive playlist');
-          const justGoodPlaylistTrackIds = new Set((await getAllPlaylistTracks(playlist.id, token)).map(t => t.id));
+          const cb2 = (p: number) => store.updateProgress(nestProgress(p, 0.7, 0.8));
+          const justGoodPlaylistTrackIds = new Set((await getAllPlaylistTracks(playlist.id, token, cb2)).map(t => t.id));
           store.updateProgress(0.8, 'Fetching all deep dive playlist tracks');
-          const deepDivePlaylistTracks = (await getAllPlaylistTracks(playlist.deepDivePlaylist.id, token));
+          const cb3 = (p: number) => store.updateProgress(nestProgress(p, 0.8, 0.9));
+          const deepDivePlaylistTracks = (await getAllPlaylistTracks(playlist.deepDivePlaylist.id, token, cb3));
 
           store.currentJustGoodPlaylist = {
             ...playlist,
@@ -588,8 +592,6 @@ const useSpotifyStore = () => {
             const { albumId } = deepDivePlaylistTracks[i];
             if (albumId !== undefined) store.currentArtistDeepDiveAlbumIds.add(albumId);
           }
-          console.log(toJS(store.currentArtistDeepDiveAlbumIds));
-
         } else {
           // set:
           store.currentJustGoodPlaylist = {
@@ -678,7 +680,6 @@ const useSpotifyStore = () => {
 
       // 2. Get all album tracks (in order) (let's go through the disco playlist)
       // 3. Get all appears on tracks (filter for only those that have the artist in them).
-      // TODO: Use already fetched list
       const filteredAlbums = albums.filter((a) => store.currentArtistDeepDiveAlbumIds?.has(a.id));
       const trackURIs: string[] = [];
       const tracks: Track[] = [];
@@ -700,13 +701,14 @@ const useSpotifyStore = () => {
 
       store.updateProgress(0.8, 'Parsing all playlist track IDs');
 
+      const cb = (p: number) => store.updateProgress(nestProgress(p, 0.8, 0.9));
       store.currentJustGoodPlaylist = {
         ...store.currentJustGoodPlaylist,
         deepDivePlaylist: {
           id: deepDiveId,
           name: deepDiveName,
         },
-        trackIds: new Set((await getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token)).map(t => t.id)),
+        trackIds: new Set((await getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb)).map(t => t.id)),
         deepDiveTracks: tracks,
         progress: 0,
       };

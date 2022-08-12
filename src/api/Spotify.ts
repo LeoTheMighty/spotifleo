@@ -73,16 +73,17 @@ export const getArtistAlbums = async (artistID: string, limit: number, offset: n
   })
 );
 
-export const getAllArtistAlbums = async (artistID: string, token: string): Promise<Album[]> => (
+export const getAllArtistAlbums = async (artistID: string, token: string, pcb?: ProgressCallback): Promise<Album[]> => (
   fetchAll(
     (offset) => getArtistAlbums(artistID, MAX_FETCH_ITEMS, offset, token),
     deserializeAlbum,
     (response) => response.album_type !== 'compilation',
     (response) => `${response.name}_${response.album_type}`,
+      pcb,
     )
 );
 
-export const getAllArtistAlbumsWithTracks = async (artistId: string, token: string): Promise<FetchedAlbum[]> => {
+export const getAllArtistAlbumsWithTracks = async (artistId: string, token: string, pcb?: ProgressCallback): Promise<FetchedAlbum[]> => {
   const albums: Album[] = await getAllArtistAlbums(artistId, token);
 
   const albumIds = [];
@@ -92,7 +93,7 @@ export const getAllArtistAlbumsWithTracks = async (artistId: string, token: stri
     albumGroups.set(albums[i].id, albums[i].albumGroup);
   }
 
-  return deserializeFetchedAlbums(await getAllMultipleAlbums(albumIds, token)).map((album) => ({
+  return deserializeFetchedAlbums(await getAllMultipleAlbums(albumIds, token, pcb)).map((album) => ({
     ...album,
     albumGroup: albumGroups.get(album.id) || album.albumGroup,
     // If it is the artist's own album/single, don't filter any of the songs
@@ -107,12 +108,13 @@ export const getAllArtistAlbumsWithTracks = async (artistId: string, token: stri
 export const getAlbumTracks = async (albumID: string, token: string): Promise<FetchResponse<TrackResponse>> =>
   callSpotifyAPI(token, `/albums/${albumID}/tracks`, GET, {});
 
-export const getAllMultipleAlbums = async (albumIds: string[], token: string): Promise<AlbumResponse[]> => {
+export const getAllMultipleAlbums = async (albumIds: string[], token: string, pcb?: ProgressCallback): Promise<AlbumResponse[]> => {
   const albums: AlbumResponse[] = [];
   const chunks = chunkList(albumIds, MAX_FETCH_ALBUMS);
   for (let i = 0; i < chunks.length; i++) {
     const albumResponses = await getMultipleAlbums(chunks[i], token);
     albums.push(...albumResponses.albums);
+    pcb?.(i / chunks.length);
   }
   console.log(albumIds.length);
   console.log(albums.length);
@@ -130,7 +132,6 @@ export const getMultipleAlbums = async (albumIds: string[], token: string): Prom
   callSpotifyAPI(token, '/albums', GET, { ids: formatQueryList(albumIds) })
 );
 
-// TODO i wonder if this works
 export const createPlaylist = async (name: string, description: string, token: string): Promise<PlaylistResponse> => (
   callSpotifyAPI(token, '/me/playlists', POST, undefined, {
     name,
@@ -157,18 +158,8 @@ export const getFirstPlaylistTrack = async (playlistID: string, token: string): 
   return total === 0 ? undefined : deserializePlaylistTrack(items[0], 0);
 };
 
-export const getAllPlaylistTracks = async (playlistId: string, token: string): Promise<PlaylistTrack[]> => {
-  return fetchAll((o) => getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, o, token), deserializePlaylistTrack);
-  // const tracks: TrackResponse[] = [];
-  //
-  // let total = 1;
-  // while (tracks.length < total) {
-  //   const response = await getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, tracks.length, token);
-  //   tracks.push(...response.items);
-  //   total = response.total
-  // }
-  //
-  // return tracks;
+export const getAllPlaylistTracks = async (playlistId: string, token: string, pcb?: ProgressCallback): Promise<PlaylistTrack[]> => {
+  return fetchAll((o) => getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, o, token), deserializePlaylistTrack, undefined, undefined, pcb);
 }
 
 export const addTrackToPlaylist = async (playlistID: string, trackURI: string, token: string) => (
@@ -179,11 +170,12 @@ export const addTracksToPlaylist = async (playlistID: string, trackURIs: string[
     uris: trackURIs,
   })
 );
-export const addAllTracksToPlaylist = async (playlistID: string, trackURIs: string[], token: string) => {
+export const addAllTracksToPlaylist = async (playlistID: string, trackURIs: string[], token: string, pcb?: ProgressCallback) => {
   const chunks = chunkList(trackURIs, MAX_ADD_TRACKS);
   for (let i = 0; i < chunks.length; i++) {
     // We want to await each individual one so that the order remains consistent
     await addTracksToPlaylist(playlistID, chunks[i], token);
+    pcb?.(i / chunks.length);
   }
 }
 
@@ -195,7 +187,7 @@ export const replacePlaylistItems = async (playlistID: string, trackURIs: string
   })
 );
 
-export const replaceAllPlaylistItems = async (playlistID: string, trackURIs: string[], token: string) => {
+export const replaceAllPlaylistItems = async (playlistID: string, trackURIs: string[], token: string, pcb?: ProgressCallback) => {
   const chunks = chunkList(trackURIs, MAX_ADD_TRACKS);
   for (let i = 0; i < chunks.length; i++) {
     // We want to await each individual one so that the order remains consistent
@@ -205,6 +197,7 @@ export const replaceAllPlaylistItems = async (playlistID: string, trackURIs: str
     } else {
       await addTracksToPlaylist(playlistID, chunks[i], token);
     }
+    pcb?.(i / chunks.length);
   }
 };
 
@@ -249,7 +242,7 @@ export const getCurrentUserProfile = async (token: string): Promise<UserProfileR
 /**
  * TODO: Opportunity to return progress
  */
-export const getAllCurrentUserPlaylists = async (token: string): Promise<CachedPlaylist[]> => {
+export const getAllCurrentUserPlaylists = async (token: string, pcb?: ProgressCallback): Promise<CachedPlaylist[]> => {
   const playlists: CachedPlaylist[] = [];
   let total = 1;
   while (playlists.length < total) {
@@ -258,6 +251,7 @@ export const getAllCurrentUserPlaylists = async (token: string): Promise<CachedP
     response.items.forEach((playlist) => {
       playlists.push({ id: playlist.id, name: playlist.name });
     });
+    pcb?.(playlists.length / total);
     total = response.total
   }
   return playlists;

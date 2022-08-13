@@ -90,17 +90,16 @@ export interface SpotifyStore {
   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
   justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
-  // justGoodPlaylistMap?: { [id: string]: CachedJustGoodPlaylist }, // TODO convert
   justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
-  // justGoodPlaylistArtistMap?: { [artistId: string]: CachedJustGoodPlaylist }, // TODO convert
 
   // Deep Diver
   currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
   currentJustGoodPlaylist?: JustGoodPlaylist;
-  // currentDeepDivePlaylistIndex?: number; // for deep dive driver
   currentDeepDiveView?: DeepDiverViewType;
   currentArtistDeepDiveAlbumIds?: Set<string>;
-  currentDeepDiveArtistDiscography?: FetchedAlbum[];
+  currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
+  currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
+  currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
 
   // High Level Spotify Edit Actions
   artistResults: Artist[];
@@ -108,18 +107,6 @@ export interface SpotifyStore {
   // High Level Spotify Player
   currentTrack?: PlayingTrack;
   showHelpScreen: boolean;
-
-  // playing: boolean;
-  // currentTrackID?: string;
-  // currentTrackURI?: string;
-  // currentTrackName?: string;
-  // currentTrackArtist?: string;
-  // // both milliseconds
-  // currentTrackProgress?: number;
-  // currentTrackDuration?: number;
-  // currentTrackSmallImageURL?: string,
-  // currentTrackLargeImageURL?: string,
-  // currentContextID?: string,
 
   // Loading Logic
   progress?: Progress; // Not loading if undefined
@@ -132,6 +119,8 @@ export interface SpotifyStore {
   likedTrackSet: Set<string> | undefined;
 
   allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
+  currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
+  currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
 
   isPlayingCurrentDeepDivePlaylist: boolean;
 
@@ -224,6 +213,34 @@ const useSpotifyStore = () => {
       return (store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) ?
         [...store.justGoodPlaylists, ...store.inProgressJustGoodPlaylists, ...store.plannedJustGoodPlaylists] :
         undefined;
+    },
+
+    get currentDeepDiveArtistDiscographyGrouped(): FetchedAlbum[] | undefined {
+      if (!store.currentDeepDiveArtistDiscography || !store.currentDeepDiveArtistAlbumIDsGrouped) return undefined;
+
+      const albums: FetchedAlbum[] = [];
+      for (let i = 0; i < store.currentDeepDiveArtistAlbumIDsGrouped.length; i++) {
+        const id = store.currentDeepDiveArtistAlbumIDsGrouped[i];
+        const album = store.currentDeepDiveArtistDiscography.get(id);
+        if (album) {
+          albums.push(album);
+        }
+      }
+      return albums;
+    },
+
+    get currentDeepDiveArtistDiscographyOrdered(): FetchedAlbum[] | undefined {
+      if (!store.currentDeepDiveArtistDiscography || !store.currentDeepDiveArtistAlbumIDsOrdered) return undefined;
+
+      const albums: FetchedAlbum[] = [];
+      for (let i = 0; i < store.currentDeepDiveArtistAlbumIDsOrdered.length; i++) {
+        const id = store.currentDeepDiveArtistAlbumIDsOrdered[i];
+        const album = store.currentDeepDiveArtistDiscography.get(id);
+        if (album) {
+          albums.push(album);
+        }
+      }
+      return albums;
     },
 
     get isPlayingCurrentDeepDivePlaylist(): boolean {
@@ -568,7 +585,13 @@ const useSpotifyStore = () => {
         const response = await getAllArtistAlbumsWithTracks(playlist.artistId, token, cb1);
         console.log(response);
 
-        store.currentDeepDiveArtistDiscography = response;
+        store.currentDeepDiveArtistAlbumIDsGrouped = [];
+        store.currentDeepDiveArtistDiscography = new Map();
+        for (let i = 0; i < response.length; i++) {
+          const album = response[i];
+          store.currentDeepDiveArtistAlbumIDsGrouped.push(album.id);
+          store.currentDeepDiveArtistDiscography.set(album.id, album);
+        }
 
         if (playlist.deepDivePlaylist) {
           store.updateProgress(0.7, 'Fetching all just good playlist tracks');
@@ -578,6 +601,14 @@ const useSpotifyStore = () => {
           store.updateProgress(0.8, 'Fetching all deep dive playlist tracks');
           const cb3 = (p: number) => store.updateProgress(nestProgress(p, 0.8, 0.9));
           const deepDivePlaylistTracks = (await getAllPlaylistTracks(playlist.deepDivePlaylist.id, token, cb3));
+
+          store.currentDeepDiveArtistAlbumIDsOrdered = [];
+          for (let i = 0; i < deepDivePlaylistTracks.length; i++) {
+            const track = deepDivePlaylistTracks[i];
+            if (track.albumId && !store.currentDeepDiveArtistAlbumIDsOrdered.find(id => id === track.albumId)) {
+              store.currentDeepDiveArtistAlbumIDsOrdered.push(track.albumId);
+            }
+          }
 
           store.currentJustGoodPlaylist = {
             ...playlist,
@@ -719,12 +750,11 @@ const useSpotifyStore = () => {
       store.plannedJustGoodPlaylists?.splice(index);
       store.inProgressJustGoodPlaylists.push(store.currentJustGoodPlaylist);
 
+      store.currentDeepDiveArtistAlbumIDsOrdered = albums.map(a => a.id);
+
       store.saveUser();
 
       store.finishProgress();
-
-      console.log('done');
-      // 5. Update locally
     }),
 
     /**
@@ -865,14 +895,6 @@ const useSpotifyStore = () => {
           store.currentPlayingJustGoodPlaylist?.trackIds?.delete(track.id);
         }
       }
-      //
-      // if (store.currentJustGoodPlaylist?.trackIds.has(track.id)) {
-      //   await removeTrackFromPlaylist(track.uri, playlistId, token);
-      //   store.currentJustGoodPlaylist?.trackIds.delete(track.id);
-      // } else {
-      //   await addTrackToPlaylist(playlistId, track.uri, token);
-      //   store.currentJustGoodPlaylist?.trackIds.add(track.id);
-      // }
     }),
 
     toggleTrackInPlayingJustGood: action(async (track: Track) => {

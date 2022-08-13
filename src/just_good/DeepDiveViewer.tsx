@@ -39,8 +39,7 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
 
   if (!isGood && !viewNotGood) return null;
   return (
-    <div
-      className={`deep-dive-track-view ${isGood ? '' : 'disabled'}`}>
+    <div key={track.name} className={`deep-dive-track-view ${isGood ? '' : 'disabled'}`}>
       <div className="d-flex flex-row justify-content-between overflow-hidden">
         <div
           className="deep-dive-track-view-play-button d-flex flex-row pointer-event align-items-start overflow-hidden"
@@ -142,17 +141,6 @@ const DeepDiveViewer = observer(() => {
           await store.toggleJustGoodPlaylistComplete();
           if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
         }}> Mark { store.currentJustGoodPlaylist?.inProgress ? 'Complete' : 'in Progress'} </button>
-        {/*{(store.currentJustGoodPlaylist?.inProgress) ? (*/}
-        {/*  <button className="primary-btn mx-2 my-3" onClick={async () => {*/}
-        {/*    await store.markJustGoodPlaylistComplete();*/}
-        {/*    if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));*/}
-        {/*  }}> Mark Complete </button>*/}
-        {/*) : (*/}
-        {/*  <button className="primary-btn mx-2 my-3" onClick={async () => {*/}
-        {/*    await store.markJustGoodPlaylistComplete();*/}
-        {/*    if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));*/}
-        {/*  }}> Mark in Progress </button>*/}
-        {/*)}*/}
       </div>
       <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
           getPlaylistUrl(store.currentJustGoodPlaylist.id) :
@@ -166,7 +154,7 @@ const DeepDiveViewer = observer(() => {
       >
         Show{viewDiscography ? 'ing' : ''} Whole Deep Dive
       </button>
-      {store.currentDeepDiveArtistDiscography?.map((album) => {
+      {store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {
         return (
           <AlbumViewer
             album={album}

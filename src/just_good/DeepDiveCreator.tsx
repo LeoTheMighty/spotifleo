@@ -83,6 +83,15 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
+  const getSortDescription = () => {
+    if (customOrder && !canUndo) return 'Custom Order';
+
+    // lmao ;////
+    return `${grouped ? 'Grouped' : ''}${(grouped && (sortAlpha || sortChrono)) ? ', ' : ''}
+    ${((sortChrono && !sortChronoForward) || (sortAlpha && !sortAlphaForward)
+    ) ? 'Reverse-' : ''}${sortChrono ? 'Chronological' : ''}${sortAlpha ? 'Alphabetical' : ''}`;
+  };
+
   const toggleAlbum = (album: Album) => {
     store.toggleAlbumForDeepDive(album.id);
   };
@@ -107,126 +116,70 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
-  const getAlbumsComponent = () => {
-    if (grouped) {
-      const discography = store.currentDeepDiveArtistDiscographyGrouped;
-      if (discography) {
-        const s = discography.findIndex((a) => a.albumGroup === 'single');
-        const a = discography.findIndex((a) => a.albumGroup === 'appears_on');
-        const albums = discography.slice(0, s);
-        const singles = discography.slice(s, a);
-        const appears = discography.slice(a);
+  const getGroupedAlbums = (): [FetchedAlbum[], FetchedAlbum[], FetchedAlbum[]] => {
+    // TODO: Support custom order of the groups????
 
-        sortAlbums(albums);
-        sortAlbums(singles);
-        sortAlbums(appears);
-
-        return (
-          <>
-            <div className="d-flex justify-content-start w-100 px-2"> <h2> Albums: </h2> </div>
-            {getGroupOfToggleAlbums(albums)}
-            <div className="d-flex justify-content-start w-100 px-2"> <h2> Singles/EPs: </h2> </div>
-            {getGroupOfToggleAlbums(singles)}
-            <div className="d-flex justify-content-start w-100 px-2"> <h2> Appears On: </h2> </div>
-            {getGroupOfToggleAlbums(appears)}
-          </>
-        );
-      }
-    } else {
-      const albums = customOrder ?
-        store.currentDeepDiveArtistDiscographyOrdered :
-        store.currentDeepDiveArtistDiscographyGrouped;
+    const discography = store.currentDeepDiveArtistDiscographyGrouped;
+    if (discography) {
+      const s = discography.findIndex((a) => a.albumGroup === 'single');
+      const a = discography.findIndex((a) => a.albumGroup === 'appears_on');
+      const albums = discography.slice(0, s);
+      const singles = discography.slice(s, a);
+      const appears = discography.slice(a);
 
       sortAlbums(albums);
+      sortAlbums(singles);
+      sortAlbums(appears);
 
-      return getGroupOfToggleAlbums(albums);
-    }
-  };
-
-  const getAlbums = (): FetchedAlbum[] => {
-    // TODO: highkey reimplemnting above logic but whatever
-    if (grouped) {
-      const discography = store.currentDeepDiveArtistDiscographyGrouped;
-      if (discography) {
-        const s = discography.findIndex((a) => a.albumGroup === 'single');
-        const a = discography.findIndex((a) => a.albumGroup === 'appears_on');
-        const albums = discography.slice(0, s);
-        const singles = discography.slice(s, a);
-        const appears = discography.slice(a);
-
-        sortAlbums(albums);
-        sortAlbums(singles);
-        sortAlbums(appears);
-
-        return [...albums, ...singles, ...appears];
-      }
-    } else {
-      const albums = customOrder ?
-        store.currentDeepDiveArtistDiscographyOrdered :
-        store.currentDeepDiveArtistDiscographyGrouped;
-
-      sortAlbums(albums);
-
-      if (albums) {
-        return [...albums];
-      }
+      return [albums, singles, appears];
     }
 
     throw new Error('Fucked up getting albums fuck you');
   };
 
+  const getUngroupedAlbums = (): FetchedAlbum[] => {
+    const albums = customOrder ?
+      store.currentDeepDiveArtistDiscographyOrdered?.slice(0) :
+      store.currentDeepDiveArtistDiscographyGrouped?.slice(0);
 
-  // album will always be first
-  // const s = store.currentDeepDiveArtistDiscography?.findIndex((a) => a.albumGroup === 'single');
-  // const a = store.currentDeepDiveArtistDiscography?.findIndex((a) => a.albumGroup === 'appears_on');
-  // const all = store.currentDeepDiveArtistDiscography?.slice(0);
-  // const albums = store.currentDeepDiveArtistDiscography?.slice(0, s);
-  // const singles = store.currentDeepDiveArtistDiscography?.slice(s, a);
-  // const appears = store.currentDeepDiveArtistDiscography?.slice(a);
-  //
-  // if (sortAlpha) {
-  //   if (sortAlphaForward) {
-  //     all?.sort(compareAlbumsAlpha);
-  //     albums?.sort(compareAlbumsAlpha)
-  //     singles?.sort(compareAlbumsAlpha)
-  //     appears?.sort(compareAlbumsAlpha)
-  //   } else {
-  //     all?.sort(compareAlbumsAlphaReverse);
-  //     albums?.sort(compareAlbumsAlphaReverse)
-  //     singles?.sort(compareAlbumsAlphaReverse)
-  //     appears?.sort(compareAlbumsAlphaReverse)
-  //   }
-  // } else {
-  //   // Split already sorted chronologically
-  //   if (sortChronoForward) {
-  //     all?.sort(compareAlbumsChrono);
-  //   } else {
-  //     all?.sort(compareAlbumsChronoReverse);
-  //     albums?.sort(compareAlbumsChronoReverse)
-  //     singles?.sort(compareAlbumsChronoReverse)
-  //     appears?.sort(compareAlbumsChronoReverse)
-  //   }
-  // }
+    sortAlbums(albums);
+
+    if (albums) {
+      return albums;
+    }
+
+    throw new Error('Fucked up getting albums fuck you');
+  };
+
+  const getAlbums = (): FetchedAlbum[] => {
+    if (grouped) {
+      return getGroupedAlbums().flat(1);
+    } else {
+      return getUngroupedAlbums();
+    }
+  };
+
+  const getAlbumsComponent = () => {
+    if (grouped) {
+      const [albums, singles, appears] = getGroupedAlbums();
+
+      return (
+        <>
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Albums: </h2> </div>
+          {getGroupOfToggleAlbums(albums)}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Singles/EPs: </h2> </div>
+          {getGroupOfToggleAlbums(singles)}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Appears On: </h2> </div>
+          {getGroupOfToggleAlbums(appears)}
+        </>
+      );
+    } else {
+      return getGroupOfToggleAlbums(getUngroupedAlbums());
+    }
+  };
 
   const hasAlbumGroup = (albumGroup: AlbumGroup) => {
     return !!store.currentDeepDiveArtistDiscographyGrouped?.find(a => a.albumGroup === albumGroup && store.currentArtistDeepDiveAlbumIds?.has(a.id));
-    // let group: Album[] | undefined = undefined;
-    // if (albumGroup === 'album') {
-    //   group = albums;
-    // } else if (albumGroup === 'single') {
-    //   group = singles;
-    // } else if (albumGroup === 'appears_on') {
-    //   group = appears;
-    // }
-    //
-    // if (group) {
-    //   for (let i = 0; i < (group ? group.length : 0); i++) {
-    //     if (store.currentArtistDeepDiveAlbumIds?.has(group[i].id)) {
-    //       return true;
-    //     }
-    //   }
-    // }
-    // return false;
   };
 
   return (
@@ -251,54 +204,48 @@ const DeepDiveCreator = observer(() => {
         </button>
       </div>
       <h1 className="text-center m-1"> Select which albums you want to exclude from the deep dive: </h1>
-      <div className="d-flex justify-content-between w-100">
+      <div className="d-flex justify-content-around my-1 w-100">
+        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
+          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
+            Albums
+          </p>
+        </button>
+        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
+          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through' }}>
+            Singles
+          </p>
+        </button>
+        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
+          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through' }}>
+            Features
+          </p>
+        </button>
+      </div>
+      <div className="d-flex justify-content-between w-100 my-1">
         <div className="d-flex justify-content-start my-2">
-          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
-            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
-              Albums
-            </p>
-          </button>
-          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
-            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through' }}>
-              Singles
-            </p>
-          </button>
-          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
-            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through' }}>
-              Features
-            </p>
-          </button>
+          <i className="text-regular"> { getSortDescription() } </i>
         </div>
         <div className="d-flex justify-content-end my-2">
-          <button className="p-0 m-0 mx-1" onClick={clickGroup}>
+          <button className="deep-dive-creator-sort-button" onClick={clickGroup}>
             <i className={`bi bi-collection bi-small mx-1 p-0 ${grouped ? '' : 'disabled'}`} />
           </button>
-          <button className="p-0 m-0 mx-1" onClick={clickAlpha}>
+          <button className="deep-dive-creator-sort-button" onClick={clickAlpha}>
             <i className={`bi bi-sort-alpha-${sortAlphaForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortAlpha ? '' : 'disabled'}`} />
           </button>
-          <button className="p-0 m-0 mx-1" onClick={clickChrono}>
+          <button className="deep-dive-creator-sort-button" onClick={clickChrono}>
             <i className={`bi bi-sort-numeric-${sortChronoForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortChrono ? '' : 'disabled'}`} />
           </button>
           {customOrder && (
-            <button className="p-0 m-0 mx-1" onClick={clickUndo}>
+            <button className="deep-dive-creator-sort-button" onClick={clickUndo}>
               <i className={`bi bi-arrow-counterclockwise bi-small mx-1 p-0 ${canUndo ? '' : 'disabled'}`} />
             </button>
           )}
         </div>
       </div>
-      { getAlbumsComponent() }
-      {/*{ grouped ? (*/}
-      {/*  <>*/}
-      {/*    <div className="d-flex justify-content-start w-100 px-2"> <h2> Albums: </h2> </div>*/}
-      {/*    {getGroupOfToggleAlbums(albums)}*/}
-      {/*    <div className="d-flex justify-content-start w-100 px-2"> <h2> Singles/EPs: </h2> </div>*/}
-      {/*    {getGroupOfToggleAlbums(singles)}*/}
-      {/*    <div className="d-flex justify-content-start w-100 px-2"> <h2> Appears On: </h2> </div>*/}
-      {/*    {getGroupOfToggleAlbums(appears)}*/}
-      {/*  </>*/}
-      {/*) : (*/}
-      {/*  getGroupOfToggleAlbums(all)*/}
+      {/*{ customOrder && !canUndo && (*/}
+      {/*  <div className="d-flex justify-content-start w-100 px-2"> <h2> Custom Order: </h2> </div>*/}
       {/*)}*/}
+      { getAlbumsComponent() }
       <ConfirmModal
         show={showConfirm}
         title="Ready to Start the Deep Dive?"

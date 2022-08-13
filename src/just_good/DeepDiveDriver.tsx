@@ -168,21 +168,21 @@ const DeepDiveDriver = observer(() => {
         </button>
       </div>
       <div className="deep-dive-driver-track-info">
-        <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, store.likedPlaylist) }>
-          { deepDiveTrack.id && store.likedTrackSet?.has(deepDiveTrack.id) ? (
-            <i className="bi bi-heart-fill" />
-          ) : (
-            <i className="bi bi-heart" />
-          )}
-        </button>
+        {/*<button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, store.likedPlaylist) }>*/}
+        {/*  { deepDiveTrack.id && store.likedTrackSet?.has(deepDiveTrack.id) ? (*/}
+        {/*    <i className="bi bi-heart-fill" />*/}
+        {/*  ) : (*/}
+        {/*    <i className="bi bi-heart" />*/}
+        {/*  )}*/}
+        {/*</button>*/}
         <div className="d-flex justify-content-between flex-column text-start mx-3 rest-space">
           <div className="d-flex flex-row justify-content-between">
             <h1> { deepDiveTrack.name } </h1>
           </div>
           <i className="text-bigger"> { deepDiveTrack.albumName } </i>
-          <i className="text-smaller"> { deepDiveTrack.artistName } </i>
+          {/*<i className="text-smaller"> { deepDiveTrack.artistName } </i>*/}
         </div>
-        <button className="p-0 m-0" onClick={() => store.toggleCurrentTrackInJustGood()}>
+        <button className="p-0 m-0 bi-big" onClick={() => store.toggleCurrentTrackInJustGood()}>
           {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (
             <i className="bi bi-hand-thumbs-up-fill" />
           ) : (
@@ -192,28 +192,40 @@ const DeepDiveDriver = observer(() => {
           )}
         </button>
       </div>
-      {/*<button className="secondary-btn m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>*/}
-      {/*  {moreInfoOpen ? 'Less info' : 'More info'}*/}
-      {/*</button>*/}
+      <button className="m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>
+        <i className="secondary-btn text-lighter">
+          {moreInfoOpen ? 'Less info' : 'More info'}
+        </i>
+      </button>
+      {moreInfoOpen && (
+        <div className="d-flex flex-column text-center">
+          <p>Album Name: {deepDiveTrack.albumName}</p>
+          <p>Artist Name(s): {deepDiveTrack.artistName}</p>
+        </div>
+      )}
       <div className="deep-dive-driver-actions">
-        {/*<button*/}
-        {/*  className={`w-100 primary-btn playlist-button ${store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id) ? 'on' : 'off'}`}*/}
-        {/*  onClick={() => store.toggleCurrentTrackInJustGood()}*/}
-        {/*>*/}
-        {/*  <h1 className="m-2 p-0 d-flex flex-row justify-content-center w-100">Good {isGood ? <i className="m-1 bi bi-hand-thumbs-up" /> : <i className="m-1 bi bi-hand-thumbs-down" />}</h1>*/}
-        {/*</button>*/}
+        <div className="d-flex flex-row justify-content-between">
+          <i className="text-regular"> Toggle track in playlists: </i>
+        </div>
         <div className="deep-dive-driver-playlists">
           {store.deepDiverPlaylistIndexes && Array.from(store.deepDiverPlaylistIndexes).map(([id, i]) => {
             const playlist = store.userPlaylists?.[store.deepDiverPlaylistIndexes?.get(id) || 0];
             const trackSet: Set<string> | undefined = playlist && store.deepDiverPlaylistTrackSets?.get(playlist.id);
-            return playlist && i !== 0 ? (
+            return playlist && (i !== 0 ? (
               <button
-                className={`primary-btn playlist-button m-1 ${store.currentTrack?.id && trackSet?.has(store.currentTrack.id) ? 'on' : 'off'}`}
-                onClick={() => store.toggleCurrentTrackInPlaylist(playlist) }
+                className={`primary-btn playlist-button m-1 ${trackSet?.has(deepDiveTrack.id) ? 'on' : 'off'}`}
+                onClick={() => store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, playlist) }
               >
                 { playlist?.name }
               </button>
-            ) : undefined;
+            ) : (
+              <button
+                className={`d-flex align-items-center text-center primary-btn playlist-button px-2 m-1 ${trackSet?.has(deepDiveTrack.id) ? 'on' : 'off'}`}
+                onClick={() => store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, playlist) }
+              >
+                Liked <i className={`mx-1 p-0 bi bi-heart${trackSet?.has(deepDiveTrack.id) ? '-fill' : ''}`} />
+              </button>
+            ));
           })}
         </div>
         <button className="secondary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
@@ -224,16 +236,6 @@ const DeepDiveDriver = observer(() => {
           <ModalBody><ConfigureDeepDivePlaylists hide={() => setConfigurePlaylistsOpen(false)}/></ModalBody>
         </Modal>
       </div>
-      {/*<div className="song-scroller">*/}
-      {/*  { getSongs()?.map((song, i) => (*/}
-      {/*    <IconView item={song} i={i} />*/}
-      {/*  )) || 'not initialized correctly'}*/}
-      {/*</div>*/}
-      {/*<div>*/}
-      {/*  <button className="primary-btn" onClick={store.updatePlayer}>*/}
-      {/*    Update Player*/}
-      {/*  </button>*/}
-      {/*</div>*/}
     </div>
   );
 });

@@ -27,6 +27,12 @@
   aspect-ratio: 1 / 1;
 }
 
+.deep-dive-creator-sort-button {
+  padding: 0;
+  margin-left: 0.125rem;
+  margin-right: 0.125rem;
+}
+
 .toggle-button-container {
   position: relative;
   //height: 100%;
@@ -162,18 +168,19 @@
   justify-content: space-between;
   width: 100%;
   font-size: 2rem;
-  padding: 1rem;
+  padding: 0.25rem 1rem;
 }
 
 .deep-dive-driver-actions {
   height: 100%;
   width: 90%;
-  margin: 1rem;
+  margin: 0.25rem 1rem;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+  padding: 0.5rem;
 }
 
 .deep-dive-driver-playlists {
@@ -181,9 +188,9 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-around;
-  margin: 1rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+  //margin: 1rem;
 }
 
 .configure-deep-dive-playlists {
@@ -195,6 +202,10 @@
 }
 
 .playlist-button {
+  max-width: 50vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: $primary-color;
 
   &:active, &:hover {

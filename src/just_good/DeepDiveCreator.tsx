@@ -19,8 +19,8 @@ TODO: IF YOU'RE CURRENTLY LISTENING TO THE PLAYLIST THIS COULD GET WEIRD
 
 const compareAlbumsAlpha = (a: Album, b: Album) => a.name.localeCompare(b.name);
 const compareAlbumsAlphaReverse = (a: Album, b: Album) => b.name.localeCompare(a.name);
-const compareAlbumsChrono = (a: Album, b: Album) => b.releaseDate.getTime() - a.releaseDate.getTime();
-const compareAlbumsChronoReverse = (a: Album, b: Album) => a.releaseDate.getTime() - b.releaseDate.getTime();
+const compareAlbumsChrono = (a: Album, b: Album) => a.releaseDate.getTime() - b.releaseDate.getTime();
+const compareAlbumsChronoReverse = (a: Album, b: Album) => b.releaseDate.getTime() - a.releaseDate.getTime();
 
 const DeepDiveCreator = observer(() => {
   const store = useStore();
@@ -222,8 +222,8 @@ const DeepDiveCreator = observer(() => {
         </button>
       </div>
       <div className="d-flex justify-content-between w-100 my-1">
-        <div className="d-flex justify-content-start my-2">
-          <i className="text-regular"> { getSortDescription() } </i>
+        <div className="d-flex justify-content-start align-items-center mx-2">
+          <i className="text-small m-0 p-0"> { getSortDescription() } </i>
         </div>
         <div className="d-flex justify-content-end my-2">
           <button className="deep-dive-creator-sort-button" onClick={clickGroup}>

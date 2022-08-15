@@ -35,7 +35,7 @@ const Dashboard = observer(() => {
       <JustGoodScroller
         label="Finished Just Good Playlists"
         emptyLabel="haha no bitches"
-        playlists={[]}
+        playlists={store.justGoodPlaylists}
         view="view-deep-dive"
       />
       <JustGoodScroller

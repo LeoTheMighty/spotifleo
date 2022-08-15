@@ -47,6 +47,7 @@ const DeepDiveDriver = observer(() => {
   const [trackIndex, setTrackIndex] = useState(0);
 
   const [showPauseButton, setShowPauseButton] = useState(true);
+  const [likeButtonAnimate, setLikeButtonAnimate] = useState(false);
 
   useSwipe({
     onLeft: () => store.skipPrevious(),
@@ -84,6 +85,13 @@ const DeepDiveDriver = observer(() => {
     return <LoadingIndicator />;
   }
   const deepDiveTrack = store.currentJustGoodPlaylist.deepDiveTracks[trackIndex];
+  const isLiked = store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id);
+  useEffect(() => {
+    if (isLiked) {
+      setLikeButtonAnimate(true);
+      setTimeout(() => setLikeButtonAnimate(false), 700);
+    }
+  }, [isLiked]);
   if (!deepDiveTrack) {
     return <LoadingIndicator />;
   }
@@ -185,15 +193,18 @@ const DeepDiveDriver = observer(() => {
           </div>
           <i className="text-bigger"> { deepDiveTrack.albumName } </i>
         </div>
-        <button className="p-0 m-0 bi-big" onClick={() => store.toggleCurrentTrackInJustGood()}>
-          {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (
-            <i className="bi bi-hand-thumbs-up-fill" />
-          ) : (
-            <i className="bi bi-hand-thumbs-up position-relative">
-              <i className="bi bi-plus floated-corner-icon" />
-            </i>
-          )}
+        <button className={`bi-big bubbly-button ${likeButtonAnimate ? 'animate' : ''}`} onClick={() => store.toggleCurrentTrackInJustGood()}>
+          <i className={`bi bi-hand-thumbs-up${isLiked ? '-fill' : ''} position-relative`} />
         </button>
+        {/*<button className="p-0 m-0 bi-big" onClick={() => store.toggleCurrentTrackInJustGood()}>*/}
+        {/*  {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (*/}
+        {/*    <i className="bi bi-hand-thumbs-up-fill" />*/}
+        {/*  ) : (*/}
+        {/*    <i className="bi bi-hand-thumbs-up position-relative">*/}
+        {/*      <i className="bi bi-plus floated-corner-icon" />*/}
+        {/*    </i>*/}
+        {/*  )}*/}
+        {/*</button>*/}
       </div>
       <button className="m-0 p-0" onClick={() => setMoreInfoOpen(o => !o)}>
         <i className="secondary-btn text-lighter">

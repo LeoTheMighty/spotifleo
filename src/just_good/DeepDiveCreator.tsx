@@ -203,7 +203,7 @@ const DeepDiveCreator = observer(() => {
           )}
         </button>
       </div>
-      <h1 className="text-center m-1"> Select which albums you want to exclude from the deep dive: </h1>
+      <h1 className="text-center m-1"> Select releases to exclude from the deep dive </h1>
       <div className="d-flex justify-content-around my-1 w-100">
         <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
           <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>

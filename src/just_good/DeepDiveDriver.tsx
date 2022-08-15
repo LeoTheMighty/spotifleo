@@ -173,7 +173,7 @@ const DeepDiveDriver = observer(() => {
         <i className="deep-dive-driver-track-prev-icon bi-caret-left-fill" />
         <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
       </div>
-      {(store.currentTrack?.playing && store.currentTrack.id === deepDiveTrack.id) && (
+      {(store.currentTrack?.id === deepDiveTrack.id) && (
         <div className="d-flex flex-row w-100 justify-content-between my-1">
           <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(0)}>
             0 / 3
@@ -215,13 +215,14 @@ const DeepDiveDriver = observer(() => {
         <table>
           {
             [
+              ['Song Name', deepDiveTrack.name],
               ['Album Name', deepDiveTrack.albumName],
-              // ['Artist Name(s)', artistString(deepDiveTrack.artists)],
+              [`Album Artist${deepDiveTrack.albumArtists.length === 1 ? '' : 's'}`, artistString(deepDiveTrack.albumArtists)],
               ['Features', artistString(featuredArtists(deepDiveTrack))],
               ['Popularity', deepDiveTrack.popularity],
               ['Explicit', deepDiveTrack.explicit ? 'Yes' : undefined],
             ].map(([info, value]) => value ? (
-              <tr><td><i>{info}</i></td><td className="d-flex justify-content-center">{value}</td></tr>
+              <tr><td><i>{info}</i></td><td className="d-flex justify-content-center text-center">{value}</td></tr>
             ) : undefined)
           }
         </table>
@@ -251,8 +252,8 @@ const DeepDiveDriver = observer(() => {
             ));
           })}
         </div>
-        <button className="secondary-btn" onClick={() => setConfigurePlaylistsOpen(true)}>
-          Add/Remove Additional Playlists
+        <button className="my-4 p-0" onClick={() => setConfigurePlaylistsOpen(true)}>
+          <i className="secondary-btn text-regular"> Add/Remove Additional Playlists </i>
         </button>
         <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>
           <ModalHeader closeButton><ModalTitle><h1>Add/Remove Playlist</h1></ModalTitle></ModalHeader>

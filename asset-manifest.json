@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/spotifleo/static/css/main.7f9eaaa5.css",
-    "main.js": "/spotifleo/static/js/main.38583ea6.js",
+    "main.css": "/spotifleo/static/css/main.6330bfe5.css",
+    "main.js": "/spotifleo/static/js/main.47e6b020.js",
     "static/js/787.fe8723b8.chunk.js": "/spotifleo/static/js/787.fe8723b8.chunk.js",
     "static/media/default_avatar.jpeg": "/spotifleo/static/media/default_avatar.33800973e33f5e250438.jpeg",
     "index.html": "/spotifleo/index.html",
-    "main.7f9eaaa5.css.map": "/spotifleo/static/css/main.7f9eaaa5.css.map",
-    "main.38583ea6.js.map": "/spotifleo/static/js/main.38583ea6.js.map",
+    "main.6330bfe5.css.map": "/spotifleo/static/css/main.6330bfe5.css.map",
+    "main.47e6b020.js.map": "/spotifleo/static/js/main.47e6b020.js.map",
     "787.fe8723b8.chunk.js.map": "/spotifleo/static/js/787.fe8723b8.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.7f9eaaa5.css",
-    "static/js/main.38583ea6.js"
+    "static/css/main.6330bfe5.css",
+    "static/js/main.47e6b020.js"
   ]
 }

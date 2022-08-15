@@ -29,7 +29,7 @@ const DeepDiveCreator = observer(() => {
   const [sortAlpha, setSortAlpha] = useState(false);
   const [sortChrono, setSortChrono] = useState(true);
   const [sortAlphaForward, setSortAlphaForward] = useState(true);
-  const [sortChronoForward, setSortChronoForward] = useState(false);
+  const [sortChronoForward, setSortChronoForward] = useState(true);
   const [customOrder, setCustomOrder] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);

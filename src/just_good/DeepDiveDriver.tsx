@@ -193,7 +193,7 @@ const DeepDiveDriver = observer(() => {
           </div>
           <i className="text-bigger"> { deepDiveTrack.albumName } </i>
         </div>
-        <button className={`bi-big bubbly-button ${likeButtonAnimate ? 'animate' : ''}`} onClick={() => store.toggleCurrentTrackInJustGood()}>
+        <button className={`m-0 p-0 bi-big bubbly-button ${likeButtonAnimate ? 'animate' : ''}`} onClick={() => store.toggleCurrentTrackInJustGood()}>
           <i className={`bi bi-hand-thumbs-up${isLiked ? '-fill' : ''} position-relative`} />
         </button>
         {/*<button className="p-0 m-0 bi-big" onClick={() => store.toggleCurrentTrackInJustGood()}>*/}

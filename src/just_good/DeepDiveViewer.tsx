@@ -4,7 +4,7 @@ import { useStore } from '../state/SpotifyStoreProvider';
 import Image from '../components/Image';
 import { useNavigate } from 'react-router-dom';
 import {
-  albumGroupString,
+  albumGroupString, artistString,
   driveDeepDiver,
   editDeepDiver,
   formatMs,
@@ -60,7 +60,7 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
             </div>
             <div className="d-flex flex-row align-items-start">
               {track.explicit ? <i className="explicit-icon bi bi-explicit-fill my-1"/> : ''}
-              <i className={`ellipses ${isGood ? '' : 'disabled'}`}> {track.artistName} </i>
+              <i className={`ellipses ${isGood ? '' : 'disabled'}`}> {artistString(track.artists)} </i>
             </div>
           </div>
         </div>

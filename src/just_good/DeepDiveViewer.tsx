@@ -137,10 +137,16 @@ const DeepDiveViewer = observer(() => {
             Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in
           </button>
         </div>
-        <button className="primary-btn mx-2 my-3" onClick={async () => {
+        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist?.inProgress ? 'off' : 'on'}`} onClick={async () => {
           await store.toggleJustGoodPlaylistComplete();
           if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-        }}> Mark { store.currentJustGoodPlaylist?.inProgress ? 'Complete' : 'in Progress'} </button>
+        }}>
+          { store.currentJustGoodPlaylist?.inProgress ? (
+            <> <i className="d-inline bi bi-lock"/> Mark Complete </>
+          ) : (
+            <> <i className="d-inline bi bi-unlock-fill" /> Mark in Progress </>
+          )}
+        </button>
       </div>
       <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
           getPlaylistUrl(store.currentJustGoodPlaylist.id) :
@@ -149,7 +155,7 @@ const DeepDiveViewer = observer(() => {
         Just Good { store.currentJustGoodPlaylist?.artistName }
       </a></h1>
       <button
-        className={`m-4 primary-btn playlist-button ${viewDiscography ? 'on' : 'off'}`}
+        className={`m-4 primary-btn toggle ${viewDiscography ? 'on' : 'off'}`}
         onClick={() => setViewDiscography(v => !v) }
       >
         Show{viewDiscography ? 'ing' : ''} Whole Deep Dive

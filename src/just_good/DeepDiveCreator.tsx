@@ -242,9 +242,6 @@ const DeepDiveCreator = observer(() => {
           )}
         </div>
       </div>
-      {/*{ customOrder && !canUndo && (*/}
-      {/*  <div className="d-flex justify-content-start w-100 px-2"> <h2> Custom Order: </h2> </div>*/}
-      {/*)}*/}
       { getAlbumsComponent() }
       <ConfirmModal
         show={showConfirm}

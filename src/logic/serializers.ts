@@ -18,7 +18,7 @@ export const deserializeArtist = ({ id, external_urls: { spotify }, images, uri,
   url: spotify,
   uri,
   img: getImages(images),
-  genre: getGenre(genres),
+  genre: genres && getGenre(genres),
   popularity,
 });
 
@@ -32,9 +32,10 @@ export const deserializeTrack = ({ id, name, album, popularity, uri, external_ur
   url: spotify,
   uri,
   artistIds: getArtistIds(artists),
-  artistName: artistString(artists),
+  artists: deserializeArtists(artists),
   albumId: passedAlbum?.id || album?.id,
   albumName: passedAlbum?.name || album?.name,
+  albumArtists: deserializeArtists(passedAlbum?.artists || album?.artists || []),
   discNumber: disc_number,
   trackNumber: track_number,
   duration: duration_ms,
@@ -72,7 +73,7 @@ export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => (
 
 
 export const deserializeCachedPlaylists = (playlists: PlaylistResponse[]): CachedPlaylist[] => playlists.map(deserializeCachedPlaylist);
-export const deserializeCachedPlaylist = ({ id, name }: PlaylistResponse): CachedPlaylist => ({ id, name });
+export const deserializeCachedPlaylist = ({ id, name, tracks: { total } }: PlaylistResponse): CachedPlaylist => ({ id, name, numTracks: total });
 
 export const deserializePlayingTrack = (playbackResponse: PlaybackResponse): PlayingTrack => ({
   ...deserializeTrack(playbackResponse.item),

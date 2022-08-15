@@ -113,6 +113,7 @@
   background: $search-bar-color;
   height: 4rem;
   border: none;
+  margin-bottom: 0.5rem;
 }
 
 .artist-result {
@@ -131,7 +132,7 @@
 }
 
 .artist-result-name {
-  font-size: 0.85rem;
+  font-size: 1rem;
   overflow: hidden;
   text-align: start;
   display: flex;
@@ -140,7 +141,7 @@
 }
 
 .search-result-action {
-  font-size: 1rem;
+  font-size: 2rem;
   height: 50%;
   aspect-ratio: 1 / 1;
   display: flex;

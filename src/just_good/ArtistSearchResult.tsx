@@ -18,7 +18,7 @@ const ArtistSearchResult = ({ artist, added, onClick, onClickAction }: Props) =>
           <Image className="artist-result-img" src={artist.img} alt={`${artist.name}`} />
           <p className="artist-result-name">{ artist.name }</p>
         </button>
-        <button className="primary-btn search-result-action" onTouchStart={onClickAction} onMouseDown={onClickAction}>
+        <button className="secondary-btn search-result-action" onTouchStart={onClickAction} onMouseDown={onClickAction}>
         { added ? (<i className="bi bi-eye-fill" />) : <i className="bi bi-plus" />}
         </button>
       </div>

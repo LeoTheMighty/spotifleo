@@ -20,20 +20,21 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
     <div className="just-good-scroller">
       <h2> { label || 'Just Good Playlists' } </h2>
       {playlists?.length ? (
-        <HorizontalScrollView>
-          {playlists?.map((playlist) => (
-            <button
-              key={playlist.id}
-              type="button"
-              className="horizontal-menu-item d-block"
-              onClick={() => navigate(deepDiver(playlist.id, view))}>
-              {playlist.artistImg && <Image className="just-good-scroller-image" src={playlist.artistImg} alt="test" large />}
-              <p> {playlist.name} </p>
-            </button>
-          ))}
-          {/*<LoadingIndicator onView={() => alert('viewed')} />*/}
-        </HorizontalScrollView>
-      ) : <div className="d-flex align-items-center h-100"> <i>{ emptyLabel }</i> </div>}
+        <div className="just-good-scroll-container">
+          <HorizontalScrollView>
+            {playlists?.map((playlist) => (
+              <button
+                key={playlist.id}
+                type="button"
+                className="horizontal-menu-item d-block"
+                onClick={() => navigate(deepDiver(playlist.id, view))}>
+                {playlist.artistImg && <Image className="just-good-scroller-image" src={playlist.artistImg} alt="test" large />}
+                <p> {playlist.name} </p>
+              </button>
+            ))}
+          </HorizontalScrollView>
+        </div>
+      ) : <div className="d-flex align-items-center m-3"> <i>{ emptyLabel }</i> </div>}
     </div>
   );
 };

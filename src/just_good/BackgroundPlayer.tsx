@@ -42,18 +42,22 @@ const BackgroundPlayer = observer(() => {
   const clickAlbum = () => {
     if (!store.currentTrack) {
       store.updatePlayer();
-    } else if (store.currentPlayingJustGoodPlaylist && (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id)) {
-      navigate(deepDiver(store.currentPlayingJustGoodPlaylist.id));
+    } else if (store.currentPlayingJustGoodPlaylist) {
+      if (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id) {
+        navigate(deepDiver(store.currentPlayingJustGoodPlaylist.id));
+      } else {
+        navigate(driveDeepDiver(store.currentPlayingJustGoodPlaylist.id));
+      }
     } else {
-      alert('TODO: Pop up screen to look up or add artist to just good? :)')
+    //   navigate(deepDiver(store.currentPlayingJustGoodPlaylist.id));
+      // alert('TODO: Pop up screen to look up or add artist to just good? :)')
     }
   };
 
-  return ( // if you drag, then it goes back?
+  return (
     <div className="background-player">
-      { /* Component to drag upwards */ }
       <div>
-
+        { /* TODO: Component to drag upwards? */ }
       </div>
       <div className="background-player-action-panel">
         <div className="background-player-action-panel-left">
@@ -61,15 +65,15 @@ const BackgroundPlayer = observer(() => {
             {(store.currentTrack?.img) ? (
               <>
                 <Image className="background-player-album" src={store.currentTrack.img} alt={store.currentTrack.name} />
-                {(store.currentPlayingJustGoodPlaylist && (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id)) ? (
-                  <i className="bi bi-box-arrow-up-right background-player-album-just-good-link">
-                    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />
-                  </i>
-                ) : (
-                  <i className="bi bi-plus-circle background-player-album-just-good-link">
-                    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />
-                  </i>
-                )}
+                {/*{(store.currentPlayingJustGoodPlaylist && (store.currentPlayingJustGoodPlaylist.id !== store.currentJustGoodPlaylist?.id)) ? (*/}
+                {/*  <i className="bi bi-box-arrow-up-right background-player-album-just-good-link">*/}
+                {/*    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />*/}
+                {/*  </i>*/}
+                {/*) : (*/}
+                {/*  <i className="bi bi-plus-circle background-player-album-just-good-link">*/}
+                {/*    <i className="bi bi-hand-thumbs-up background-player-album-just-good-thumb" />*/}
+                {/*  </i>*/}
+                {/*)}*/}
               </>
             ) : (
               <i className="bi bi-arrow-clockwise bi-small" />
@@ -103,7 +107,6 @@ const BackgroundPlayer = observer(() => {
             <i className="bi bi-skip-end-fill" />
           </button>
         </div>
-        {/*<div className="background-player-spacer" />*/}
         <div className="background-player-action-panel-right">
           { store.currentTrack && (
             store.currentPlayingJustGoodPlaylist && store.currentPlayingJustGoodPlaylist.trackIds ? (
@@ -115,7 +118,7 @@ const BackgroundPlayer = observer(() => {
                 )}
               </button>
             ) : (
-              <button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
+              <button className="px-1 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>
                 { store.currentTrack?.id && store.likedTrackSet?.has(store.currentTrack?.id) ? (
                   <i className="bi bi-heart-fill" />
                 ) : (
@@ -124,36 +127,6 @@ const BackgroundPlayer = observer(() => {
               </button>
             )
           )}
-          {/*<button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleCurrentTrackInPlaylist(store.likedPlaylist) }>*/}
-          {/*  { store.currentTrack?.id && store.likedTrackSet?.has(store.currentTrack?.id) ? (*/}
-          {/*    <i className="bi bi-heart-fill" />*/}
-          {/*  ) : (*/}
-          {/*    <i className="bi bi-heart" />*/}
-          {/*  )}*/}
-          {/*</button>*/}
-          {/*{(store.currentPlayingJustGoodPlaylist && store.currentJustGoodPlaylist && store.currentJustGoodPlaylist.trackIds !== undefined && (store.currentPlayingJustGoodPlaylist?.id === store.currentJustGoodPlaylist?.id)) ? (*/}
-          {/*  <button className="px-1" onClick={() => store.toggleCurrentTrackInJustGood()}>*/}
-          {/*    {(store.currentTrack?.id && store.currentJustGoodPlaylist?.trackIds?.has(store.currentTrack.id)) ? (*/}
-          {/*      <i className="bi bi-hand-thumbs-up-fill" />*/}
-          {/*    ) : (*/}
-          {/*      <i className="bi bi-hand-thumbs-up" />*/}
-          {/*    )}*/}
-          {/*  </button>*/}
-          {/*) : (*/}
-          {/*  (store.currentPlayingJustGoodPlaylist === undefined) ? ( // jesus. nested ternaries ;/*/}
-          {/*    <button className="px-1" onClick={() => alert('TODO: pull up modal to choose which artist to add if multiple')}>*/}
-          {/*      <i className="bi bi-person-plus position-relative" >*/}
-          {/*        <i className="bi bi-hand-thumbs-up floated-corner-icon"/>*/}
-          {/*      </i>*/}
-          {/*    </button>*/}
-          {/*  ) : (*/}
-          {/*    <button className="px-1" onClick={() => navigate(deepDiver(store.currentPlayingJustGoodPlaylist!.id))}>*/}
-          {/*      <i className="bi bi-eye position-relative">*/}
-          {/*        <i className="bi bi-hand-thumbs-up floated-corner-icon"/>*/}
-          {/*      </i>*/}
-          {/*    </button>*/}
-          {/*  )*/}
-          {/*)}*/}
         </div>
       </div>
       <Slider store={store} />

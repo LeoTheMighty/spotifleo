@@ -48,7 +48,15 @@ import {
   CachedJustGoodPlaylist,
   Token,
   Track,
-  JustGoodPlaylist, DeepDiverViewType, Album, AlbumGroup, FetchedAlbum, Progress, FetchedCachedPlaylist, PlayingTrack
+  JustGoodPlaylist,
+  DeepDiverViewType,
+  Album,
+  AlbumGroup,
+  FetchedAlbum,
+  Progress,
+  FetchedCachedPlaylist,
+  PlayingTrack,
+  HelpViewType
 } from '../types';
 import { deserializeArtists, deserializePlayingTrack, deserializeTrack } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
@@ -106,11 +114,12 @@ export interface SpotifyStore {
 
   // High Level Spotify Player
   currentTrack?: PlayingTrack;
-  showHelpScreen: boolean;
 
   // Loading Logic
   progress?: Progress; // Not loading if undefined
 
+  // Help Logic
+  helpView?: HelpViewType;
   // Up next/prev previewer
   // TODO: currentContextTracks: Images[]; ?
 
@@ -173,7 +182,6 @@ export interface SpotifyStore {
   updatePlayer: () => Promise<void>;
   toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
   toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
-  setShowHelpScreen: (showHelpScreen: boolean) => void;
 
   // Low Level Helpers
   toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
@@ -182,6 +190,10 @@ export interface SpotifyStore {
   startProgress: (task?: string) => void;
   updateProgress: (progress: number, current?: string) => void;
   finishProgress: () => void;
+
+  // Help
+  view?: 'usage';
+  setHelpView: (helpView: HelpViewType) => void;
 
   // ============ DEBUGGING ================
   logStore: () => void;
@@ -457,13 +469,15 @@ const useSpotifyStore = () => {
 
       console.log('Fetching User Liked songs');
       store.updateProgress(0.6, 'Fetching and caching all User Liked tracks...');
-      const likedPlaylist: CachedPlaylist = {
-        id: LIKED_INDICATOR,
-        name: 'Liked Songs',
-      };
 
       const cb2 = (progress: number) => store.updateProgress(nestProgress(progress, 0.6, 0.9));
       const trackSet = new Set((await getAllCurrentUserLikedSongs(token, cb2)).map((t) => t.id));
+
+      const likedPlaylist: CachedPlaylist = {
+        id: LIKED_INDICATOR,
+        name: 'Liked Songs',
+        numTracks: trackSet.size,
+      };
 
       store.deepDiverPlaylistIndexes = new Map();
       store.deepDiverPlaylistTrackSets = new Map();
@@ -615,6 +629,7 @@ const useSpotifyStore = () => {
             deepDivePlaylist: {
               id: playlist.deepDivePlaylist.id,
               name: playlist.deepDivePlaylist.name,
+              numTracks: playlist.deepDivePlaylist.numTracks,
             },
             trackIds: justGoodPlaylistTrackIds,
             deepDiveTracks: deepDivePlaylistTracks,
@@ -740,6 +755,7 @@ const useSpotifyStore = () => {
         deepDivePlaylist: {
           id: deepDiveId,
           name: deepDiveName,
+          numTracks: tracks.length,
         },
         trackIds: new Set((await getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb)).map(t => t.id)),
         deepDiveTracks: tracks,
@@ -784,6 +800,7 @@ const useSpotifyStore = () => {
         artistName: 'aristn',
         inProgress: true,
         progress: 0,
+        numTracks: 0,
       });
 
       const name = getInProgressJustGoodPlaylistName(artist.name);
@@ -798,6 +815,7 @@ const useSpotifyStore = () => {
         artistImg: artist.img,
         inProgress: true,
         progress: 0,
+        numTracks: 0,
       }
 
       store.plannedJustGoodPlaylists = [justGoodPlaylist, ...(store.plannedJustGoodPlaylists || [])];
@@ -883,16 +901,24 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
       if (!store.currentJustGoodPlaylist?.trackIds) return notInitialized();
 
+      if (!store.currentJustGoodPlaylist.inProgress) {
+        store.helpView = 'not-in-progress';
+        return;
+      }
+
       const playlistId = store.currentJustGoodPlaylist?.id;
       if (playlistId === undefined || !track) return fail('Tracks not initialized');
 
       await store.toggleTrackInFetchedPlaylist(track, store.currentJustGoodPlaylist);
 
       if (store.isPlayingCurrentDeepDivePlaylist) {
+        // Update the duplicated playlist if they're the same
         if (store.currentJustGoodPlaylist.trackIds.has(track.id)) {
           store.currentPlayingJustGoodPlaylist?.trackIds?.add(track.id);
+          store.currentPlayingJustGoodPlaylist?.numTracks && (store.currentPlayingJustGoodPlaylist.numTracks += 1);
         } else {
           store.currentPlayingJustGoodPlaylist?.trackIds?.delete(track.id);
+          store.currentPlayingJustGoodPlaylist?.numTracks && (store.currentPlayingJustGoodPlaylist.numTracks -= 1);
         }
       }
     }),
@@ -902,16 +928,24 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
       if (!store.currentPlayingJustGoodPlaylist?.trackIds) return notInitialized();
 
+      if (!store.currentPlayingJustGoodPlaylist.inProgress) {
+        store.helpView = 'not-in-progress';
+        return;
+      }
+
       const playlistId = store.currentPlayingJustGoodPlaylist?.id;
       if (playlistId === undefined || !track) return fail('Tracks not initialized');
 
       await store.toggleTrackInFetchedPlaylist(track, store.currentPlayingJustGoodPlaylist);
 
       if (store.isPlayingCurrentDeepDivePlaylist) {
+        // Update the duplicated playlist if they're the same
         if (store.currentPlayingJustGoodPlaylist.trackIds.has(track.id)) {
           store.currentJustGoodPlaylist?.trackIds?.add(track.id);
+          store.currentJustGoodPlaylist?.numTracks && (store.currentJustGoodPlaylist.numTracks += 1);
         } else {
           store.currentJustGoodPlaylist?.trackIds?.delete(track.id);
+          store.currentJustGoodPlaylist?.numTracks && (store.currentJustGoodPlaylist.numTracks -= 1);
         }
       }
     }),
@@ -1023,7 +1057,7 @@ const useSpotifyStore = () => {
       } catch (e) {
         // @ts-ignore
         if (e.reason === 'NO_ACTIVE_DEVICE') {
-          store.setShowHelpScreen(true);
+          store.setHelpView('usage');
         } else {
           throw e;
         }
@@ -1167,6 +1201,7 @@ const useSpotifyStore = () => {
           await removeTrackFromPlaylist(uri, playlistID, token);
         }
         trackIds.delete(id);
+        playlist.numTracks -= 1;
       } else {
         if (playlistID === LIKED_INDICATOR) {
           await addTrackToLiked(id, token);
@@ -1174,6 +1209,7 @@ const useSpotifyStore = () => {
           await addTrackToPlaylist(playlist.id, uri, token);
         }
         trackIds.add(id);
+        playlist.numTracks += 1;
       }
 
       await store.saveUser();
@@ -1197,6 +1233,7 @@ const useSpotifyStore = () => {
           await removeTrackFromPlaylist(store.currentTrack.uri, playlist.id, token);
         }
         trackSet.delete(store.currentTrack.id);
+        playlist.numTracks -= 1;
       } else {
         if (playlist.id === LIKED_INDICATOR) {
           await addTrackToLiked(store.currentTrack.id, token);
@@ -1204,12 +1241,11 @@ const useSpotifyStore = () => {
           await addTrackToPlaylist(playlist.id, store.currentTrack.uri, token);
         }
         trackSet.add(store.currentTrack.id);
+        playlist.numTracks += 1;
       }
 
       await store.saveUser();
     }),
-
-    setShowHelpScreen: action((showHelpScreen: boolean) => store.showHelpScreen = showHelpScreen),
 
     startProgress: action((task?: string) => {
       store.progress = { task: (task || ''), current: '', progress: 0 };
@@ -1233,6 +1269,11 @@ const useSpotifyStore = () => {
 
         setTimeout(() => runInAction(() => (store.progress = undefined)), 1000);
       }
+    }),
+
+    setHelpView: action((helpView: HelpViewType) => {
+      store.helpView = helpView;
+      store.updatePlayer();
     }),
 
     // really slow

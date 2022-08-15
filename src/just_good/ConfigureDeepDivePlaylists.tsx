@@ -10,17 +10,28 @@ const ConfigureDeepDivePlaylists = observer(({ hide }: { hide: () => void }) => 
 
   return (
     <div className="configure-deep-dive-playlists">
-      {store.userPlaylists?.map((playlist, i) => (playlist.id === LIKED_INDICATOR ? undefined :
-        <button
-          className={`primary-btn playlist-button ${store.deepDiverPlaylistIndexes?.has(playlist.id) ? 'on' : 'off'}`}
-          onClick={() => {
-            store.togglePlaylistInDeepDiverPlaylists(playlist, i);
-            hide();
-          }}
-        >
-          { playlist.name }
-        </button>
-      ))}
+      <table>
+        <tr>
+          <th>Playlist</th>
+          <th>Tracks</th>
+        </tr>
+        {store.userPlaylists?.map((playlist, i) => (playlist.id === LIKED_INDICATOR ? undefined :
+          <tr>
+            <td>
+              <button
+                className={`primary-btn playlist-button ${store.deepDiverPlaylistIndexes?.has(playlist.id) ? 'on' : 'off'}`}
+                onClick={() => {
+                  store.togglePlaylistInDeepDiverPlaylists(playlist, i);
+                  hide();
+                }}
+              >
+                { playlist.name }
+              </button>
+            </td>
+            <td className="d-flex justify-content-end"> { playlist.numTracks } </td>
+          </tr>
+        ))}
+      </table>
     </div>
   );
 });

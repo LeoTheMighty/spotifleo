@@ -10,7 +10,6 @@
 }
 
 .just-good-scroller {
-  height: 30vh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -18,7 +17,17 @@
   align-content: center;
   justify-content: flex-start;
   font-size: 0.9rem;
-  margin-bottom: 4rem;
+  margin-bottom: 2rem;
+}
+
+.just-good-scroll-container {
+  height: 30vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .just-good-scroller-image {
@@ -143,6 +152,7 @@
   font-size: 4rem;
   top: calc(50% - 3rem);
   pointer-events: none;
+  transition: color 0.2s linear;
 }
 
 .deep-dive-driver-track-next-icon {
@@ -199,6 +209,24 @@
   flex-direction: row;
   justify-content: space-around;
   align-items: center
+}
+
+.toggle {
+  color: $primary-color;
+
+  &:active, &:hover {
+    background-color: unset;
+  }
+}
+
+.toggle.on {
+  background-color: $primary-color;
+  color: $primary-text;
+}
+
+.toggle.off {
+  background-color: transparent;
+  color: $primary-color;
 }
 
 .playlist-button {

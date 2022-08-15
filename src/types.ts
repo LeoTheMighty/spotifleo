@@ -38,8 +38,10 @@ export interface FetchedAlbum extends Album {
 export interface Track extends SpotifyItem {
   artistIds?: string[];
   artistName?: string;
+  artists: Artist[];
   albumId?: string;
   albumName?: string;
+  albumArtists: Artist[];
   discNumber: number;
   trackNumber: number;
   popularity: number;
@@ -90,6 +92,7 @@ export interface Playback {
 export interface CachedPlaylist {
   name: string;
   id: string;
+  numTracks: number;
 }
 
 export interface FetchedCachedPlaylist extends CachedPlaylist {
@@ -342,6 +345,8 @@ export interface Progress {
 }
 
 export type ProgressCallback = (progress: number, current?: string) => void;
+
+export type HelpViewType = 'usage' | 'not-in-progress' | undefined;
 
 // export interface IconViewable extends SpotifyItem {
 //   img: string; // src/url of img

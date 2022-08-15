@@ -13,9 +13,7 @@ import DeepDiver from './just_good/DeepDiver';
 import TopBar from './just_good/TopBar';
 import BottomBar from './just_good/BottomBar';
 import SpotifyAuthLogout from './auth/SpotifyAuthLogout';
-// import LoadingIndicator from './common/LoadingIndicator';
-// import LoadingScreen from './components/LoadingScreen';
-import { Modal, ModalHeader } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import HelpView from './just_good/HelpView';
 
 const NavToRoot = () => {
@@ -59,13 +57,9 @@ const App = observer(() => {
             )}
           </div>
           <BottomBar />
-          <Modal show={store.showHelpScreen} onHide={() => store.setShowHelpScreen(false)}>
-            <ModalHeader closeButton> <h1> How to Use </h1> </ModalHeader>
-            <HelpView />
+          <Modal show={store.helpView !== undefined} onHide={() => store.setHelpView(undefined)}>
+            <HelpView view={store.helpView} />
           </Modal>
-          {/*<Modal show={store.progress !== undefined}>*/}
-          {/*  <LoadingScreen />*/}
-          {/*</Modal>*/}
         </BrowserRouter>
       </StoreProvider>
     </div>

@@ -2,19 +2,26 @@ import React, { ChangeEvent, useState } from 'react';
 import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { debounce } from 'lodash';
-import LoadingIndicator from '../common/LoadingIndicator';
 import ArtistSearchResult from './ArtistSearchResult';
 import { Artist } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { deepDiver } from '../logic/common';
 
 const SEARCH_DEBOUNCE_TIME = 800;
 
 const ArtistSearch = observer(() => {
   const store = useStore();
+  const navigate = useNavigate();
   const [inputSelected, setInputSelected] = useState(false);
 
   const onClick = (artist: Artist) => {
-    if (!store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) {
+    if (!store.justGoodPlaylistArtistMap?.has(artist.id)) {
       store.createJustGoodPlaylist(artist);
+    } else {
+      const id = store.justGoodPlaylistArtistMap.get(artist.id)?.id;
+      if (id) {
+        navigate(deepDiver(id));
+      }
     }
   };
 
@@ -55,7 +62,8 @@ const ArtistSearch = observer(() => {
         {store.artistResults.map((artist) => (
           <ArtistSearchResult
             artist={artist}
-            added={store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id) || false}
+            added={store.justGoodPlaylistArtistMap?.has(artist.id) || false}
+            onClick={() => onClick(artist)}
             onClickAction={() => onClick(artist)}
           />
         ))}

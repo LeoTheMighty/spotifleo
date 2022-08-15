@@ -249,7 +249,7 @@ export const getAllCurrentUserPlaylists = async (token: string, pcb?: ProgressCa
     const response = await getCurrentUserPlaylists(MAX_FETCH_ITEMS, playlists.length, token);
 
     response.items.forEach((playlist) => {
-      playlists.push({ id: playlist.id, name: playlist.name });
+      playlists.push({ id: playlist.id, name: playlist.name, numTracks: playlist.tracks.total });
     });
     pcb?.(playlists.length / total);
     total = response.total

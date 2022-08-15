@@ -4,7 +4,7 @@ import {
   ImageResponse,
   Images,
   CachedJustGoodPlaylist,
-  JustGoodPlaylist, AlbumType, AlbumGroup
+  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist
 } from '../types';
 import defaultAvatar from '../images/default_avatar.jpeg';
 import { capitalize } from 'lodash';
@@ -66,9 +66,14 @@ export const getArtistIds = (artists?: ArtistResponse[]): string[] | undefined =
   artists && artists.map((a) => a.id)
 );
 
-export const artistString = (artists?: ArtistResponse[]) => (
+export const artistString = (artists?: Artist[]) => (
   artists ? artists.map((artist) => artist.name).join(', ') : ''
 );
+
+// remove all artists that aren't artists of the album
+export const featuredArtists = (track: Track): Artist[] => (
+  track.artists.filter((a) => !track.albumArtists.find((aa) => aa.id === a.id))
+)
 
 export const getImages = (images?: ImageResponse[]): Images => {
   let minURL = undefined;
@@ -208,6 +213,7 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): CachedJust
   inProgress: justGoodPlaylist.inProgress,
   progress: justGoodPlaylist.progress,
   artistId: justGoodPlaylist.artistId,
+  numTracks: justGoodPlaylist.numTracks,
 });
 
 export const newTab = { target: "_blank", rel: "noreferrer noopener" };

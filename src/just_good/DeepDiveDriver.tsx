@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Track } from '../types';
 import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
-import { Modal, ModalBody, ModalHeader, ModalTitle, ProgressBar } from 'react-bootstrap';
+import { Modal, ModalBody, ModalHeader, ModalTitle } from 'react-bootstrap';
 import {
-  arrayGetWrap,
-  editDeepDiver,
+  arrayGetWrap, artistString,
+  editDeepDiver, featuredArtists,
   getPlaylistUrl, newTab,
   viewDeepDiver,
   wrapIndex
@@ -14,8 +13,6 @@ import Image from '../components/Image';
 import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
-import SpotifySlider from './SpotifySlider';
-import { toJS } from 'mobx';
 import useSwipe from '../components/SwipeHook';
 
 /*
@@ -38,7 +35,6 @@ Back button "<"                                 "View Playlist in Spotify"
 
 // Prepare 5 components.
 // TODO: ADD MORE INFO FOR THE ALBUM (MAYBE HAVE A BUTTON TO OPEN EXTRA INFO)
-// TODO: ADD MORE ACTIONS LIKE GO TO 1/3 in and/or 2/3 in if you in a rush
 
 const DeepDiveDriver = observer(() => {
   const store = useStore();
@@ -49,6 +45,8 @@ const DeepDiveDriver = observer(() => {
   const [skipNext, setSkipNext] = useState(false);
   const [skipPrev, setSkipPrev] = useState(false);
   const [trackIndex, setTrackIndex] = useState(0);
+
+  const [showPauseButton, setShowPauseButton] = useState(true);
 
   useSwipe({
     onLeft: () => store.skipPrevious(),
@@ -65,6 +63,7 @@ const DeepDiveDriver = observer(() => {
         if (progress === prevWrapIndex) {
           setSkipPrev(true);
           setTimeout(() => setSkipPrev(false), 1000);
+          setShowPauseButton(true);
         } else if (progress === nextWrapIndex) {
           setSkipNext(true);
           setTimeout(() => setSkipNext(false), 1000);
@@ -72,6 +71,14 @@ const DeepDiveDriver = observer(() => {
       }
     }
   }, [store.currentJustGoodPlaylist?.progress]);
+
+  useEffect(() => {
+    const deepDiveTrack = store.currentJustGoodPlaylist?.deepDiveTracks?.[trackIndex];
+    if (store.currentTrack?.playing && deepDiveTrack && store.currentTrack.id === deepDiveTrack.id) {
+      setShowPauseButton(true);
+      setTimeout(() => setShowPauseButton(false), 3000);
+    }
+  }, [store.currentJustGoodPlaylist?.deepDiveTracks, store.currentTrack?.playing]);
 
   if (store.currentJustGoodPlaylist === undefined || store.currentJustGoodPlaylist.progress === undefined || store.currentJustGoodPlaylist.deepDiveTracks === undefined || store.currentJustGoodPlaylist.trackIds === undefined) {
     return <LoadingIndicator />;
@@ -81,19 +88,15 @@ const DeepDiveDriver = observer(() => {
     return <LoadingIndicator />;
   }
 
-  // console.log(toJS(store.currentJustGoodPlaylist.trackIds));
-
   const prevPrevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 2).img;
   const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 1).img;
   const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 1).img;
   const nextNextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 2).img;
-  const isGood = deepDiveTrack?.id && store.currentJustGoodPlaylist.trackIds.has(deepDiveTrack.id)
 
   return (
     <div className="deep-dive-driver">
       <div className="d-flex flex-column w-100">
         <div className="d-flex justify-content-between mx-2 mt-2">
-          {/*<a href={`https://open.spotify.com/playlist/${store.currentJustGoodPlaylist.id}`} className="secondary-btn m-2"> {'<'} View Playlist in Spotify </a>*/}
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(viewDeepDiver(store.currentJustGoodPlaylist.id))}>
             View Playlist
           </button>
@@ -101,10 +104,16 @@ const DeepDiveDriver = observer(() => {
             Edit Dive
           </button>
         </div>
-        <button className="primary-btn mx-2 my-3" onClick={async () => {
+        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist.inProgress ? 'off' : 'on'}`} onClick={async () => {
           await store.toggleJustGoodPlaylistComplete();
           if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
-        }}> Mark { store.currentJustGoodPlaylist.inProgress ? 'Complete' : 'in Progress'} </button>
+        }}>
+          { store.currentJustGoodPlaylist.inProgress ? (
+            <> <i className="d-inline bi bi-lock"/> Mark Complete </>
+          ) : (
+            <> <i className="d-inline bi bi-unlock-fill" /> Mark in Progress </>
+          )}
+        </button>
       </div>
       <h1 className="text-center"><a className="text-decoration-none" href={(store.currentJustGoodPlaylist?.id) ?
         getPlaylistUrl(store.currentJustGoodPlaylist.id) :
@@ -149,38 +158,32 @@ const DeepDiveDriver = observer(() => {
           />
         </div>
         { (store.currentTrack?.playing && store.currentTrack.id === deepDiveTrack.id) ? (
-          <i className="deep-dive-driver-track-play-icon bi-pause" />
+          <i className={`deep-dive-driver-track-play-icon bi-pause ${showPauseButton ? '' : 'transparent'}`} />
         ) : (
           <i className="deep-dive-driver-track-play-icon bi-play" />
         )}
         <i className="deep-dive-driver-track-prev-icon bi-caret-left-fill" />
         <i className="deep-dive-driver-track-next-icon bi-caret-right-fill" />
       </div>
-      <div className="d-flex flex-row w-100 justify-content-between my-1">
-        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(0)}>
-          0 / 3
-        </button>
-        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition((store.currentTrack?.duration || 0) / 3)}>
-          1 / 3
-        </button>
-        <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(2 * (store.currentTrack?.duration || 0) / 3)}>
-          2 / 3
-        </button>
-      </div>
+      {(store.currentTrack?.playing && store.currentTrack.id === deepDiveTrack.id) && (
+        <div className="d-flex flex-row w-100 justify-content-between my-1">
+          <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(0)}>
+            0 / 3
+          </button>
+          <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition((store.currentTrack?.duration || 0) / 3)}>
+            1 / 3
+          </button>
+          <button className="primary-btn text-smaller px-2 py-0 m-2" onClick={() => store.seekToPosition(2 * (store.currentTrack?.duration || 0) / 3)}>
+            2 / 3
+          </button>
+        </div>
+      )}
       <div className="deep-dive-driver-track-info">
-        {/*<button className="p-0 m-0" onClick={() => store.likedPlaylist && store.toggleTrackInDeepDiverPlaylist(deepDiveTrack, store.likedPlaylist) }>*/}
-        {/*  { deepDiveTrack.id && store.likedTrackSet?.has(deepDiveTrack.id) ? (*/}
-        {/*    <i className="bi bi-heart-fill" />*/}
-        {/*  ) : (*/}
-        {/*    <i className="bi bi-heart" />*/}
-        {/*  )}*/}
-        {/*</button>*/}
         <div className="d-flex justify-content-between flex-column text-start mx-3 rest-space">
           <div className="d-flex flex-row justify-content-between">
             <h1> { deepDiveTrack.name } </h1>
           </div>
           <i className="text-bigger"> { deepDiveTrack.albumName } </i>
-          {/*<i className="text-smaller"> { deepDiveTrack.artistName } </i>*/}
         </div>
         <button className="p-0 m-0 bi-big" onClick={() => store.toggleCurrentTrackInJustGood()}>
           {(deepDiveTrack && store.currentJustGoodPlaylist?.trackIds?.has(deepDiveTrack.id)) ? (
@@ -198,10 +201,19 @@ const DeepDiveDriver = observer(() => {
         </i>
       </button>
       {moreInfoOpen && (
-        <div className="d-flex flex-column text-center">
-          <p>Album Name: {deepDiveTrack.albumName}</p>
-          <p>Artist Name(s): {deepDiveTrack.artistName}</p>
-        </div>
+        <table>
+          {
+            [
+              ['Album Name', deepDiveTrack.albumName],
+              // ['Artist Name(s)', artistString(deepDiveTrack.artists)],
+              ['Features', artistString(featuredArtists(deepDiveTrack))],
+              ['Popularity', deepDiveTrack.popularity],
+              ['Explicit', deepDiveTrack.explicit ? 'Yes' : undefined],
+            ].map(([info, value]) => value ? (
+              <tr><td><i>{info}</i></td><td className="d-flex justify-content-center">{value}</td></tr>
+            ) : undefined)
+          }
+        </table>
       )}
       <div className="deep-dive-driver-actions">
         <div className="d-flex flex-row justify-content-between">

@@ -46,6 +46,24 @@ i {
   color: $secondary-text;
 }
 
+table {
+  //border: 1px solid $search-bar-color;
+  width: 80%;
+}
+
+tr {
+  display: flex;
+  justify-content: space-between;
+}
+
+td {
+  //display: flex;
+  //justify-content: center;
+  padding: 4px;
+  width: 100%;
+  //border: 1px solid $search-bar-color;
+}
+
 #root {
   background: black;
 }

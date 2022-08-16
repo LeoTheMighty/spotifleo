@@ -14,7 +14,7 @@
 
   m .979 -2.178
   a .624 .624 0 0 1 -.858 .205
-  c -2.15 -1.321 -5.428 -1.704 -7.972 -.932
+  C 9.64 8.244 6.362 7.861 3.818 8.633
   a .625 .625 0 0 1 -.362 -1.194
   c 2.905 -.881 6.517 -.454 8.986 1.063
   a .624 .624 0 0 1 .206 .858
@@ -30,11 +30,21 @@
   "/>
 
   <circle cx="11.669" cy="11.538" r="0.1" fill="red"/>
+  <circle cx="10.983" cy="11.703" r="0.1" fill="red"/>
+  <circle cx="3.955" cy="10.933" r="0.1" fill="red"/>
+  <circle cx="3.733" cy="9.96" r="0.1" fill="red"/>
+  <circle cx="11.503" cy="10.852" r="0.1" fill="red"/>
+
   <circle cx="5.6" cy="5.8" r="0.1" fill="blue"/>
 
   <circle cx="12.648" cy="9.36" r="0.1" fill="red"/>
   <circle cx="11.79" cy="9.565" r="0.1" fill="red"/>
+  <circle cx="9.64" cy="8.244" r="0.1" fill="green"/>
+  <circle cx="6.362" cy="7.861" r="0.1" fill="green"/>
   <circle cx="3.818" cy="8.633" r="0.1" fill="red"/>
+
+  <circle cx="3.456" cy="7.439" r="0.1" fill="red"/>
+  <circle cx="12.442" cy="8.502" r="0.1" fill="red"/>
 
   <circle cx="6" cy="8.25" r="0.1" fill="blue"/>
 

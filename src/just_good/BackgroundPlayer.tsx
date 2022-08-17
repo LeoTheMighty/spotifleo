@@ -3,7 +3,7 @@ import Slider from './SpotifySlider';
 import { observer } from 'mobx-react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import { useNavigate } from 'react-router-dom';
-import { deepDiver, driveDeepDiver } from '../logic/common';
+import { artistString, deepDiver, driveDeepDiver } from '../logic/common';
 import Image from '../components/Image';
 
 const SHOULD_PRETEND = true;
@@ -87,7 +87,7 @@ const BackgroundPlayer = observer(() => {
             </div>
             <div className="h-100 m-1 d-flex align-items-start wrap overflow-hidden">
               <p>
-                { store.currentTrack?.artistName }
+                { store.currentTrack && artistString(store.currentTrack.artists) }
               </p>
             </div>
           </div>

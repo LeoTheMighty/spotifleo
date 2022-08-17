@@ -3,16 +3,6 @@
   "name": "Leo's Spotify App",
   "icons": [
     {
-      "src": "logo57.png",
-      "sizes": "57x57",
-      "type": "image/png"
-    },
-    {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
       "src": "logo192.png",
       "type": "image/png",
       "sizes": "192x192"

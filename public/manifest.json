@@ -16,5 +16,6 @@
   "start_url": "/spotifleo",
   "display": "standalone",
   "theme_color": "#042e01",
-  "background_color": "#042e01"
+  "background_color": "#042e01",
+  "id": "/spotifleo"
 }

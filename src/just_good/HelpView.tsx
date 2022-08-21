@@ -59,6 +59,22 @@ const HelpView = ({ view }: Props) => {
           { /* TODO: Make some ModalActions that do it in the modal itself? :oooo */ }
         </>
       );
+    case 'welcome':
+      return (
+        <>
+          <ModalHeader closeButton> <h1> Welcome to the Spotify-driven Deep Diver </h1> </ModalHeader>
+          <ModalBody>
+            <div className="d-flex flex-column justify-content-center m-2">
+              <i className="text-center">
+                The Spotify App rules dictate that I need to specify everyone who wants to
+                use my app specifically so just text me (Leo) or email me
+                at <a href="mailto:leonid@ac93.org" {...newTab}>leonid@ac93.org</a> to request access.
+              </i>
+            </div>
+          </ModalBody>
+          { /* TODO: Make some ModalActions that do it in the modal itself? :oooo */ }
+        </>
+      );
     default:
       return <> Oopsy leo forgot to do write this help screen ({ view }) </>;
   }

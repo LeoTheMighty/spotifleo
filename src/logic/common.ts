@@ -9,6 +9,10 @@ import {
 import { capitalize } from 'lodash';
 
 const IN_BETA = true;
+const IN_HOMESCREEN = window.matchMedia('(display-mode: standalone)').matches;
+
+// TODO: Test
+// alert(IN_HOMESCREEN);
 
 const BETA_TAG = '(TESTING)'
 export const JUST_GOOD_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Just Good`;

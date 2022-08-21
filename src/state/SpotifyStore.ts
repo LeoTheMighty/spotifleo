@@ -128,6 +128,7 @@ export interface SpotifyStore {
 
   // Help Logic
   helpView?: HelpViewType;
+  welcome: boolean;
 
   // ============ COMPUTED ================
   likedPlaylist: CachedPlaylist | undefined;
@@ -197,7 +198,6 @@ export interface SpotifyStore {
   finishProgress: () => void;
 
   // Help
-  view?: 'usage';
   setHelpView: (helpView: HelpViewType) => void;
 
   call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
@@ -218,6 +218,8 @@ const useSpotifyStore = () => {
     artistResults: [],
 
     showHelpScreen: false,
+
+    welcome: false,
 
     // ============ COMPUTED ================
     get likedPlaylist(): CachedPlaylist | undefined {
@@ -800,9 +802,9 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
       if (!store.justGoodPlaylistMap || !store.justGoodPlaylistArtistMap || store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) return fail('artist map not intialized');
 
-      // TODO: ??????? sstill no idea lmfao
+      // ok i figured it out i wrote a "mutex lock"
       store.justGoodPlaylistArtistMap.set(artist.id, {
-        id: 'id',
+        id: '',
         name: 'name',
         artistName: 'aristn',
         inProgress: true,

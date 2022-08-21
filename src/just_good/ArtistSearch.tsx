@@ -19,7 +19,7 @@ const ArtistSearch = observer(() => {
       store.createJustGoodPlaylist(artist);
     } else {
       const id = store.justGoodPlaylistArtistMap.get(artist.id)?.id;
-      if (id) {
+      if (id && id !== '') {
         navigate(deepDiver(id));
       }
     }

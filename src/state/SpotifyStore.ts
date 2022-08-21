@@ -220,7 +220,7 @@ const useSpotifyStore = () => {
 
     showHelpScreen: false,
 
-    welcomeStep: 0,
+    welcomeStep: undefined,
 
     // ============ COMPUTED ================
     get likedPlaylist(): CachedPlaylist | undefined {
@@ -775,7 +775,7 @@ const useSpotifyStore = () => {
       };
 
       const index = store.plannedJustGoodPlaylists?.findIndex(p => p.id === store.currentJustGoodPlaylist!.id);
-      store.plannedJustGoodPlaylists?.splice(index);
+      store.plannedJustGoodPlaylists?.splice(index, 1);
       store.inProgressJustGoodPlaylists.push(store.currentJustGoodPlaylist);
 
       store.currentDeepDiveArtistAlbumIDsOrdered = albums.map(a => a.id);

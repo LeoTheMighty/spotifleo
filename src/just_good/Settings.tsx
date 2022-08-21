@@ -13,14 +13,19 @@ const Settings = ({ hide }: Props) => {
     <>
       <ModalHeader closeButton> <ModalTitle> Settings </ModalTitle> </ModalHeader>
       <ModalBody>
-        <div className="d-flex justify-content-center">
+        <div className="d-flex justify-content-center m-2">
           <button className="reset-user-button primary-btn" onClick={() => { store.resetUser(); hide(); }}>
             Re-setup user
           </button>
         </div>
-        <div className="d-flex justify-content-center">
+        <div className="d-flex justify-content-center m-2">
           <button className="reset-user-button primary-btn" onClick={() => { store.deauthorize(); hide(); }}>
             Sign Out
+          </button>
+        </div>
+        <div className="d-flex justify-content-center m-2">
+          <button className="reset-user-button primary-btn" onClick={() => { store.welcomeStep = 0; store.helpView = 'welcome'; hide(); }}>
+            Start Welcome Flow
           </button>
         </div>
       </ModalBody>

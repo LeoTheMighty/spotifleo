@@ -1,6 +1,7 @@
 import React from 'react';
 import { ModalBody, ModalHeader } from 'react-bootstrap';
 import { HelpViewType } from '../types';
+import { newTab } from '../logic/common';
 
 type Props = {
   view: HelpViewType;
@@ -37,6 +38,22 @@ const HelpView = ({ view }: Props) => {
               <p className="text-center my-2">
                 Mark the playlist as "In Progress" before you can update it.
               </p>
+            </div>
+          </ModalBody>
+          { /* TODO: Make some ModalActions that do it in the modal itself? :oooo */ }
+        </>
+      );
+    case 'not-in-beta':
+      return (
+        <>
+          <ModalHeader closeButton> <h1> Not in the Beta Trial </h1> </ModalHeader>
+          <ModalBody>
+            <div className="d-flex flex-column justify-content-center m-2">
+              <i className="text-center">
+                The Spotify App rules dictate that I need to specify everyone who wants to
+                use my app specifically so just text me (Leo) or email me
+                at <a href="mailto:leonid@ac93.org" {...newTab}>leonid@ac93.org</a> to request access.
+              </i>
             </div>
           </ModalBody>
           { /* TODO: Make some ModalActions that do it in the modal itself? :oooo */ }

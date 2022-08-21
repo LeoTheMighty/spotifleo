@@ -56,7 +56,7 @@ import {
   Progress,
   FetchedCachedPlaylist,
   PlayingTrack,
-  HelpViewType
+  HelpViewType, APIError
 } from '../types';
 import { deserializeArtists, deserializePlayingTrack, deserializeTrack } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
@@ -120,8 +120,6 @@ export interface SpotifyStore {
 
   // Help Logic
   helpView?: HelpViewType;
-  // Up next/prev previewer
-  // TODO: currentContextTracks: Images[]; ?
 
   // ============ COMPUTED ================
   likedPlaylist: CachedPlaylist | undefined;
@@ -194,6 +192,8 @@ export interface SpotifyStore {
   // Help
   view?: 'usage';
   setHelpView: (helpView: HelpViewType) => void;
+
+  call: <T>(apiPromise: Promise<T>) => Promise<T>;
 
   // ============ DEBUGGING ================
   logStore: () => void;
@@ -1120,7 +1120,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      const playback = await getPlayback(token);
+      const playback = await store.call(getPlayback(token));
 
       runInAction(() => {
         store.currentTrack = playback.item && deserializePlayingTrack(playback);
@@ -1278,6 +1278,27 @@ const useSpotifyStore = () => {
 
     // really slow
     logStore: () => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),
+
+    call: async <T>(apiPromise: Promise<T>): Promise<T> => {
+      try {
+        return await apiPromise;
+      } catch (error) {
+        if (error instanceof APIError && error.status && error.reason) {
+          if (error.status === 429) {
+            console.error('Rate limited');
+            // TODO: Expoenential backoff?
+          } else if (error.status === 403) {
+            // TODO: Could this also check to see if the refresh token is expired
+            console.error('Forbidden');
+            if (error.reason === 'User not registered in the Developer Dashboard') {
+              store.deauthorize();
+              store.setHelpView('not-in-beta')
+            }
+          }
+        }
+        throw error;
+      }
+    },
   }));
 
   return store;

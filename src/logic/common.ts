@@ -4,25 +4,32 @@ import {
   ImageResponse,
   Images,
   CachedJustGoodPlaylist,
-  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist
+  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist, APIError
 } from '../types';
-import defaultAvatar from '../images/default_avatar.jpeg';
 import { capitalize } from 'lodash';
 
-export const JUST_GOOD_INDICATOR = '(TESTING) Just Good';
-export const IN_PROGRESS_INDICATOR = '(TESTING) [WIP] Just Good';
-export const DEEP_DIVE_INDICATOR = '(TESTING) Deep Dive of';
+const IN_BETA = true;
+
+const BETA_TAG = '(TESTING)'
+export const JUST_GOOD_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Just Good`;
+export const IN_PROGRESS_INDICATOR = `${IN_BETA ? BETA_TAG : ''} [WIP] Just Good`;
+export const DEEP_DIVE_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Deep Dive of`;
 
 export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
-  if (r.status === 204) return resolve(true);
-  if (r.headers.get('content-length') === '0') return resolve(true);
-  r.json().then((resp) => {
-    if (resp.error) {
-      reject(resp.error);
-    } else {
-      resolve(resp);
-    }
-  });
+  if (r.ok) {
+    if (r.status === 204) return resolve(true);
+    if (r.headers.get('content-length') === '0') return resolve(true);
+    r.json().then((resp) => {
+      if (resp.error) {
+        reject(resp.error);
+      } else {
+        resolve(resp);
+      }
+    });
+  } else {
+    console.error(r);
+    r.text().then(t => reject(new APIError(r.status, t)));
+  }
 });
 
 const myTag = 'Created using Leo Belyi\'s Deep Diver :)';

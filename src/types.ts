@@ -346,7 +346,18 @@ export interface Progress {
 
 export type ProgressCallback = (progress: number, current?: string) => void;
 
-export type HelpViewType = 'usage' | 'not-in-progress' | undefined;
+export type HelpViewType = 'usage' | 'not-in-progress' | 'not-in-beta' | undefined;
+
+export class APIError extends Error {
+  status: number;
+  reason: string;
+
+  constructor(status: number, reason: string) {
+    super(`${reason} (${status})`);
+    this.status = status;
+    this.reason = reason;
+  }
+}
 
 // export interface IconViewable extends SpotifyItem {
 //   img: string; // src/url of img

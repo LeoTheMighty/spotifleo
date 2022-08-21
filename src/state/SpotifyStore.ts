@@ -724,7 +724,7 @@ const useSpotifyStore = () => {
         console.log('CREATING DEEP DIVE PLAYLIST');
         store.updateProgress(0.1, 'Creating the playlist');
         // 1. Create Deep Dive Playlist
-        const response = await store.call(createPlaylist(getDeepDivePlaylistName(artistName), getDeepDivePlaylistDescription(artistName), token));
+        const response = await store.call(createPlaylist(getDeepDivePlaylistName(artistName), getDeepDivePlaylistDescription(artistName), false, token));
         deepDiveId = response.id;
         deepDiveName = response.name;
       } else {
@@ -814,7 +814,7 @@ const useSpotifyStore = () => {
 
       const name = getInProgressJustGoodPlaylistName(artist.name);
       const description = getInProgressJustGoodPlaylistDescription(artist.name);
-      const response = await store.call(createPlaylist(name, description, token));
+      const response = await store.call(createPlaylist(name, description, false, token));
 
       const justGoodPlaylist: CachedJustGoodPlaylist = {
         id: response.id,
@@ -990,7 +990,7 @@ const useSpotifyStore = () => {
       const name = inProgress ? getJustGoodPlaylistName(artistName) : getInProgressJustGoodPlaylistName(artistName);
       const description = inProgress ? getJustGoodPlaylistDescription(artistName) : getInProgressJustGoodPlaylistDescription(artistName);
 
-      await store.call(changePlaylistDetails(playlistID, name, description, token));
+      await store.call(changePlaylistDetails(playlistID, name, description, inProgress, token));
 
       store.currentJustGoodPlaylist.name = name;
       store.currentJustGoodPlaylist.inProgress = !inProgress;

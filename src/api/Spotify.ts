@@ -132,10 +132,11 @@ export const getMultipleAlbums = async (albumIds: string[], token: string): Prom
   callSpotifyAPI(token, '/albums', GET, { ids: formatQueryList(albumIds) })
 );
 
-export const createPlaylist = async (name: string, description: string, token: string): Promise<PlaylistResponse> => (
+export const createPlaylist = async (name: string, description: string, publicAccess: boolean, token: string): Promise<PlaylistResponse> => (
   callSpotifyAPI(token, '/me/playlists', POST, undefined, {
     name,
     description,
+    public: publicAccess,
   })
 );
 
@@ -228,10 +229,11 @@ export const removeTrackFromLiked = async (trackID: string, token: string) => (
   callSpotifyAPI(token, '/me/tracks', DELETE, { ids: [ trackID ]})
 );
 
-export const changePlaylistDetails = async (playlistID: string, name: string | undefined, description: string | undefined, token: string) => (
+export const changePlaylistDetails = async (playlistID: string, name: string | undefined, description: string | undefined, publicAccess: boolean | undefined, token: string) => (
   callSpotifyAPI(token, `/playlists/${playlistID}`, PUT, {}, {
     name,
     description,
+    public: publicAccess,
   })
 );
 

@@ -7,7 +7,7 @@ import {
   PlaylistResponse, PlaylistTrack, PlaylistTrackResponse, ProgressCallback, SpotifyItemResponse, Track, TrackResponse,
   UserProfileResponse,
 } from '../types';
-import { chunkList, formatQueryList, formatResp } from '../logic/common';
+import { chunkList, formatQueryList, formatResp, percent } from '../logic/common';
 import {
   deserializeAlbum,
   deserializeFetchedAlbum,
@@ -270,7 +270,7 @@ export const getAllCurrentUserLikedSongs = async (token: string, pcb?: ProgressC
     deserializePlaylistTrack,
     undefined,
     undefined,
-    pcb,
+    pcb && ((n) => pcb(n, `Fetching all Current User Liked Songs (${percent(n)})`)),
   )
 )
 export const getCurrentUserLikedSongs = async (limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistTrackResponse>> => (

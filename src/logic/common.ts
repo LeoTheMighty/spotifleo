@@ -15,20 +15,20 @@ export const JUST_GOOD_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Just Good`;
 export const IN_PROGRESS_INDICATOR = `${IN_BETA ? BETA_TAG : ''} [WIP] Just Good`;
 export const DEEP_DIVE_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Deep Dive of`;
 
+export const BACKOFF_LIMIT = 5;
+
 export const formatResp = async (r: Response): Promise<any> => new Promise((resolve, reject) => {
   if (r.ok) {
     if (r.status === 204) return resolve(true);
     if (r.headers.get('content-length') === '0') return resolve(true);
-    r.json().then((resp) => {
-      if (resp.error) {
-        reject(resp.error);
-      } else {
-        resolve(resp);
-      }
-    });
+    r.json().then(resolve);
   } else {
     console.error(r);
-    r.text().then(t => reject(new APIError(r.status, t)));
+    if (r.status === 404) {
+      r.json().then(j => reject(new APIError(r.status, j.error.reason)));
+    } else {
+      r.text().then(t => reject(new APIError(r.status, t)));
+    }
   }
 });
 
@@ -228,3 +228,19 @@ export const newTab = { target: "_blank", rel: "noreferrer noopener" };
 export const nestProgress = (value: number, min: number, max: number) => (min + (value * (max - min)));
 
 export const albumGroupString = (type: AlbumGroup): string => type.split('_').map(capitalize).join(' '); // overkill but sick
+
+export const percent = (n: number): string => `${Math.round(n * 100)}%`;
+
+export const backoffTimeoutMs = (n: number): number => {
+  if (n === 1) {
+    return 500;
+  } else if (n === 2) {
+    return 2500;
+  } else if (n === 3) {
+    return 5000;
+  } else if (n === 4) {
+    return 15000;
+  } else {
+    return 30000;
+  }
+};

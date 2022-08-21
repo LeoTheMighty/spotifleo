@@ -34,8 +34,9 @@ const App = observer(() => {
           <TopBar />
           <div className="app-content">
             { store.setupLoading ? (
-              <div className="d-flex justify-content-center align-items-center text-center w-100">
+              <div className="d-flex justify-content-center flex-column align-items-center text-center w-100">
                 <i className="text-center text-bigger m-3"> Loading all current user data... This may take a while </i>
+                <i className="text-center text-smaller mx-5"> {store.progress?.current} </i>
               </div>
             ) : (
               <Routes>

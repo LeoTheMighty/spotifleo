@@ -38,7 +38,15 @@ import {
   getInProgressJustGoodPlaylistDescription,
   importMapOfSets,
   exportMapOfSets,
-  getJustGoodPlaylistDescription, importMap, exportMap, getPlaylistUri, getID, justGoodToCached, nestProgress, wrapIndex
+  getJustGoodPlaylistDescription,
+  importMap,
+  exportMap,
+  getPlaylistUri,
+  getID,
+  justGoodToCached,
+  nestProgress,
+  wrapIndex,
+  sleep, BACKOFF_LIMIT, backoffTimeoutMs
 } from '../logic/common';
 import {
   Artist,
@@ -171,7 +179,6 @@ export interface SpotifyStore {
   createJustGoodPlaylist: (artist: Artist) => Promise<void>;
 
   // High Level Spotify Player
-  checkPlayer: (playerAction: (token: string) => Promise<void>, token: string) => Promise<void>;
   togglePlaying: () => Promise<void>;
   skipNext: () => Promise<void>;
   skipPrevious: () => Promise<void>;
@@ -193,7 +200,7 @@ export interface SpotifyStore {
   view?: 'usage';
   setHelpView: (helpView: HelpViewType) => void;
 
-  call: <T>(apiPromise: Promise<T>) => Promise<T>;
+  call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
 
   // ============ DEBUGGING ================
   logStore: () => void;
@@ -389,7 +396,7 @@ const useSpotifyStore = () => {
 
       console.log('Fetching user profile!')
 
-      const user = await getCurrentUserProfile(token);
+      const user = await store.call(getCurrentUserProfile(token));
 
       console.log('Loaded profile.');
       console.log(user);
@@ -402,7 +409,7 @@ const useSpotifyStore = () => {
       store.updateProgress(0.1, 'Fetching all user playlists')
 
       const cb1 = (p: number) => store.updateProgress(nestProgress(p, 0.1, 0.3));
-      const playlists = await getAllCurrentUserPlaylists(token, cb1);
+      const playlists = await store.call(getAllCurrentUserPlaylists(token, cb1));
 
       console.log('Fetched.');
       console.log(playlists);
@@ -444,7 +451,7 @@ const useSpotifyStore = () => {
           const artistName = playlist.name.substring(prefix.length).trim();
           console.log(`Artist Name from playlist: ${artistName}`);
 
-          const artist: ArtistResponse | undefined = (await searchForArtist(artistName, 1, token)).artists.items[0];
+          const artist: ArtistResponse | undefined = (await store.call(searchForArtist(artistName, 1, token))).artists.items[0];
           console.log('Artist received from search:');
           console.log(artist);
 
@@ -470,8 +477,8 @@ const useSpotifyStore = () => {
       console.log('Fetching User Liked songs');
       store.updateProgress(0.6, 'Fetching and caching all User Liked tracks...');
 
-      const cb2 = (progress: number) => store.updateProgress(nestProgress(progress, 0.6, 0.9));
-      const trackSet = new Set((await getAllCurrentUserLikedSongs(token, cb2)).map((t) => t.id));
+      const cb2 = (progress: number, c?: string) => store.updateProgress(nestProgress(progress, 0.6, 0.9), c);
+      const trackSet = new Set((await store.call(getAllCurrentUserLikedSongs(token, cb2))).map((t) => t.id));
 
       const likedPlaylist: CachedPlaylist = {
         id: LIKED_INDICATOR,
@@ -596,7 +603,7 @@ const useSpotifyStore = () => {
         store.updateProgress(0.1, 'Getting all albums and tracks for the artist');
         console.log('Fetching all artist albums');
         const cb1 = (p: number) => store.updateProgress(nestProgress(p, 0.1, 0.7));
-        const response = await getAllArtistAlbumsWithTracks(playlist.artistId, token, cb1);
+        const response = await store.call(getAllArtistAlbumsWithTracks(playlist.artistId, token, cb1));
         console.log(response);
 
         store.currentDeepDiveArtistAlbumIDsGrouped = [];
@@ -611,10 +618,10 @@ const useSpotifyStore = () => {
           store.updateProgress(0.7, 'Fetching all just good playlist tracks');
           console.log('loading deep dive playlist');
           const cb2 = (p: number) => store.updateProgress(nestProgress(p, 0.7, 0.8));
-          const justGoodPlaylistTrackIds = new Set((await getAllPlaylistTracks(playlist.id, token, cb2)).map(t => t.id));
+          const justGoodPlaylistTrackIds = new Set((await store.call(getAllPlaylistTracks(playlist.id, token, cb2))).map(t => t.id));
           store.updateProgress(0.8, 'Fetching all deep dive playlist tracks');
           const cb3 = (p: number) => store.updateProgress(nestProgress(p, 0.8, 0.9));
-          const deepDivePlaylistTracks = (await getAllPlaylistTracks(playlist.deepDivePlaylist.id, token, cb3));
+          const deepDivePlaylistTracks = (await store.call(getAllPlaylistTracks(playlist.deepDivePlaylist.id, token, cb3)));
 
           store.currentDeepDiveArtistAlbumIDsOrdered = [];
           for (let i = 0; i < deepDivePlaylistTracks.length; i++) {
@@ -715,7 +722,7 @@ const useSpotifyStore = () => {
         console.log('CREATING DEEP DIVE PLAYLIST');
         store.updateProgress(0.1, 'Creating the playlist');
         // 1. Create Deep Dive Playlist
-        const response = await createPlaylist(getDeepDivePlaylistName(artistName), getDeepDivePlaylistDescription(artistName), token);
+        const response = await store.call(createPlaylist(getDeepDivePlaylistName(artistName), getDeepDivePlaylistDescription(artistName), token));
         deepDiveId = response.id;
         deepDiveName = response.name;
       } else {
@@ -742,9 +749,9 @@ const useSpotifyStore = () => {
 
       if (store.currentJustGoodPlaylist.deepDivePlaylist === undefined) {
         // 4. Add all to playlist.
-        await addAllTracksToPlaylist(deepDiveId, trackURIs, token);
+        await store.call(addAllTracksToPlaylist(deepDiveId, trackURIs, token));
       } else {
-        await replaceAllPlaylistItems(deepDiveId, trackURIs, token);
+        await store.call(replaceAllPlaylistItems(deepDiveId, trackURIs, token));
       }
 
       store.updateProgress(0.8, 'Parsing all playlist track IDs');
@@ -757,7 +764,7 @@ const useSpotifyStore = () => {
           name: deepDiveName,
           numTracks: tracks.length,
         },
-        trackIds: new Set((await getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb)).map(t => t.id)),
+        trackIds: new Set((await store.call(getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb))).map(t => t.id)),
         deepDiveTracks: tracks,
         progress: 0,
       };
@@ -780,7 +787,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      const response = await searchForArtist(term, 5, token);
+      const response = await store.call(searchForArtist(term, 5, token));
 
       store.artistResults = deserializeArtists(response.artists.items);
     }),
@@ -805,7 +812,7 @@ const useSpotifyStore = () => {
 
       const name = getInProgressJustGoodPlaylistName(artist.name);
       const description = getInProgressJustGoodPlaylistDescription(artist.name);
-      const response = await createPlaylist(name, description, token);
+      const response = await store.call(createPlaylist(name, description, token));
 
       const justGoodPlaylist: CachedJustGoodPlaylist = {
         id: response.id,
@@ -838,16 +845,16 @@ const useSpotifyStore = () => {
 
       if (store.currentTrack?.id === store.currentJustGoodPlaylist?.deepDiveTracks?.[store.currentJustGoodPlaylist.progress].id) {
         if (store.currentTrack?.playing) {
-          await store.checkPlayer(pausePlayback, token);
+          await store.call(pausePlayback(token));
         } else {
-          await store.checkPlayer(playPlayback, token);
+          await store.call(playPlayback(token));
         }
       } else {
         const uri = getPlaylistUri(store.currentJustGoodPlaylist.deepDivePlaylist.id);
         const { progress } = store.currentJustGoodPlaylist;
-        await store.checkPlayer(async (t: string) => playPlaylistPlayback(uri, progress, t), token);
-        await toggleShuffle(false, token);
-        await setRepeatMode('context', token);
+        await store.call(playPlaylistPlayback(uri, progress, token));
+        await store.call(toggleShuffle(false, token));
+        await store.call(setRepeatMode('context', token));
       }
 
       setTimeout(() => store.updatePlayer(), 500);
@@ -981,7 +988,7 @@ const useSpotifyStore = () => {
       const name = inProgress ? getJustGoodPlaylistName(artistName) : getInProgressJustGoodPlaylistName(artistName);
       const description = inProgress ? getJustGoodPlaylistDescription(artistName) : getInProgressJustGoodPlaylistDescription(artistName);
 
-      await changePlaylistDetails(playlistID, name, description, token);
+      await store.call(changePlaylistDetails(playlistID, name, description, token));
 
       store.currentJustGoodPlaylist.name = name;
       store.currentJustGoodPlaylist.inProgress = !inProgress;
@@ -1012,7 +1019,7 @@ const useSpotifyStore = () => {
         store.startProgress('Adding additional playlist')
         store.updateProgress(0.1, 'Adding all playlist tracks to cache');
         store.deepDiverPlaylistIndexes.set(id, i)
-        store.deepDiverPlaylistTrackSets.set(id, new Set((await getAllPlaylistTracks(id, token)).map(t => t.id)));
+        store.deepDiverPlaylistTrackSets.set(id, new Set((await store.call(getAllPlaylistTracks(id, token))).map(t => t.id)));
         store.finishProgress();
       }
 
@@ -1051,24 +1058,11 @@ const useSpotifyStore = () => {
       store.artistResults = [];
     }),
 
-    checkPlayer: action(async (playerAction: (token: string) => Promise<void>, token: string) => {
-      try {
-        await playerAction(token);
-      } catch (e) {
-        // @ts-ignore
-        if (e.reason === 'NO_ACTIVE_DEVICE') {
-          store.setHelpView('usage');
-        } else {
-          throw e;
-        }
-      }
-    }),
-
     togglePlaying: action(async () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      await store.checkPlayer(store.currentTrack?.playing ? pausePlayback : playPlayback, token);
+      await store.call(store.currentTrack?.playing ? pausePlayback(token) : playPlayback(token));
 
       return await store.updatePlayer();
     }),
@@ -1077,7 +1071,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      await store.checkPlayer(nextPlayback, token);
+      await store.call(nextPlayback(token));
 
       setTimeout(() => store.updatePlayer(), 500);
 
@@ -1088,7 +1082,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      await store.checkPlayer(prevPlayback, token);
+      await store.call(prevPlayback(token));
 
       setTimeout(() => store.updatePlayer(), 500);
 
@@ -1099,7 +1093,7 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      await store.checkPlayer(async (t: string) => seekPlayback(Math.trunc(value), t), token);
+      await store.call(seekPlayback(Math.trunc(value), token));
 
       return await store.updatePlayer();
     }),
@@ -1137,7 +1131,7 @@ const useSpotifyStore = () => {
                 // TODO: Does this mess up anything else? without fetching the details?
                 console.log('Fetching playing just good details');
                 runInAction(async () => {
-                  const trackIds = justGoodPlaylist.trackIds || (new Set((await getAllPlaylistTracks(justGoodPlaylist.id, token)).map(t => t.id)));
+                  const trackIds = justGoodPlaylist.trackIds || (new Set((await store.call(getAllPlaylistTracks(justGoodPlaylist.id, token))).map(t => t.id)));
                   runInAction(() => {
                     store.currentPlayingJustGoodPlaylist = {
                       ...justGoodPlaylist,
@@ -1196,17 +1190,17 @@ const useSpotifyStore = () => {
 
       if (trackIds.has(id)) {
         if (playlistID === LIKED_INDICATOR) {
-          await removeTrackFromLiked(id, token);
+          await store.call(removeTrackFromLiked(id, token));
         } else {
-          await removeTrackFromPlaylist(uri, playlistID, token);
+          await store.call(removeTrackFromPlaylist(uri, playlistID, token));
         }
         trackIds.delete(id);
         playlist.numTracks -= 1;
       } else {
         if (playlistID === LIKED_INDICATOR) {
-          await addTrackToLiked(id, token);
+          await store.call(addTrackToLiked(id, token));
         } else {
-          await addTrackToPlaylist(playlist.id, uri, token);
+          await store.call(addTrackToPlaylist(playlist.id, uri, token));
         }
         trackIds.add(id);
         playlist.numTracks += 1;
@@ -1228,17 +1222,17 @@ const useSpotifyStore = () => {
 
       if (trackSet.has(store.currentTrack.id)) {
         if (playlist.id === LIKED_INDICATOR) {
-          await removeTrackFromLiked(store.currentTrack.id, token);
+          await store.call(removeTrackFromLiked(store.currentTrack.id, token));
         } else {
-          await removeTrackFromPlaylist(store.currentTrack.uri, playlist.id, token);
+          await store.call(removeTrackFromPlaylist(store.currentTrack.uri, playlist.id, token));
         }
         trackSet.delete(store.currentTrack.id);
         playlist.numTracks -= 1;
       } else {
         if (playlist.id === LIKED_INDICATOR) {
-          await addTrackToLiked(store.currentTrack.id, token);
+          await store.call(addTrackToLiked(store.currentTrack.id, token));
         } else {
-          await addTrackToPlaylist(playlist.id, store.currentTrack.uri, token);
+          await store.call(addTrackToPlaylist(playlist.id, store.currentTrack.uri, token));
         }
         trackSet.add(store.currentTrack.id);
         playlist.numTracks += 1;
@@ -1279,14 +1273,23 @@ const useSpotifyStore = () => {
     // really slow
     logStore: () => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),
 
-    call: async <T>(apiPromise: Promise<T>): Promise<T> => {
+    call: async <T>(apiPromise: Promise<T>, backoff: number = 0): Promise<T> => {
+      if (backoff > 0) {
+        if (backoff > BACKOFF_LIMIT) {
+
+        }
+        await sleep(backoffTimeoutMs(backoff));
+      }
+
       try {
         return await apiPromise;
       } catch (error) {
         if (error instanceof APIError && error.status && error.reason) {
-          if (error.status === 429) {
+          if (error.status === 404 && error.reason === 'NO_ACTIVE_DEVICE') {
+            store.setHelpView('usage');
+          } else if (error.status === 429) {
             console.error('Rate limited');
-            // TODO: Expoenential backoff?
+            return store.call(apiPromise, backoff + 1);
           } else if (error.status === 403) {
             // TODO: Could this also check to see if the refresh token is expired
             console.error('Forbidden');

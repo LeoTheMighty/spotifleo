@@ -346,7 +346,9 @@ export interface Progress {
 
 export type ProgressCallback = (progress: number, current?: string) => void;
 
-export type HelpViewType = 'usage' | 'not-in-progress' | 'not-in-beta' | 'welcome' | undefined;
+export type HelpViewType =
+  'usage' | 'not-in-progress' | 'not-in-beta' |
+  'welcome' | 'welcome-creator' | 'welcome-driver' | 'welcome-viewer' | undefined;
 
 export class APIError extends Error {
   status: number;

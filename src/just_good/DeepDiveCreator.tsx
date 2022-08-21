@@ -47,6 +47,13 @@ const DeepDiveCreator = observer(() => {
     }
   }, [store.currentJustGoodPlaylist, store.currentDeepDiveArtistDiscographyOrdered]);
 
+  useEffect(() => {
+    if (store.welcomeStep === 2 && store.progress === undefined) {
+      store.setHelpView('welcome-creator');
+      store.welcomeStep = 3;
+    }
+  }, [store, store.welcomeStep, store.progress]);
+
   const clickGroup = () => {
     setGrouped(g => {
       customOrder && setCanUndo(sortAlpha || sortChrono || !g);

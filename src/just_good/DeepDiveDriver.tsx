@@ -55,6 +55,13 @@ const DeepDiveDriver = observer(() => {
   })
 
   useEffect(() => {
+    if (store.welcomeStep === 3 && store.progress === undefined) {
+      store.setHelpView('welcome-driver');
+      store.welcomeStep = 4;
+    }
+  }, [store, store.welcomeStep, store.progress]);
+
+  useEffect(() => {
     if (store.currentJustGoodPlaylist) {
       const { deepDiveTracks, progress } = store.currentJustGoodPlaylist;
       if (progress !== undefined && deepDiveTracks) {

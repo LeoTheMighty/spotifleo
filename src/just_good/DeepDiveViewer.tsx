@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ListViewer from './ListViewer';
 import { useStore } from '../state/SpotifyStoreProvider';
 import Image from '../components/Image';
@@ -125,6 +125,13 @@ const DeepDiveViewer = observer(() => {
   const navigate = useNavigate();
 
   const [viewDiscography, setViewDiscography] = useState(true);
+
+  useEffect(() => {
+    if (store.welcomeStep === 4 && store.progress === undefined) {
+      store.setHelpView('welcome-viewer');
+      store.welcomeStep = undefined;
+    }
+  }, [store, store.welcomeStep, store.progress]);
 
   return (
     <div className="deep-dive-viewer">

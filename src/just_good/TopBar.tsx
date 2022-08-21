@@ -23,7 +23,7 @@ const TopBar = () => {
             <i className="bi bi-gear top-bar-icon" />
           </button>
           <Modal show={showSettings} onHide={() => setShowSettings(false)}>
-            <Settings />
+            <Settings hide={() => setShowSettings(false)} />
           </Modal>
         </div>
       )}

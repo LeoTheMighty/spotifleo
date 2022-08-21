@@ -49,6 +49,7 @@ const Dashboard = observer(() => {
         emptyLabel="haha no bitches"
         playlists={store.plannedJustGoodPlaylists}
         view="edit-deep-dive"
+        welcomeFirst={store.welcomeStep === 1}
       />
     </div>
   );

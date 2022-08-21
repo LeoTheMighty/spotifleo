@@ -167,4 +167,14 @@
   color: transparent;
 }
 
+.welcome-select {
+  z-index: 0;
+  box-shadow: 0 0 0 99999px rgba(0, 0, 0, .75);
+}
+
+.welcome-select-highlighted {
+  z-index: 0;
+  box-shadow: inset 0.0125em 0.0125em 0.5em white, 0 0 0 99999px rgba(0, 0, 0, .75);
+}
+
 

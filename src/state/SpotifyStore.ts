@@ -128,7 +128,7 @@ export interface SpotifyStore {
 
   // Help Logic
   helpView?: HelpViewType;
-  welcome: boolean;
+  welcomeStep?: number;
 
   // ============ COMPUTED ================
   likedPlaylist: CachedPlaylist | undefined;
@@ -199,6 +199,7 @@ export interface SpotifyStore {
 
   // Help
   setHelpView: (helpView: HelpViewType) => void;
+  skipWelcome: () => void;
 
   call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
 
@@ -219,7 +220,7 @@ const useSpotifyStore = () => {
 
     showHelpScreen: false,
 
-    welcome: false,
+    welcomeStep: 0,
 
     // ============ COMPUTED ================
     get likedPlaylist(): CachedPlaylist | undefined {
@@ -393,6 +394,8 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
 
       store.startProgress('Setting up the user');
+      store.welcomeStep = 0;
+      store.helpView = 'welcome';
 
       store.setupLoading = true;
 
@@ -1304,6 +1307,8 @@ const useSpotifyStore = () => {
         throw error;
       }
     },
+
+    skipWelcome: action(() => { store.welcomeStep = undefined; store.helpView = undefined; }),
   }));
 
   return store;

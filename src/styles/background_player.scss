@@ -171,9 +171,11 @@
   font-size: 0.6rem;
   margin-inline: 1rem;
   margin-bottom: 0.5rem;
+  max-width: 100vw;
 }
 
 .slider {
+  max-width: 100vw;
   height: 3px;
   width: 100%;
   margin-inline: 1rem;

@@ -15,6 +15,9 @@ const ArtistSearch = observer(() => {
   const [inputSelected, setInputSelected] = useState(false);
 
   const onClick = (artist: Artist) => {
+    if (store.welcomeStep === 0) {
+      store.welcomeStep = 1;
+    }
     if (!store.justGoodPlaylistArtistMap?.has(artist.id)) {
       store.createJustGoodPlaylist(artist);
     } else {
@@ -43,7 +46,7 @@ const ArtistSearch = observer(() => {
     >
       <div className="search-bar">
         <input
-          className={`search-bar-input ${showResults ? 'results-showing' : ''}`}
+          className={`search-bar-input ${store.welcomeStep === 0 ? 'welcome-select-highlighted' : ''} ${showResults ? 'results-showing' : ''}`}
           type="text"
           name="searchInput"
           placeholder="Find Artists"

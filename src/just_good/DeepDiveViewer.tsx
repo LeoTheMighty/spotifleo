@@ -39,7 +39,7 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
 
   if (!isGood && !viewNotGood) return null;
   return (
-    <div key={track.name} className={`deep-dive-track-view ${isGood ? '' : 'disabled'}`}>
+    <div key={track.name} className={`deep-dive-track-view ${isPlaying ? 'text-green' : (isGood ? '' : 'disabled')}`}>
       <div className="d-flex flex-row justify-content-between overflow-hidden">
         <div
           className="deep-dive-track-view-play-button d-flex flex-row pointer-event align-items-start overflow-hidden"
@@ -49,9 +49,9 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
         >
           <div className="deep-dive-track-view-number text-center">
             {(isPlaying) ? (
-              <i className="bi bi-pause bi-small" />
+              <i className="bi bi-pause bi-small text-1" />
             ) : (
-              (hoverName) ? <i className="bi bi-play-fill bi-small"/> : `${index + 1}.`
+              (hoverName) ? <i className="bi bi-play-fill bi-small text-1"/> : `${index + 1}.`
             )}
           </div>
           <div className="d-flex flex-column overflow-hidden no-wrap">
@@ -60,7 +60,7 @@ const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, on
             </div>
             <div className="d-flex flex-row align-items-start">
               {track.explicit ? <i className="explicit-icon bi bi-explicit-fill my-1"/> : ''}
-              <i className={`ellipses ${isGood ? '' : 'disabled'}`}> {artistString(track.artists)} </i>
+              <i className={`ellipses ${isPlaying ? 'text-green' : (isGood ? '' : 'disabled')}`}> {artistString(track.artists)} </i>
             </div>
           </div>
         </div>

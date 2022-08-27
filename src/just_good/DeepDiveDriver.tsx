@@ -41,6 +41,7 @@ const DeepDiveDriver = observer(() => {
   const navigate = useNavigate();
   const [configurePlaylistsOpen, setConfigurePlaylistsOpen] = useState(false);
   const [moreInfoOpen, setMoreInfoOpen] = useState(false);
+  const [experimentalOpen, setExperimentalOpen] = useState(false);
 
   const [skipNext, setSkipNext] = useState(false);
   const [skipPrev, setSkipPrev] = useState(false);
@@ -262,6 +263,21 @@ const DeepDiveDriver = observer(() => {
         <button className="my-4 p-0" onClick={() => setConfigurePlaylistsOpen(true)}>
           <i className="secondary-btn text-regular"> Add/Remove Additional Playlists </i>
         </button>
+        <button className="m-0 p-0" onClick={() => setExperimentalOpen(o => !o)}>
+          <i className="secondary-btn text-lighter">
+            {experimentalOpen ? 'Hide Experimental Features' : 'See Experimental Features'}
+          </i>
+        </button>
+        {experimentalOpen && (
+          <div className="d-flex flex-row justify-content-around w-100 my-2">
+            <button className="m-2 p-0" onClick={() => store.toggleShuffle()}>
+              <i className={`bi bi-shuffle bi-big ${store.currentTrack?.shuffle ? 'text-1' : 'disabled'}`}/>
+            </button>
+            <button className="m-2 p-0" onClick={() => store.toggleRepeat()}>
+              <i className={`bi bi-repeat${store.currentTrack?.repeat === 'track' ? '-1' : ''} bi-big ${store.currentTrack?.repeat !== 'off' ? 'text-1' : 'disabled'}`}/>
+            </button>
+          </div>
+          )}
         <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>
           <ModalHeader closeButton><ModalTitle><h1>Add/Remove Playlist</h1></ModalTitle></ModalHeader>
           <ModalBody><ConfigureDeepDivePlaylists hide={() => setConfigurePlaylistsOpen(false)}/></ModalBody>

@@ -184,6 +184,8 @@ export interface SpotifyStore {
   skipNext: () => Promise<void>;
   skipPrevious: () => Promise<void>;
   seekToPosition: (value: number) => Promise<void>;
+  toggleShuffle: () => Promise<void>;
+  toggleRepeat: () => Promise<void>;
   pretendToProceedPosition: () => void;
   updatePlayer: () => Promise<void>;
   toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
@@ -1121,6 +1123,41 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
 
       await store.call(seekPlayback(Math.trunc(value), token));
+
+      return await store.updatePlayer();
+    }),
+
+    /**
+     *
+     */
+    toggleShuffle: action(async () => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+
+      if (store.currentTrack?.shuffle) {
+        await store.call(toggleShuffle(false, token));
+      } else {
+        await store.call(toggleShuffle(true, token));
+      }
+
+      return await store.updatePlayer();
+    }),
+
+    /**
+     *
+     */
+    toggleRepeat: action(async () => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+
+      const state = store.currentTrack?.repeat;
+      if (state === 'off') {
+        await store.call(setRepeatMode('context', token));
+      } else if (state === 'context') {
+        await store.call(setRepeatMode('track', token));
+      } else if (state === 'track') {
+        await store.call(setRepeatMode('off', token));
+      }
 
       return await store.updatePlayer();
     }),

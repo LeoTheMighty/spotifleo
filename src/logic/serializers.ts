@@ -78,6 +78,8 @@ export const deserializeCachedPlaylist = ({ id, name, tracks: { total } }: Playl
 export const deserializePlayingTrack = (playbackResponse: PlaybackResponse): PlayingTrack => ({
   ...deserializeTrack(playbackResponse.item),
   playing: playbackResponse.is_playing,
+  shuffle: playbackResponse.shuffle_state,
+  repeat: playbackResponse.repeat_state,
   context: playbackResponse.context && {
     type: playbackResponse.context.type,
     id: getID(playbackResponse.context.uri),

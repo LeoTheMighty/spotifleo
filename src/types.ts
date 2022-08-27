@@ -58,6 +58,8 @@ export interface PlaylistTrack extends Track {
 export interface PlayingTrack extends Track {
   playing?: boolean;
   progress: number; // milliseconds
+  shuffle?: boolean;
+  repeat?: 'track' | 'context' | 'off';
   context?: { // where it's playing from
     type: 'album' | 'show' | 'artist' | 'playlist';
     id: string;
@@ -314,7 +316,7 @@ export interface PlaybackResponse {
     volume_percent: number; // 0 - 100
   };
   repeat_state: 'off' | 'track' | 'context';
-  shuffle_state: string; // not boolean?? "if shuffle is on or off"
+  shuffle_state: boolean; // "if shuffle is on or off"
   context?: ContextResponse;
   timestamp: number; // Unix milliseocnd timestamp when data was fetched
   progress_ms?: number; // progress into the currently playing track or episode

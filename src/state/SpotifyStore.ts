@@ -46,7 +46,7 @@ import {
   justGoodToCached,
   nestProgress,
   wrapIndex,
-  sleep, BACKOFF_LIMIT, backoffTimeoutMs
+  sleep, BACKOFF_LIMIT, backoffTimeoutMs, setSubtraction, setIntersection, getTrackUri
 } from '../logic/common';
 import {
   Artist,
@@ -161,7 +161,7 @@ export interface SpotifyStore {
   fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
   toggleAlbumForDeepDive: (albumId: string) => void;
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-  createOrUpdateDeepDivePlaylist: (albums: FetchedAlbum[]) => Promise<void>;
+  createOrUpdateDeepDivePlaylist: (albums: FetchedAlbum[], importLiked?: boolean) => Promise<void>;
   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
   toggleCurrentTrackInJustGood: () => Promise<void>;
@@ -710,7 +710,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    createOrUpdateDeepDivePlaylist: action(async (albums: FetchedAlbum[]) => {
+    createOrUpdateDeepDivePlaylist: action(async (albums: FetchedAlbum[], importLiked: boolean = false) => {
       console.log('STARTING DEEP DIVE');
       store.startProgress(`${store.currentJustGoodPlaylist?.deepDivePlaylist ? 'Updating' : 'Creating'} Deep Dive Playlist`);
       store.logStore();
@@ -742,9 +742,11 @@ const useSpotifyStore = () => {
       // 3. Get all appears on tracks (filter for only those that have the artist in them).
       const filteredAlbums = albums.filter((a) => store.currentArtistDeepDiveAlbumIds?.has(a.id));
       const trackURIs: string[] = [];
+      const trackIds: Set<string> = new Set();
       const tracks: Track[] = [];
       filteredAlbums.forEach((a) => a.tracks.forEach((t) => {
         tracks.push(t);
+        trackIds.add(t.id);
         trackURIs.push(t.uri)
       }));
 
@@ -773,6 +775,26 @@ const useSpotifyStore = () => {
         deepDiveTracks: tracks,
         progress: 0,
       };
+
+      if (importLiked) {
+        console.log('IMPORT EXISTING LIKED INTO THE JUST GOOD PLAYLIST');
+        if (store.likedTrackSet) {
+          // D, L, C
+          // Get the intersection of the deep dive track Ids and liked IDs and subtract current track IDs
+          // (D U L) - C
+          const toImport = setSubtraction(setIntersection(trackIds, store.likedTrackSet), store.currentJustGoodPlaylist.trackIds);
+
+          const importTrackUris: string[] = [];
+          toImport.forEach(id => {
+            importTrackUris.push(getTrackUri(id))
+            store.currentJustGoodPlaylist?.trackIds.add(id);
+          });
+
+          await store.call(addAllTracksToPlaylist(store.currentJustGoodPlaylist.id, importTrackUris, token));
+        } else {
+          console.error('Cannot import because LIKED track set is not initialized');
+        }
+      }
 
       const index = store.plannedJustGoodPlaylists?.findIndex(p => p.id === store.currentJustGoodPlaylist!.id);
       store.plannedJustGoodPlaylists?.splice(index, 1);

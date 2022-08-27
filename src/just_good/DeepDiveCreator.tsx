@@ -6,6 +6,7 @@ import { Album, AlbumGroup, FetchedAlbum } from '../types';
 import ConfirmModal from '../components/ConfirmModal';
 import { driveDeepDiver, viewDeepDiver } from '../logic/common';
 import { useNavigate } from 'react-router-dom';
+import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from 'react-bootstrap';
 
 /*
 
@@ -33,6 +34,7 @@ const DeepDiveCreator = observer(() => {
   const [customOrder, setCustomOrder] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [importExisting, setImportExisting] = useState(false);
 
   useEffect(() => {
     if (store.currentJustGoodPlaylist?.deepDivePlaylist) {
@@ -209,6 +211,13 @@ const DeepDiveCreator = observer(() => {
             'Start the Deep Dive'
           )}
         </button>
+        <button className={`primary-btn toggle mx-2 my-3 ${importExisting ? 'on' : 'off'}`} onClick={() => setImportExisting(i => !i)}>
+          {importExisting ? (
+            'Importing Liked to Just Good'
+          ) : (
+            'Import Liked Songs to Just Good?'
+          )}
+        </button>
       </div>
       <h1 className="text-center m-1"> Select releases to exclude from the deep dive </h1>
       <div className="d-flex justify-content-around my-1 w-100">
@@ -250,17 +259,46 @@ const DeepDiveCreator = observer(() => {
         </div>
       </div>
       { getAlbumsComponent() }
-      <ConfirmModal
-        show={showConfirm}
-        title="Ready to Start the Deep Dive?"
-        message="This will create a new playlist in your spotify with all of this artists songs you chose."
-        onConfirm={async () => {
-          setShowConfirm(false);
-          await store.createOrUpdateDeepDivePlaylist(getAlbums());
-          store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
-        }}
-        onDecline={() => setShowConfirm(false)}
-      />
+      <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
+        <ModalHeader> <ModalTitle> Ready to Start the deep dive? </ModalTitle></ModalHeader>
+        <ModalBody>
+          <div className="d-flex justify-content-center">
+            This will create a new playlist in your spotify with all of this artists songs you chose.
+          </div>
+          <div className="d-flex justify-content-center">
+            <button className={`primary-btn toggle mx-2 my-3 ${importExisting ? 'on' : 'off'}`} onClick={() => setImportExisting(i => !i)}>
+              {importExisting ? (
+                'Importing Liked to Just Good'
+              ) : (
+                'Import Liked Songs to Just Good?'
+              )}
+            </button>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <button className="primary-btn" onClick={async () => {
+            setShowConfirm(false);
+            await store.createOrUpdateDeepDivePlaylist(getAlbums(), importExisting);
+            store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
+          }}>
+            yes
+          </button>
+          <button className="primary-btn secondary-btn" onClick={() => setShowConfirm(false)}>
+            no
+          </button>
+        </ModalFooter>
+      </Modal>
+      {/*<ConfirmModal*/}
+      {/*  show={showConfirm}*/}
+      {/*  title="Ready to Start the Deep Dive?"*/}
+      {/*  message="This will create a new playlist in your spotify with all of this artists songs you chose."*/}
+      {/*  onConfirm={async () => {*/}
+      {/*    setShowConfirm(false);*/}
+      {/*    await store.createOrUpdateDeepDivePlaylist(getAlbums());*/}
+      {/*    store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));*/}
+      {/*  }}*/}
+      {/*  onDecline={() => setShowConfirm(false)}*/}
+      {/*/>*/}
     </div>
   );
 });

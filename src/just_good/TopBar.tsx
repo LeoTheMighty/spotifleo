@@ -14,7 +14,7 @@ const TopBar = () => {
   return (
     <div className="top-bar">
       {store.token && (
-        <div className="d-flex justify-content-between align-items-center h-100">
+        <div className="d-flex justify-content-between align-items-center h-100 w-100">
           <button onClick={() => navigate('/spotifleo')}>
             <i className="bi bi-caret-left top-bar-icon" />
           </button>

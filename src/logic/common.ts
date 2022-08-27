@@ -180,6 +180,8 @@ export const getUrl = (type: string, id: string) => `https://open.spotify.com/${
 export const getPlaylistUri = (id: string) => getUri('playlist', id);
 export const getPlaylistUrl = (id: string) => getUrl('playlist', id);
 
+export const getTrackUri = (id: string) => getUri('track', id);
+
 export const exportSet = <T>(set: Set<T>): T[] => Array.from(set);
 export const importSet = <T>(array: T[]): Set<T> => new Set(array);
 export const exportMap = <V>(map: Map<string, V>): { [key: string]: V } => Object.fromEntries(map);
@@ -247,4 +249,28 @@ export const backoffTimeoutMs = (n: number): number => {
   } else {
     return 30000;
   }
+};
+
+export const setIntersection = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
+  const sf = new Set<T>();
+
+  s1.forEach(e => {
+    if (s2.has(e)) {
+      sf.add(e);
+    }
+  });
+
+  return sf;
+};
+
+export const setSubtraction = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
+  const sf = new Set<T>();
+
+  s1.forEach(e => {
+    if (!s2.has(e)) {
+      sf.add(e);
+    }
+  });
+
+  return sf;
 };

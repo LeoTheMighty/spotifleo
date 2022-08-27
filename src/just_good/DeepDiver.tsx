@@ -8,6 +8,7 @@ import DeepDiveCreator from './DeepDiveCreator';
 import DeepDiveDriver from './DeepDiveDriver';
 import LoadingIndicator from '../common/LoadingIndicator';
 import { useLocation } from 'react-router-dom';
+import ExternalDeepDiveViewer from './ExternalDeepDiveViewer';
 
 /*
 
@@ -25,12 +26,20 @@ const DeepDiver = observer(() => {
   const location = useLocation();
 
   useEffect(() => {
-    if (params.playlist_id && ['edit-deep-dive', 'deep-dive', 'view-deep-dive', undefined].includes(params.view)) {
-      store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType | undefined).then(() => {
-        console.log('Fully fetched the details');
-      }).catch((error) => {
-        console.error(error);
-      });
+    if (params.playlist_id) {
+      if (params.view === 'external' && params.deep_dive_id) {
+        store.fetchExternalDeepDivePlaylist(params.playlist_id, params.deep_dive_id).then(() => {
+          console.log('Fully fetched the details');
+        }).catch((error) => {
+          console.error(error);
+        });
+      } else if (['edit-deep-dive', 'deep-dive', 'view-deep-dive', undefined].includes(params.view)) {
+        store.fetchCurrentDeepDiverPlaylist(params.playlist_id, params.view as DeepDiverViewType | undefined).then(() => {
+          console.log('Fully fetched the details');
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
     } else {
       console.error('No playlist provided');
     }
@@ -39,11 +48,13 @@ const DeepDiver = observer(() => {
   const getPage = (): React.ReactNode => {
     const { currentDeepDiveView } = store;
     if (currentDeepDiveView === 'edit-deep-dive') {
-      return (<DeepDiveCreator />)
+      return (<DeepDiveCreator />);
     } else if (currentDeepDiveView === 'deep-dive') {
-      return (<DeepDiveDriver />)
+      return (<DeepDiveDriver />);
     } else if (currentDeepDiveView === 'view-deep-dive') {
-      return (<DeepDiveViewer />)
+      return (<DeepDiveViewer />);
+    } else if (currentDeepDiveView === 'external') {
+      return (<ExternalDeepDiveViewer />);
     } else {
       return <></>
     }

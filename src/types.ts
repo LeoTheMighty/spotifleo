@@ -338,7 +338,7 @@ export interface PlaybackResponse {
 }
 
 // View
-export type DeepDiverViewType = 'edit-deep-dive' | 'deep-dive' | 'view-deep-dive';
+export type DeepDiverViewType = 'edit-deep-dive' | 'deep-dive' | 'view-deep-dive' | 'external';
 
 export interface Progress {
   progress: number; // <float> 0.0 - 1.0;

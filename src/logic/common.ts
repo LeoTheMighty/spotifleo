@@ -8,16 +8,18 @@ import {
 } from '../types';
 import { capitalize } from 'lodash';
 
-const IN_BETA = true;
+export const externalBaseUrl = window.location.host;
+
+const IN_BETA = false;
 const IN_HOMESCREEN = window.matchMedia('(display-mode: standalone)').matches;
 
 // TODO: Test
 // alert(IN_HOMESCREEN);
 
-const BETA_TAG = '(TESTING)'
-export const JUST_GOOD_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Just Good`;
-export const IN_PROGRESS_INDICATOR = `${IN_BETA ? BETA_TAG : ''} [WIP] Just Good`;
-export const DEEP_DIVE_INDICATOR = `${IN_BETA ? BETA_TAG : ''} Deep Dive of`;
+const BETA_TAG = '(TESTING) '
+export const JUST_GOOD_INDICATOR = `${IN_BETA ? BETA_TAG : ''}Just Good`;
+export const IN_PROGRESS_INDICATOR = `${IN_BETA ? BETA_TAG : ''}[WIP] Just Good`;
+export const DEEP_DIVE_INDICATOR = `${IN_BETA ? BETA_TAG : ''}Deep Dive of`;
 
 export const BACKOFF_LIMIT = 5;
 

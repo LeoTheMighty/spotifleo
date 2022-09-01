@@ -9,7 +9,7 @@ import {
 } from '../types';
 import { chunkList, formatQueryList, formatResp, percent } from '../logic/common';
 import {
-  deserializeAlbum,
+  deserializeAlbum, deserializeCachedPlaylist,
   deserializeFetchedAlbum,
   deserializeFetchedAlbums, deserializePlaylistTrack, deserializeTrack,
   deserializeTracks
@@ -245,21 +245,14 @@ export const getCurrentUserProfile = async (token: string): Promise<UserProfileR
  * TODO: Opportunity to return progress
  */
 export const getAllCurrentUserPlaylists = async (token: string, pcb?: ProgressCallback): Promise<CachedPlaylist[]> => {
-  const playlists: CachedPlaylist[] = [];
   const currentUserId = (await getCurrentUserProfile(token)).id;
-  let total = 1;
-  while (playlists.length < total) {
-    const response = await getCurrentUserPlaylists(MAX_FETCH_ITEMS, playlists.length, token);
-
-    response.items.forEach((playlist) => {
-      if (playlist.owner.id === currentUserId || playlist.collaborative) {
-        playlists.push({ id: playlist.id, name: playlist.name, numTracks: playlist.tracks.total });
-      }
-    });
-    pcb?.(playlists.length / total);
-    total = response.total
-  }
-  return playlists;
+  return fetchAll<PlaylistResponse, CachedPlaylist>(
+    (offset) => getCurrentUserPlaylists(MAX_FETCH_ITEMS, offset, token),
+    deserializeCachedPlaylist,
+    (response) => (response.owner.id === currentUserId || response.collaborative),
+    undefined,
+    pcb,
+  );
 };
 
 export const getCurrentUserPlaylists = async (limit: number, offset: number, token: string): Promise<FetchResponse<PlaylistResponse>> => (

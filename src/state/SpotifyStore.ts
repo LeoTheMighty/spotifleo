@@ -102,6 +102,7 @@ export interface SpotifyStore {
   userPlaylists?: CachedPlaylist[];
   deepDiverPlaylistIndexes?: Map<string, number>; // which ones are activated
   deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the activated deep diver playlists
+  loadingDeepDiverPlaylists: Set<string>; // which ones are loading
   justGoodPlaylists?: CachedJustGoodPlaylist[];
   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
@@ -222,6 +223,8 @@ const useSpotifyStore = () => {
   const store: SpotifyStore = useLocalObservable<SpotifyStore>(() => ({
     // ============ INITIAL PROPERTIES ================
     setupLoading: true,
+
+    loadingDeepDiverPlaylists: new Set(),
 
     artistResults: [],
 
@@ -685,8 +688,8 @@ const useSpotifyStore = () => {
           store.currentArtistDeepDiveAlbumIds = new Set(response.map(a => a.id));
         }
 
+        // Move the playlist to the front of the playlist
         if (store.currentJustGoodPlaylistList) {
-          // Move the playlist to the front of the playlist
           const playlist = store.currentJustGoodPlaylistList.splice(store.currentJustGoodPlaylistList.findIndex(p => p.id === store.currentJustGoodPlaylist?.id), 1)[0];
           store.currentJustGoodPlaylistList.unshift(playlist);
         }
@@ -1172,6 +1175,7 @@ const useSpotifyStore = () => {
       if (store.deepDiverPlaylistTrackSets === undefined || store.deepDiverPlaylistIndexes === undefined) return fail('Deep diver playlists not initialized');
 
       const { id } = playlist;
+      store.loadingDeepDiverPlaylists.add(id);
       if (store.deepDiverPlaylistIndexes.has(id)) {
         store.deepDiverPlaylistIndexes.delete(id);
       } else {
@@ -1181,6 +1185,7 @@ const useSpotifyStore = () => {
         store.deepDiverPlaylistTrackSets.set(id, new Set((await store.call(getAllPlaylistTracks(id, token))).map(t => t.id)));
         store.finishProgress();
       }
+      store.loadingDeepDiverPlaylists.delete(id);
 
       store.saveUser();
     }),

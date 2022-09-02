@@ -136,6 +136,7 @@ export interface SpotifyStore {
   likedTrackSet: Set<string> | undefined;
 
   allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
+  currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
   currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
   currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
 
@@ -241,6 +242,16 @@ const useSpotifyStore = () => {
       return (store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) ?
         [...store.justGoodPlaylists, ...store.inProgressJustGoodPlaylists, ...store.plannedJustGoodPlaylists] :
         undefined;
+    },
+
+    get currentJustGoodPlaylistList(): CachedJustGoodPlaylist[] | undefined {
+      if (!store.currentJustGoodPlaylist) return undefined;
+      const { id } = store.currentJustGoodPlaylist;
+      const lists: (CachedJustGoodPlaylist[] | undefined)[] = [store.justGoodPlaylists, store.inProgressJustGoodPlaylists, store.plannedJustGoodPlaylists];
+      for (let i = 0; i < lists.length; i++) {
+        if (lists[i]?.find(p => p.id === id)) return lists[i];
+      }
+      return undefined;
     },
 
     get currentDeepDiveArtistDiscographyGrouped(): FetchedAlbum[] | undefined {
@@ -472,7 +483,7 @@ const useSpotifyStore = () => {
           console.log('Artist received from search:');
           console.log(artist);
 
-          justGoodPlaylists.push({
+          justGoodPlaylists.unshift({
             ...playlist,
             artistId: artist?.id,
             artistName,
@@ -672,6 +683,12 @@ const useSpotifyStore = () => {
           };
 
           store.currentArtistDeepDiveAlbumIds = new Set(response.map(a => a.id));
+        }
+
+        if (store.currentJustGoodPlaylistList) {
+          // Move the playlist to the front of the playlist
+          const playlist = store.currentJustGoodPlaylistList.splice(store.currentJustGoodPlaylistList.findIndex(p => p.id === store.currentJustGoodPlaylist?.id), 1)[0];
+          store.currentJustGoodPlaylistList.unshift(playlist);
         }
       }
 
@@ -913,7 +930,7 @@ const useSpotifyStore = () => {
 
       const index = store.plannedJustGoodPlaylists?.findIndex(p => p.id === store.currentJustGoodPlaylist!.id);
       store.plannedJustGoodPlaylists?.splice(index, 1);
-      store.inProgressJustGoodPlaylists.push(store.currentJustGoodPlaylist);
+      store.inProgressJustGoodPlaylists.unshift(store.currentJustGoodPlaylist);
 
       store.currentDeepDiveArtistAlbumIDsOrdered = albums.map(a => a.id);
 
@@ -1141,7 +1158,7 @@ const useSpotifyStore = () => {
       inProgress ? store.inProgressJustGoodPlaylists.splice(index, 1) : store.justGoodPlaylists.splice(index, 1);
 
       // Add to the other playlist
-      inProgress ? store.justGoodPlaylists.push(playlist) : store.inProgressJustGoodPlaylists.push(playlist);
+      inProgress ? store.justGoodPlaylists.unshift(playlist) : store.inProgressJustGoodPlaylists.unshift(playlist);
 
       await store.saveUser();
     }),

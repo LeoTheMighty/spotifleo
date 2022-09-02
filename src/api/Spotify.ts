@@ -241,9 +241,6 @@ export const getCurrentUserProfile = async (token: string): Promise<UserProfileR
   callSpotifyAPI(token, '/me', GET)
 );
 
-/**
- * TODO: Opportunity to return progress
- */
 export const getAllCurrentUserPlaylists = async (token: string, pcb?: ProgressCallback): Promise<CachedPlaylist[]> => {
   const currentUserId = (await getCurrentUserProfile(token)).id;
   return fetchAll<PlaylistResponse, CachedPlaylist>(

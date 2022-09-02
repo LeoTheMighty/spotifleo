@@ -5,6 +5,8 @@ import { Modal, ModalHeader } from 'react-bootstrap';
 import Settings from './Settings';
 import { useStore } from '../state/SpotifyStoreProvider';
 import LoadingBar from '../components/LoadingBar';
+import Image from '../components/Image';
+import LoadingIndicator from '../common/LoadingIndicator';
 
 const TopBar = () => {
   const store = useStore();
@@ -15,12 +17,20 @@ const TopBar = () => {
     <div className="top-bar">
       {store.token && (
         <div className="d-flex justify-content-between align-items-center h-100 w-100">
-          <button onClick={() => navigate('/spotifleo')}>
-            <i className="bi bi-caret-left top-bar-icon" />
-          </button>
+          { store.progress ? (
+            <LoadingIndicator />
+          ) : (
+            <button onClick={() => navigate('/spotifleo')}>
+              <i className="bi bi-house top-bar-icon" />
+            </button>
+          )}
           <ArtistSearch />
           <button onClick={() => setShowSettings(true)}>
-            <i className="bi bi-gear top-bar-icon" />
+            { store.userImg ? (
+              <Image className="top-bar-icon" src={store.userImg} large />
+            ) : (
+              <i className="bi bi-gear top-bar-icon" />
+            )}
           </button>
           <Modal show={showSettings} onHide={() => setShowSettings(false)}>
             <Settings hide={() => setShowSettings(false)} />

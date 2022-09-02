@@ -174,6 +174,7 @@ export interface SpotifyStore {
   toggleTrackInJustGood: (track: Track) => Promise<void>;
   toggleTrackInPlayingJustGood: (track: Track) => Promise<void>;
   toggleCurrentTrackInPlayingJustGood: () => Promise<void>;
+  toggleTrackNotGood: (trackId: string) => Promise<void>;
   toggleJustGoodPlaylistComplete: () => Promise<void>;
   togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Promise<void>;
   updateJustGoodPlaylistFromCurrent: () => void;
@@ -1081,14 +1082,22 @@ const useSpotifyStore = () => {
 
       await store.toggleTrackInFetchedPlaylist(track, store.currentJustGoodPlaylist);
 
+      if (store.currentJustGoodPlaylist.notGoodIds?.has(track.id)) {
+        store.currentJustGoodPlaylist.notGoodIds?.delete(track.id)
+      }
+
       if (store.isPlayingCurrentDeepDivePlaylist) {
         // Update the duplicated playlist if they're the same
-        if (store.currentJustGoodPlaylist.trackIds.has(track.id)) {
+        if (store.currentPlayingJustGoodPlaylist?.trackIds?.has(track.id)) {
           store.currentPlayingJustGoodPlaylist?.trackIds?.add(track.id);
           store.currentPlayingJustGoodPlaylist?.numTracks && (store.currentPlayingJustGoodPlaylist.numTracks += 1);
         } else {
           store.currentPlayingJustGoodPlaylist?.trackIds?.delete(track.id);
           store.currentPlayingJustGoodPlaylist?.numTracks && (store.currentPlayingJustGoodPlaylist.numTracks -= 1);
+        }
+
+        if (store.currentPlayingJustGoodPlaylist?.notGoodIds?.has(track.id)) {
+          store.currentPlayingJustGoodPlaylist?.notGoodIds?.delete(track.id)
         }
       }
     }),
@@ -1108,14 +1117,22 @@ const useSpotifyStore = () => {
 
       await store.toggleTrackInFetchedPlaylist(track, store.currentPlayingJustGoodPlaylist);
 
+      if (store.currentPlayingJustGoodPlaylist?.notGoodIds?.has(track.id)) {
+        store.currentPlayingJustGoodPlaylist?.notGoodIds?.delete(track.id)
+      }
+
       if (store.isPlayingCurrentDeepDivePlaylist) {
         // Update the duplicated playlist if they're the same
-        if (store.currentPlayingJustGoodPlaylist.trackIds.has(track.id)) {
+        if (store.currentJustGoodPlaylist?.trackIds.has(track.id)) {
           store.currentJustGoodPlaylist?.trackIds?.add(track.id);
           store.currentJustGoodPlaylist?.numTracks && (store.currentJustGoodPlaylist.numTracks += 1);
         } else {
           store.currentJustGoodPlaylist?.trackIds?.delete(track.id);
           store.currentJustGoodPlaylist?.numTracks && (store.currentJustGoodPlaylist.numTracks -= 1);
+        }
+
+        if (store.currentJustGoodPlaylist?.notGoodIds?.has(track.id)) {
+          store.currentJustGoodPlaylist?.notGoodIds?.delete(track.id)
         }
       }
     }),
@@ -1126,7 +1143,7 @@ const useSpotifyStore = () => {
     toggleCurrentTrackInJustGood: action(async () => {
       if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
 
-      return store.toggleTrackInJustGood(store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress])
+      return store.toggleTrackInJustGood(store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress]);
     }),
 
     toggleCurrentTrackInPlayingJustGood: action(async () => {
@@ -1134,6 +1151,22 @@ const useSpotifyStore = () => {
 
       return store.toggleTrackInPlayingJustGood(store.currentTrack);
     }),
+
+    toggleTrackNotGood: async (trackId: string) => {
+      if (!store.currentJustGoodPlaylist) return notInitialized();
+
+      if (store.currentJustGoodPlaylist.notGoodIds?.has(trackId)) {
+        store.currentJustGoodPlaylist.notGoodIds?.delete(trackId);
+      } else {
+        store.currentJustGoodPlaylist.notGoodIds?.add(trackId);
+      }
+
+      if (store.currentPlayingJustGoodPlaylist?.notGoodIds?.has(trackId)) {
+        store.currentPlayingJustGoodPlaylist?.notGoodIds?.delete(trackId);
+      } else {
+        store.currentPlayingJustGoodPlaylist?.notGoodIds?.add(trackId);
+      }
+    },
 
     /**
      * TODO

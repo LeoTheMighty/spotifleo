@@ -276,6 +276,9 @@ const DeepDiveDriver = observer(() => {
             <button className="m-2 p-0" onClick={() => store.toggleRepeat()}>
               <i className={`bi bi-repeat${store.currentTrack?.repeat === 'track' ? '-1' : ''} bi-big ${store.currentTrack?.repeat !== 'off' ? 'text-1' : 'disabled'}`}/>
             </button>
+            <button className="m-2 p-0" onClick={() => store.toggleTrackNotGood(deepDiveTrack.id)}>
+              <i className={`bi bi-dash-circle bi-big ${store.currentJustGoodPlaylist?.notGoodIds?.has(deepDiveTrack.id) ? 'text-1' : 'disabled'}`} />
+            </button>
           </div>
           )}
         <Modal show={configurePlaylistsOpen} onHide={() => setConfigurePlaylistsOpen(false)}>

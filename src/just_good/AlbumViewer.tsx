@@ -11,18 +11,19 @@ type TrackViewerProps = {
   isPlaying: boolean;
   isLiked: boolean;
   isGood: boolean;
+  isNotGood: boolean;
   viewNotGood: boolean;
   onClick: () => void;
   onToggleAdd: () => void;
   onToggleLike: () => void;
 };
 
-const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, viewNotGood, onClick, onToggleAdd, onToggleLike }: TrackViewerProps) => {
+const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, isNotGood, viewNotGood, onClick, onToggleAdd, onToggleLike }: TrackViewerProps) => {
   const [hoverName, setHoverName] = useState(false);
 
   if (!isGood && !viewNotGood) return null;
   return (
-    <div key={track.name} className={`deep-dive-track-view ${isPlaying ? 'text-green' : (isGood ? '' : 'disabled')}`}>
+    <div key={track.name} className={`deep-dive-track-view ${isPlaying ? 'text-green' : (isNotGood ? 'disabled' : 'text-1')}`}>
       <div className="d-flex flex-row justify-content-between overflow-hidden">
         <div
           className="deep-dive-track-view-play-button d-flex flex-row pointer-event align-items-start overflow-hidden"
@@ -89,6 +90,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: Al
       </div>
       {album.tracks.map((track, index) => {
         const isGood = store.currentJustGoodPlaylist?.trackIds?.has(track.id) || false;
+        const isNotGood = store.currentJustGoodPlaylist?.notGoodIds?.has(track.id) || false;
         return (
           <TrackViewer
             track={track}
@@ -96,6 +98,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: Al
             isPlaying={store.playing && (store.currentTrack?.id === track.id)}
             isGood={isGood}
             isLiked={store.likedTrackSet?.has(track.id) || false}
+            isNotGood={isNotGood}
             viewNotGood={viewNotGood}
             onClick={async () => {
               await store.playTrackInDeepDivePlaylist(track);

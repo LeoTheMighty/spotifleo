@@ -229,6 +229,7 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): CachedJust
   progress: justGoodPlaylist.progress,
   artistId: justGoodPlaylist.artistId,
   numTracks: justGoodPlaylist.numTracks,
+  notGoodIds: justGoodPlaylist.notGoodIds,
 });
 
 export const newTab = { target: "_blank", rel: "noreferrer noopener" };

@@ -79,6 +79,36 @@ export interface FetchedArtist extends Artist {
   albums: Album[];
 }
 
+export interface Playback {
+  playing?: SpotifyItem;
+}
+
+export interface StoredToken {
+  accessToken: string;
+  refreshToken: string;
+  expires: string;
+}
+
+export interface StoredUser {
+  userId: string;
+  userName: string;
+  userImg: Images;
+  userPlaylists: CachedPlaylist[];
+  deepDiverPlaylistIndexes: { [id: string]: number };
+  deepDiverPlaylistTrackSets: { [id: string]: string[] };
+  justGoodPlaylists: StoredCachedJustGoodPlaylist[];
+}
+
+export type User = {
+  userId: string;
+  userName: string;
+  userImg: Images;
+  userPlaylists: CachedPlaylist[];
+  deepDiverPlaylistIndexes: { [id: string]: number };
+  deepDiverPlaylistTrackSets: { [id: string]: string[] };
+  justGoodPlaylists: CachedJustGoodPlaylist[];
+};
+
 export interface Playlist extends SpotifyItem {
   description: string;
 }
@@ -87,9 +117,6 @@ export interface FetchedPlaylist extends Playlist {
   tracks: Track[];
 }
 
-export interface Playback {
-  playing?: SpotifyItem;
-}
 
 export interface CachedPlaylist {
   name: string;
@@ -101,6 +128,16 @@ export interface FetchedCachedPlaylist extends CachedPlaylist {
   trackIds?: Set<string>;
 }
 
+export interface StoredCachedJustGoodPlaylist extends CachedPlaylist {
+  artistId?: string;
+  artistImg?: Images;
+  artistName: string;
+  inProgress: boolean;
+  progress: number; // which playlist track you last were on. Could also be helpful for creating list.
+  deepDivePlaylist?: CachedPlaylist;
+  notGoodIds?: string[];
+}
+
 export interface CachedJustGoodPlaylist extends CachedPlaylist {
   artistId?: string;
   artistImg?: Images;
@@ -108,6 +145,7 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
   inProgress: boolean;
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedPlaylist;
+  notGoodIds?: Set<string>; // cached within the playlist, not within
   trackIds?: Set<string>;
 }
 

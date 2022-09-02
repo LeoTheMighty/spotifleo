@@ -64,10 +64,10 @@ import {
   Progress,
   FetchedCachedPlaylist,
   PlayingTrack,
-  HelpViewType, APIError
+  HelpViewType, APIError, User
 } from '../types';
 import { deserializeArtists, deserializePlayingTrack, deserializeTrack } from '../logic/serializers';
-import { getUser, getToken, storeToken, storeUser, StoredUser, removeUser, removeToken } from '../logic/storage';
+import { getUser, getToken, storeToken, storeUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
 /*
@@ -156,9 +156,9 @@ export interface SpotifyStore {
 
   // User Setup
   fetchUser: () => Promise<void>;
-  setupUser: () => Promise<StoredUser>;
+  setupUser: () => Promise<User>;
   saveUser: () => void;
-  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => StoredUser;
+  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => User;
   resetUser: () => Promise<void>;
   evictUser: () => void;
 
@@ -985,6 +985,7 @@ const useSpotifyStore = () => {
         inProgress: true,
         progress: 0,
         numTracks: 0,
+        notGoodIds: new Set(),
       }
 
       store.plannedJustGoodPlaylists = [justGoodPlaylist, ...(store.plannedJustGoodPlaylists || [])];

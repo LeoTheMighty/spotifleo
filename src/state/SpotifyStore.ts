@@ -95,6 +95,7 @@ export interface SpotifyStore {
 
   // User Setup
   setupLoading: boolean;
+  previewMode: boolean;
 
   userId?: string;
   userName?: string;
@@ -226,6 +227,7 @@ const useSpotifyStore = () => {
   const store: SpotifyStore = useLocalObservable<SpotifyStore>(() => ({
     // ============ INITIAL PROPERTIES ================
     setupLoading: true,
+    previewMode: false,
 
     loadingDeepDiverPlaylists: new Set(),
 
@@ -543,6 +545,34 @@ const useSpotifyStore = () => {
       store.setupLoading = false;
 
       return storedUser;
+    }),
+
+    loadPreviewData: action(() => {
+      // TODO: Load in the offline data so that you can
+      // userId?: string;
+      // userName?: string;
+      // userImg?: Images;
+      // userPlaylists?: CachedPlaylist[];
+      // deepDiverPlaylistIndexes?: Map<string, number>; // which ones are activated
+      // deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the activated deep diver playlists
+      // justGoodPlaylists?: CachedJustGoodPlaylist[];
+      // inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
+      // plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
+      // justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
+      // justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
+
+        // Deep Diver
+      // currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
+      // currentJustGoodPlaylist?: JustGoodPlaylist;
+      // currentArtistDeepDiveAlbumIds?: Set<string>;
+      // currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
+      // currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
+      // currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
+
+      // TODO: Search bar will have to be disabled
+
+      // High Level Spotify Player
+      // currentTrack?: PlayingTrack;
     }),
 
     /**

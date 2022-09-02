@@ -73,6 +73,10 @@ export const getArtistAlbums = async (artistID: string, limit: number, offset: n
   })
 );
 
+export const getLatestArtistAlbum = async (artistID: string, token: string): Promise<Album> => (
+  deserializeAlbum((await getArtistAlbums(artistID, 1, 0, token)).items[0])
+);
+
 export const getAllArtistAlbums = async (artistID: string, token: string, pcb?: ProgressCallback): Promise<Album[]> => (
   fetchAll(
     (offset) => getArtistAlbums(artistID, MAX_FETCH_ITEMS, offset, token),
@@ -154,9 +158,18 @@ export const getPlaylistTracks = async (playlistID: string, limit: number, offse
   })
 );
 
+// TODO: DOES THIS GET THE MOST RECENT TRACK OR LAST THE FIRST ONE?
 export const getFirstPlaylistTrack = async (playlistID: string, token: string): Promise<PlaylistTrack | undefined> => {
   const { total, items } = await getPlaylistTracks(playlistID, 1, 0, token);
   return total === 0 ? undefined : deserializePlaylistTrack(items[0], 0);
+};
+
+// TODO: IF IT DOESN'T THEN USE THIS FUNCTION
+export const getLastPlaylistTrack = async (playlistID: string, token: string): Promise<PlaylistTrack | undefined> => {
+  const { total } = await getPlaylistTracks(playlistID, 1, 0, token);
+  if (total === 0) return undefined;
+  const { items } = await getPlaylistTracks(playlistID, 1, total - 1, token);
+  return deserializePlaylistTrack(items[0], 0);
 };
 
 export const getAllPlaylistTracks = async (playlistId: string, token: string, pcb?: ProgressCallback): Promise<PlaylistTrack[]> => {

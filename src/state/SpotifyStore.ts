@@ -22,7 +22,7 @@ import {
   getAllCurrentUserLikedSongs,
   removeTrackFromLiked,
   addTrackToLiked,
-  replaceAllPlaylistItems, toggleShuffle, setRepeatMode, getPlaylistDetails
+  replaceAllPlaylistItems, toggleShuffle, setRepeatMode, getPlaylistDetails, getLatestArtistAlbum, getFirstPlaylistTrack
 } from '../api/Spotify';
 import {
   DEEP_DIVE_INDICATOR,
@@ -200,6 +200,8 @@ export interface SpotifyStore {
 
   // Low Level Helpers
   toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
+  playlistOutOfDate: (playlist: CachedPlaylist) => Promise<boolean>;
+  artistOutOfDate: (playlist: CachedJustGoodPlaylist) => Promise<boolean>;
 
   // Loading Logic
   startProgress: (task?: string) => void;
@@ -1473,6 +1475,22 @@ const useSpotifyStore = () => {
 
       await store.saveUser();
     }),
+
+    playlistOutOfDate: async (playlist: CachedPlaylist) => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!playlist.last || !playlist.id) return notInitialized();
+
+      return (await getFirstPlaylistTrack(playlist.id, token))?.id !== playlist.last;
+    },
+
+    artistOutOfDate: async (playlist: CachedJustGoodPlaylist) => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!playlist.artistId || !playlist.artistLast) return notInitialized();
+
+      return (await getLatestArtistAlbum(playlist.artistId, token)).id !== playlist.artistLast;
+    },
 
     startProgress: action((task?: string) => {
       store.progress = { task: (task || ''), current: '', progress: 0 };

@@ -122,6 +122,7 @@ export interface CachedPlaylist {
   name: string;
   id: string;
   numTracks: number;
+  last?: string; // the most recent track in the playlist to check if we're out of date
 }
 
 export interface FetchedCachedPlaylist extends CachedPlaylist {
@@ -132,6 +133,7 @@ export interface StoredCachedJustGoodPlaylist extends CachedPlaylist {
   artistId?: string;
   artistImg?: Images;
   artistName: string;
+  artistLast?: string; // the most recent artist track to check if we're out of date
   inProgress: boolean;
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedPlaylist;
@@ -142,6 +144,7 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
   artistId?: string;
   artistImg?: Images;
   artistName: string;
+  artistLast?: string; // the most recent artist track to check if we're out of date
   inProgress: boolean;
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedPlaylist;

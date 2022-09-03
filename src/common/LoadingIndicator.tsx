@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Spinner } from 'react-bootstrap';
 
 type Props = {
+  className?: string;
   onView?: () => void;
 };
 
@@ -10,7 +11,7 @@ const intersectionObserverOptions = {
   rootMargin: '50px',
 };
 
-const LoadingIndicator = ({ onView }: Props) => {
+const LoadingIndicator = ({ className, onView }: Props) => {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ const LoadingIndicator = ({ onView }: Props) => {
   }, [ref]);
 
   return (
-    <div ref={ref} className="d-flex justify-content-center">
+    <div ref={ref} className={`d-flex justify-content-center align-items-center ${className || ''}`}>
       <Spinner animation="border" />
     </div>
   );

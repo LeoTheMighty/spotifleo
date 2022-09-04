@@ -1,68 +1,10 @@
-import { FetchedAlbum, Track } from '../types';
-import React, { useState } from 'react';
-import { albumGroupString, artistString, formatMs } from '../logic/common';
+import { FetchedAlbum } from '../types';
+import React  from 'react';
+import { albumGroupString } from '../logic/common';
 import { observer } from 'mobx-react';
 import { SpotifyStore } from '../state/SpotifyStore';
 import Image from '../components/Image';
-
-type TrackViewerProps = {
-  track: Track;
-  index: number;
-  isPlaying: boolean;
-  isLiked: boolean;
-  isGood: boolean;
-  isNotGood: boolean;
-  viewNotGood: boolean;
-  onClick: () => void;
-  onToggleAdd: () => void;
-  onToggleLike: () => void;
-};
-
-const TrackViewer = ({ track, index, isPlaying, isLiked, isGood, isNotGood, viewNotGood, onClick, onToggleAdd, onToggleLike }: TrackViewerProps) => {
-  const [hoverName, setHoverName] = useState(false);
-
-  if (!isGood && !viewNotGood) return null;
-  return (
-    <div key={track.name} className={`deep-dive-track-view ${isPlaying ? 'text-green' : (isNotGood ? 'disabled' : 'text-1')}`}>
-      <div className="d-flex flex-row justify-content-between overflow-hidden">
-        <div
-          className="deep-dive-track-view-play-button d-flex flex-row pointer-event align-items-start overflow-hidden"
-          onMouseEnter={() => setHoverName(true)}
-          onMouseLeave={() => setHoverName(false)}
-          onClick={onClick}
-        >
-          <div className="deep-dive-track-view-number text-center">
-            {(isPlaying) ? (
-              <i className="bi bi-pause bi-small text-1" />
-            ) : (
-              (hoverName) ? <i className="bi bi-play-fill bi-small text-1"/> : `${index + 1}.`
-            )}
-          </div>
-          <div className="d-flex flex-column overflow-hidden no-wrap">
-            <div className="ellipses">
-              {track.name}
-            </div>
-            <div className="d-flex flex-row align-items-start">
-              {track.explicit ? <i className="explicit-icon bi bi-explicit-fill my-1"/> : ''}
-              <i className={`ellipses ${isPlaying ? 'text-green' : (isGood ? '' : 'disabled')}`}> {artistString(track.artists)} </i>
-            </div>
-          </div>
-        </div>
-        <div className="d-flex flex-row align-items-center">
-          <div className="mx-2">
-            {formatMs(track.duration)}
-          </div>
-          <button className="deep-dive-track-view-add-button m-0 p-0" onClick={onToggleAdd}>
-            {isGood ? <i className="bi bi-hand-thumbs-up-fill"/> : <i className="bi bi-hand-thumbs-up"/>}
-          </button>
-          {/*<button className="deep-dive-track-view-add-button m-0 p-1 mt-1" onClick={onToggleLike}>*/}
-          {/*  {isLiked ? <i className="bi bi-heart-fill"/> : <i className="bi bi-heart"/>}*/}
-          {/*</button>*/}
-        </div>
-      </div>
-    </div>
-  );
-};
+import TrackViewer from './TrackViewer';
 
 type AlbumViewerProps = {
   album: FetchedAlbum;
@@ -90,7 +32,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: Al
       </div>
       {album.tracks.map((track, index) => {
         const isGood = store.currentJustGoodPlaylist?.trackIds?.has(track.id) || false;
-        const isNotGood = store.currentJustGoodPlaylist?.notGoodIds?.has(track.id) || false;
+        const isNotGood = store.currentJustGoodPlaylist?.notGoodIds === undefined ? !isGood : store.currentJustGoodPlaylist.notGoodIds.has(track.id);
         return (
           <TrackViewer
             track={track}
@@ -100,6 +42,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: Al
             isLiked={store.likedTrackSet?.has(track.id) || false}
             isNotGood={isNotGood}
             viewNotGood={viewNotGood}
+            showAlbum={false}
             onClick={async () => {
               await store.playTrackInDeepDivePlaylist(track);
               // navigateToDrive?.();

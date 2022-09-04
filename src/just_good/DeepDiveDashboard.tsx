@@ -33,7 +33,7 @@ const Dashboard = observer(() => {
   return (
     <div className="deep-dive-dashboard">
       <JustGoodScroller
-        label="Finished Deep Dives"
+        label="Completed Deep Dives"
         emptyLabel="haha no bitches"
         playlists={store.justGoodPlaylists}
         view="view-deep-dive"

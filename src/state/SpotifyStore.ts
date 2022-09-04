@@ -1191,6 +1191,10 @@ const useSpotifyStore = () => {
     toggleTrackNotGood: async (trackId: string) => {
       if (!store.currentJustGoodPlaylist) return notInitialized();
 
+      if (store.currentJustGoodPlaylist.notGoodIds === undefined) {
+        store.currentJustGoodPlaylist.notGoodIds = new Set();
+      }
+
       if (store.currentJustGoodPlaylist.notGoodIds?.has(trackId)) {
         store.currentJustGoodPlaylist.notGoodIds?.delete(trackId);
       } else {
@@ -1202,6 +1206,8 @@ const useSpotifyStore = () => {
       } else {
         store.currentPlayingJustGoodPlaylist?.notGoodIds?.add(trackId);
       }
+
+      store.saveUser();
     },
 
     /**

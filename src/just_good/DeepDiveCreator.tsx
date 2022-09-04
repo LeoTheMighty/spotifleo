@@ -27,10 +27,13 @@ const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
   const [grouped, setGrouped] = useState(true);
+  const [byAlbum, setByAlbum] = useState(true);
   const [sortAlpha, setSortAlpha] = useState(false);
   const [sortChrono, setSortChrono] = useState(true);
+  const [sortPopular, setSortPopular] = useState(false);
   const [sortAlphaForward, setSortAlphaForward] = useState(true);
   const [sortChronoForward, setSortChronoForward] = useState(true);
+  const [sortPopularForward, setSortPopularForward] = useState(true);
   const [customOrder, setCustomOrder] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -83,6 +86,16 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
+  const clickPopular = () => {
+    if (sortPopular) {
+      setSortPopularForward(s => !s);
+    } else {
+      setByAlbum(false);
+      setSortPopular(true);
+      customOrder && setCanUndo(true);
+    }
+  }
+
   const clickUndo = () => {
     if (canUndo) {
       setGrouped(false);
@@ -98,7 +111,8 @@ const DeepDiveCreator = observer(() => {
     // lmao ;////
     return `${grouped ? 'Grouped' : ''}${(grouped && (sortAlpha || sortChrono)) ? ', ' : ''}
     ${((sortChrono && !sortChronoForward) || (sortAlpha && !sortAlphaForward)
-    ) ? 'Reverse-' : ''}${sortChrono ? 'Chronological' : ''}${sortAlpha ? 'Alphabetical' : ''}`;
+    ) ? 'Reverse-' : ''}${sortChrono ? 'Chronological' : ''}${sortAlpha ? 'Alphabetical' : ''}
+    ${sortPopular ? (sortPopularForward ? 'Popular' : 'Unpopular') : ''}`;
   };
 
   const toggleAlbum = (album: Album) => {
@@ -211,15 +225,15 @@ const DeepDiveCreator = observer(() => {
             'Start the Deep Dive'
           )}
         </button>
-        <button className={`primary-btn toggle mx-2 my-3 ${importExisting ? 'on' : 'off'}`} onClick={() => setImportExisting(i => !i)}>
-          {importExisting ? (
-            'Importing Liked to Just Good'
-          ) : (
-            'Import Liked Songs to Just Good?'
-          )}
-        </button>
+        {/*<button className={`primary-btn toggle mx-2 my-3 ${importExisting ? 'on' : 'off'}`} onClick={() => setImportExisting(i => !i)}>*/}
+        {/*  {importExisting ? (*/}
+        {/*    'Importing Liked to Just Good'*/}
+        {/*  ) : (*/}
+        {/*    'Import Liked Songs to Just Good?'*/}
+        {/*  )}*/}
+        {/*</button>*/}
       </div>
-      <h1 className="text-center m-1"> Select releases to exclude from the deep dive </h1>
+      <h1 className="text-center m-1"> Customize your {store.currentJustGoodPlaylist?.artistName} Deep Dive </h1>
       <div className="d-flex justify-content-around my-1 w-100">
         <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
           <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
@@ -250,6 +264,11 @@ const DeepDiveCreator = observer(() => {
           </button>
           <button className="deep-dive-creator-sort-button" onClick={clickChrono}>
             <i className={`bi bi-sort-numeric-${sortChronoForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortChrono ? '' : 'disabled'}`} />
+          </button>
+          <button className="deep-dive-creator-sort-button my-1" onClick={clickPopular}>
+            <i className={`bi bi-sort-${sortPopularForward ? 'down' : 'up'} bi-small position-relative mx-1 p-0 ${sortPopular ? '' : 'disabled'}`}>
+              <i className="bi bi-person-hearts floated-bottom-right-corner" />
+            </i>
           </button>
           {customOrder && (
             <button className="deep-dive-creator-sort-button" onClick={clickUndo}>

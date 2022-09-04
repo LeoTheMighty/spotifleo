@@ -278,16 +278,30 @@
 }
 
 .deep-dive-track-view {
-  margin: 0.5rem;
+  margin-block: 0.4rem;
+  margin-inline: 0.3rem;
 }
 
 .deep-dive-track-view-number {
-  width: 1.75rem;
+  width: 3.5rem;
+  max-width: 24px;
   margin-right: 0.25rem;
 }
 
 .deep-dive-track-view-play-button {
   pointer-events: painted;
+}
+
+.deep-dive-track-album-preview {
+  margin-right: 0.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.deep-dive-track-album-preview-img {
+  height: 2.5rem;
+  width: 2.5rem;
 }
 
 .deep-dive-track-view-add-button {

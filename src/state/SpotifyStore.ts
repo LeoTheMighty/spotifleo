@@ -723,8 +723,12 @@ const useSpotifyStore = () => {
 
         // Move the playlist to the front of the playlist
         if (store.currentJustGoodPlaylistList) {
-          const playlist = store.currentJustGoodPlaylistList.splice(store.currentJustGoodPlaylistList.findIndex(p => p.id === store.currentJustGoodPlaylist?.id), 1)[0];
-          store.currentJustGoodPlaylistList.unshift(playlist);
+          const list = store.currentJustGoodPlaylistList;
+          const playlist = list.splice(store.currentJustGoodPlaylistList.findIndex(p => p.id === store.currentJustGoodPlaylist?.id), 1)[0];
+          console.log(playlist);
+          list.unshift(playlist);
+
+          store.saveUser();
         }
       }
 

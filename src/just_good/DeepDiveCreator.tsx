@@ -27,7 +27,8 @@ const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
   const [grouped, setGrouped] = useState(true);
-  const [byAlbum, setByAlbum] = useState(true);
+  const [albumGrouped, setAlbumGrouped] = useState(false);
+  // const [byAlbum, setByAlbum] = useState(true);
   const [sortAlpha, setSortAlpha] = useState(false);
   const [sortChrono, setSortChrono] = useState(true);
   const [sortPopular, setSortPopular] = useState(false);
@@ -60,10 +61,17 @@ const DeepDiveCreator = observer(() => {
   }, [store, store.welcomeStep, store.progress]);
 
   const clickGroup = () => {
-    setGrouped(g => {
-      customOrder && setCanUndo(sortAlpha || sortChrono || !g);
-      return !g;
-    });
+    if (grouped) {
+      setGrouped(false);
+      setAlbumGrouped(true);
+    } else if (albumGrouped) {
+      setGrouped(false);
+      setAlbumGrouped(false);
+      customOrder && setCanUndo(sortAlpha || sortChrono);
+    } else {
+      setGrouped(true);
+      setAlbumGrouped(false);
+    }
   };
 
   const clickAlpha = () => {
@@ -90,7 +98,8 @@ const DeepDiveCreator = observer(() => {
     if (sortPopular) {
       setSortPopularForward(s => !s);
     } else {
-      setByAlbum(false);
+      setGrouped(false);
+      setAlbumGrouped(false);
       setSortPopular(true);
       customOrder && setCanUndo(true);
     }
@@ -101,6 +110,7 @@ const DeepDiveCreator = observer(() => {
       setGrouped(false);
       setSortChrono(false);
       setSortAlpha(false);
+      setSortPopular(false);
       setCanUndo(false);
     }
   };
@@ -257,7 +267,9 @@ const DeepDiveCreator = observer(() => {
         </div>
         <div className="d-flex justify-content-end my-2">
           <button className="deep-dive-creator-sort-button" onClick={clickGroup}>
-            <i className={`bi bi-collection bi-small mx-1 p-0 ${grouped ? '' : 'disabled'}`} />
+            <i className={`bi bi-collection bi-small position-relative mx-1 p-0 ${(grouped || albumGrouped) ? '' : 'disabled'}`}>
+              {albumGrouped && (<i className="bi bi-file-music" style={{ position: 'absolute', bottom: '0.11rem', left: '0.32rem', fontSize: '0.9rem' }} />)}
+            </i>
           </button>
           <button className="deep-dive-creator-sort-button" onClick={clickAlpha}>
             <i className={`bi bi-sort-alpha-${sortAlphaForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortAlpha ? '' : 'disabled'}`} />
@@ -265,7 +277,7 @@ const DeepDiveCreator = observer(() => {
           <button className="deep-dive-creator-sort-button" onClick={clickChrono}>
             <i className={`bi bi-sort-numeric-${sortChronoForward ? 'down' : 'up'} bi-small mx-1 p-0 ${sortChrono ? '' : 'disabled'}`} />
           </button>
-          <button className="deep-dive-creator-sort-button my-1" onClick={clickPopular}>
+          <button className="deep-dive-creator-sort-button mx-1" onClick={clickPopular}>
             <i className={`bi bi-sort-${sortPopularForward ? 'down' : 'up'} bi-small position-relative mx-1 p-0 ${sortPopular ? '' : 'disabled'}`}>
               <i className="bi bi-person-hearts floated-bottom-right-corner" />
             </i>

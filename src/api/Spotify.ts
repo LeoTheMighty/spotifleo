@@ -138,8 +138,8 @@ export const getAllMultipleAlbums = async (albumIds: string[], token: string, pc
 
   console.log('1.');
   console.log(albums);
-  // fuck this :(
-  const tracks = await getAllTracks(trackIds, token);
+  // fuck this :( i wish they sent the popularity in the initial album tracks call
+  const tracks = await getAllTracks(trackIds, token, (i) => pcb?.((0.5 + (0.5 * i))));
   console.log(tracks);
   for (let i = 0; i < tracks.length; i++) {
     const track = tracks[i];

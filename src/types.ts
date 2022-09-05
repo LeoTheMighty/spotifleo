@@ -158,6 +158,18 @@ export interface JustGoodPlaylist extends CachedJustGoodPlaylist {
   deepDiveTracks?: Track[];
 }
 
+// Sort Type =
+// 0 =>
+export interface DeepDivePlaylistDescriptionContent {
+  justGoodPlaylist: string;
+  sortType: number;
+}
+
+export interface JustGoodPlaylistDescriptionContent {
+  deepDivePlaylist: string;
+  artistId: string;
+}
+
 // Auth
 export interface PCKECodes {
   code: string;

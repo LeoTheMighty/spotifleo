@@ -4,7 +4,15 @@ import {
   ImageResponse,
   Images,
   CachedJustGoodPlaylist,
-  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist, APIError, FetchedAlbum
+  JustGoodPlaylist,
+  AlbumType,
+  AlbumGroup,
+  Track,
+  Artist,
+  APIError,
+  FetchedAlbum,
+  JustGoodPlaylistDescriptionContent,
+  DeepDivePlaylistDescriptionContent
 } from '../types';
 import { capitalize } from 'lodash';
 
@@ -38,19 +46,61 @@ export const formatResp = async (r: Response): Promise<any> => new Promise((reso
   }
 });
 
+const PLAYLIST_NAME_MAX = 100;
+const PLAYLIST_DESCRIPTION_MAX = 300;
 const myTag = 'Created using Leo Belyi\'s Deep Diver :)';
-export const getDeepDivePlaylistName = (artistName: string) => `${DEEP_DIVE_INDICATOR} ${artistName}`;
-export const getDeepDivePlaylistDescription = (artistName: string) => (
-  `The playlist of the artist's discography to make the "${getJustGoodPlaylistName(artistName)}" playlist! ${myTag}`
+const getJustGoodDescriptionContentTag = (content?: JustGoodPlaylistDescriptionContent) => (
+  content ? `DON'T TOUCH => |${content.deepDivePlaylist},${content.artistId}` : ''
 );
-export const getJustGoodPlaylistName = (artistName: string) => `${JUST_GOOD_INDICATOR} ${artistName}`;
-export const getJustGoodPlaylistDescription = (artistName: string) => (
-  `Only the good songs from the "${getDeepDivePlaylistName(artistName)}" playlist. ${myTag}`
+const getDeepDiveDescriptionContentTag = (content?: DeepDivePlaylistDescriptionContent) => (
+  content ? `DON'T TOUCH => |${content.justGoodPlaylist},${content.sortType}` : ''
 );
-export const getInProgressJustGoodPlaylistName = (artistName: string) => `${IN_PROGRESS_INDICATOR} ${artistName}`;
-export const getInProgressJustGoodPlaylistDescription = (artistName: string) => (
-  `!!! NOT FINISHED !!! Will be just the good songs from the "${getDeepDivePlaylistName(artistName)}" playlist. ${myTag}`
+const getJustGoodDescriptionContent = (description: string): JustGoodPlaylistDescriptionContent => {
+  const contentString = arrayGetWrap(description.split('|'), -1);
+  const [deepDivePlaylist, artistId] = contentString.split(',');
+  return {
+    deepDivePlaylist,
+    artistId,
+  }
+};
+const getDeepDiveDescriptionContent = (description: string): DeepDivePlaylistDescriptionContent => {
+  const contentString = arrayGetWrap(description.split('|'), -1);
+  const [justGoodPlaylist, sortType] = contentString.split(',');
+  return {
+    justGoodPlaylist,
+    sortType: parseInt(sortType),
+  }
+};
+const ellipsizeString = (content: string, maxLength: number) => (
+  content.length > maxLength ? content.substring(0, maxLength - 3) + '...' : content
 );
+export const getDeepDivePlaylistName = (artistName: string) => (
+  `${DEEP_DIVE_INDICATOR} ${ellipsizeString(artistName, PLAYLIST_NAME_MAX - (DEEP_DIVE_INDICATOR.length + 1))}`
+);
+export const getDeepDivePlaylistDescription = (artistName: string, content?: DeepDivePlaylistDescriptionContent) => {
+  const contentStr = getDeepDiveDescriptionContentTag(content);
+  const restChars = 64;
+  const left = PLAYLIST_DESCRIPTION_MAX - contentStr.length - myTag.length - restChars;
+  return `The playlist of the artist's discography to make the "${ellipsizeString(getJustGoodPlaylistName(artistName), left)}" playlist! ${myTag}${contentStr}`
+};
+export const getJustGoodPlaylistName = (artistName: string) => (
+  `${JUST_GOOD_INDICATOR} ${ellipsizeString(artistName, PLAYLIST_NAME_MAX - (JUST_GOOD_INDICATOR.length + 1))}`
+);
+export const getJustGoodPlaylistDescription = (artistName: string, content?: JustGoodPlaylistDescriptionContent) => {
+  const contentStr = getJustGoodDescriptionContentTag(content);
+  const restChars = 40;
+  const left = PLAYLIST_DESCRIPTION_MAX - contentStr.length - myTag.length - restChars;
+  return `Only the good songs from the "${ellipsizeString(getDeepDivePlaylistName(artistName), left)}" playlist. ${myTag}${getJustGoodDescriptionContentTag(content)}`
+};
+export const getInProgressJustGoodPlaylistName = (artistName: string) => (
+  `${IN_PROGRESS_INDICATOR} ${ellipsizeString(artistName, PLAYLIST_NAME_MAX - (IN_PROGRESS_INDICATOR.length + 1))}`
+);
+export const getInProgressJustGoodPlaylistDescription = (artistName: string, content?: JustGoodPlaylistDescriptionContent) => {
+  const contentStr = getJustGoodDescriptionContentTag(content);
+  const restChars = 69;
+  const left = PLAYLIST_DESCRIPTION_MAX - contentStr.length - myTag.length - restChars;
+  return `!!! NOT FINISHED !!! Will be just the good songs from the "${ellipsizeString(getDeepDivePlaylistName(artistName), left)}" playlist. ${myTag}${getJustGoodDescriptionContentTag(content)}`
+};
 
 export const formatQueryList = (list: string[]) => list.join(',');
 

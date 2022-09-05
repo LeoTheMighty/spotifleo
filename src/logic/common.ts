@@ -4,7 +4,7 @@ import {
   ImageResponse,
   Images,
   CachedJustGoodPlaylist,
-  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist, APIError
+  JustGoodPlaylist, AlbumType, AlbumGroup, Track, Artist, APIError, FetchedAlbum
 } from '../types';
 import { capitalize } from 'lodash';
 
@@ -277,3 +277,6 @@ export const setSubtraction = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
 
   return sf;
 };
+
+export const min = (...args: number[]): number => args.reduce((a, b) => a > b ? b : a);
+export const max = (...args: number[]): number => args.reduce((a, b) => a < b ? b : a);

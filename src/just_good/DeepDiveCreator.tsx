@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../state/SpotifyStoreProvider';
 import ToggleAlbum from './ToggleAlbum';
 import { observer } from 'mobx-react';
-import { Album, AlbumGroup, FetchedAlbum } from '../types';
+import { Album, AlbumGroup, FetchedAlbum, Track } from '../types';
 import ConfirmModal from '../components/ConfirmModal';
-import { driveDeepDiver, viewDeepDiver } from '../logic/common';
+import { driveDeepDiver, min, viewDeepDiver } from '../logic/common';
 import { useNavigate } from 'react-router-dom';
 import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from 'react-bootstrap';
 
@@ -22,13 +22,16 @@ const compareAlbumsAlpha = (a: Album, b: Album) => a.name.localeCompare(b.name);
 const compareAlbumsAlphaReverse = (a: Album, b: Album) => b.name.localeCompare(a.name);
 const compareAlbumsChrono = (a: Album, b: Album) => a.releaseDate.getTime() - b.releaseDate.getTime();
 const compareAlbumsChronoReverse = (a: Album, b: Album) => b.releaseDate.getTime() - a.releaseDate.getTime();
+const compareAlbumsPopular = (a: Album, b: Album) => b.popularity - a.popularity;
+const compareAlbumsPopularReverse = (a: Album, b: Album) => a.popularity - b.popularity;
+const compareTracksPopular = (a: Track, b: Track) => b.popularity - a.popularity;
+const compareTracksPopularReverse = (a: Track, b: Track) => a.popularity - b.popularity;
 
 const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
   const [grouped, setGrouped] = useState(true);
   const [albumGrouped, setAlbumGrouped] = useState(false);
-  // const [byAlbum, setByAlbum] = useState(true);
   const [sortAlpha, setSortAlpha] = useState(false);
   const [sortChrono, setSortChrono] = useState(true);
   const [sortPopular, setSortPopular] = useState(false);
@@ -60,17 +63,18 @@ const DeepDiveCreator = observer(() => {
     }
   }, [store, store.welcomeStep, store.progress]);
 
+  // really wish this click logic could be cleaner rip
   const clickGroup = () => {
-    if (grouped) {
-      setGrouped(false);
-      setAlbumGrouped(true);
-    } else if (albumGrouped) {
-      setGrouped(false);
-      setAlbumGrouped(false);
-      customOrder && setCanUndo(sortAlpha || sortChrono);
-    } else {
+    if (albumGrouped) {
       setGrouped(true);
       setAlbumGrouped(false);
+    } else if (grouped && !sortChrono) {
+      setGrouped(false);
+      setAlbumGrouped(false);
+    } else {
+      setGrouped(false);
+      setAlbumGrouped(true);
+      customOrder && setCanUndo(sortAlpha || sortChrono || sortPopular);
     }
   };
 
@@ -80,6 +84,7 @@ const DeepDiveCreator = observer(() => {
     } else {
       setSortAlpha(true);
       setSortChrono(false);
+      setSortPopular(false);
       customOrder && setCanUndo(true);
     }
   };
@@ -90,7 +95,12 @@ const DeepDiveCreator = observer(() => {
     } else {
       setSortAlpha(false);
       setSortChrono(true);
+      setSortPopular(false);
       customOrder && setCanUndo(true);
+      if (!grouped && !albumGrouped) {
+        setGrouped(false);
+        setAlbumGrouped(true);
+      }
     }
   };
 
@@ -98,8 +108,8 @@ const DeepDiveCreator = observer(() => {
     if (sortPopular) {
       setSortPopularForward(s => !s);
     } else {
-      setGrouped(false);
-      setAlbumGrouped(false);
+      setSortAlpha(false);
+      setSortChrono(false);
       setSortPopular(true);
       customOrder && setCanUndo(true);
     }
@@ -108,6 +118,7 @@ const DeepDiveCreator = observer(() => {
   const clickUndo = () => {
     if (canUndo) {
       setGrouped(false);
+      setAlbumGrouped(false);
       setSortChrono(false);
       setSortAlpha(false);
       setSortPopular(false);
@@ -115,14 +126,22 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
-  const getSortDescription = () => {
-    if (customOrder && !canUndo) return 'Custom Order';
+  const getGroupedDescription = () => (
+    (grouped || albumGrouped) ? `Grouped by ${grouped ? 'Type' : 'Album'}` : 'Individual Tracks'
+  );
 
+  const getSortDescription = () => {
+    // return 'Sorted Popularly';
+    // return 'Sorted Un-popularly';
+    // return 'Chronological';
+    // return 'Sorted by Popular';
+    // return 'Grouped by Type, Reverse-Chronological';
+
+    if (customOrder && !canUndo) return 'Custom Order';
     // lmao ;////
-    return `${grouped ? 'Grouped' : ''}${(grouped && (sortAlpha || sortChrono)) ? ', ' : ''}
-    ${((sortChrono && !sortChronoForward) || (sortAlpha && !sortAlphaForward)
+    return `Sorted ${((sortChrono && !sortChronoForward) || (sortAlpha && !sortAlphaForward)
     ) ? 'Reverse-' : ''}${sortChrono ? 'Chronological' : ''}${sortAlpha ? 'Alphabetical' : ''}
-    ${sortPopular ? (sortPopularForward ? 'Popular' : 'Unpopular') : ''}`;
+    ${sortPopular ? (sortPopularForward ? 'Popularly' : 'Un-popularly') : ''}`;
   };
 
   const toggleAlbum = (album: Album) => {
@@ -146,6 +165,8 @@ const DeepDiveCreator = observer(() => {
       albums?.sort(sortAlphaForward ? compareAlbumsAlpha : compareAlbumsAlphaReverse);
     } else if (sortChrono) {
       albums?.sort(sortChronoForward ? compareAlbumsChrono : compareAlbumsChronoReverse);
+    } else if (sortPopular) {
+      albums?.sort(sortPopularForward ? compareAlbumsPopular : compareAlbumsPopularReverse);
     }
   };
 
@@ -243,7 +264,12 @@ const DeepDiveCreator = observer(() => {
         {/*  )}*/}
         {/*</button>*/}
       </div>
-      <h1 className="text-center m-1"> Customize your {store.currentJustGoodPlaylist?.artistName} Deep Dive </h1>
+      {store.currentJustGoodPlaylist?.artistName && (
+        <h1 className="text-center text-lightest m-1 w-100" style={{ fontSize: `${29.5 - min(store.currentJustGoodPlaylist.artistName.length, 10)}vw` }}>
+          {store.currentJustGoodPlaylist.artistName}
+        </h1>
+      )}
+      <h1 className="text-center text-lightest m-1"> Sort and filter your Deep Dive </h1>
       <div className="d-flex justify-content-around my-1 w-100">
         <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
           <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
@@ -261,8 +287,9 @@ const DeepDiveCreator = observer(() => {
           </p>
         </button>
       </div>
-      <div className="d-flex justify-content-between w-100 my-1">
-        <div className="d-flex justify-content-start align-items-center mx-2">
+      <div className="d-flex justify-content-between align-items-center w-100 my-1">
+        <div className="d-flex justify-content-start flex-column mx-2 text-start">
+          <i className="text-small m-0 p-0"> { getGroupedDescription() } </i>
           <i className="text-small m-0 p-0"> { getSortDescription() } </i>
         </div>
         <div className="d-flex justify-content-end my-2">
@@ -309,7 +336,11 @@ const DeepDiveCreator = observer(() => {
         <ModalFooter>
           <button className="primary-btn" onClick={async () => {
             setShowConfirm(false);
-            await store.createOrUpdateDeepDivePlaylist(getAlbums(), importExisting);
+            const tracks = getAlbums().flatMap(a => a.tracks);
+            if (!grouped && !albumGrouped && sortPopular) {
+              sortPopularForward ? tracks.sort(compareTracksPopular) : tracks.sort(compareTracksPopularReverse);
+            }
+            await store.createOrUpdateDeepDivePlaylist(tracks, importExisting);
             store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
           }}>
             yes

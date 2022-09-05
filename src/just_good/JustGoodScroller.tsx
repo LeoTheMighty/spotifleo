@@ -31,7 +31,7 @@ const JustGoodScroller = ({ label, emptyLabel, playlists, view = 'edit-deep-dive
                 className={`horizontal-menu-item d-block ${(welcomeFirst && i === 0) ? 'welcome-select-highlighted' : ''}`}
                 onClick={() => { if (welcomeFirst && i === 0) { store.welcomeStep = 2 } navigate(deepDiver(playlist.id, view)) }}>
                 {playlist.artistImg && <Image className="just-good-scroller-image" src={playlist.artistImg} alt="test" large />}
-                <i className="d-block text-big text-lightest"> {playlist.artistName} </i>
+                <i className="d-block text-big text-lighter"> {playlist.artistName} </i>
               </button>
             ))}
           </HorizontalScrollView>

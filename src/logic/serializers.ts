@@ -51,7 +51,7 @@ export const deserializePlaylistTrack = (playlistTrackResponse: PlaylistTrackRes
 })
 
   export const deserializeAlbums = (albums: AlbumResponse[]): Album[] => albums.map(deserializeAlbum);
-export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, images, album_group, album_type, release_date, total_tracks, artists }: AlbumResponse): Album => ({
+export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, images, album_group, album_type, release_date, total_tracks, popularity, artists }: AlbumResponse): Album => ({
   id,
   name,
   type: 'album',
@@ -63,13 +63,25 @@ export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, im
   releaseDate: new Date(release_date),
   artistIds: getArtistIds(artists),
   trackCount: total_tracks,
+  popularity: popularity || 0,
 });
 
 export const deserializeFetchedAlbums = (albums: AlbumResponse[]): FetchedAlbum[] => albums.map(deserializeFetchedAlbum);
-export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => ({
-  ...deserializeAlbum(album),
-  tracks: album.tracks ? deserializeTracks(album.tracks?.items, album) : [],
-});
+export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => {
+  console.log(album.tracks);
+  const tracks = album.tracks ? deserializeTracks(album.tracks?.items, album) : [];
+  console.log(tracks);
+  // let popularity = 0; // get average of all popularity
+  // tracks.forEach(t => {
+  //   popularity += t.popularity;
+  // });
+  // console.log(popularity);
+  // popularity /= tracks.length;
+  return {
+    ...deserializeAlbum(album),
+    tracks,
+  };
+};
 
 
 export const deserializeCachedPlaylists = (playlists: PlaylistResponse[]): CachedPlaylist[] => playlists.map(deserializeCachedPlaylist);

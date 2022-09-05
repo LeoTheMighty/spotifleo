@@ -114,14 +114,45 @@ export const getAlbumTracks = async (albumID: string, token: string): Promise<Fe
 
 export const getAllMultipleAlbums = async (albumIds: string[], token: string, pcb?: ProgressCallback): Promise<AlbumResponse[]> => {
   const albums: AlbumResponse[] = [];
+  const trackIds: string[] = [];
+  const trackAlbumMap: Map<string, [number, number]> = new Map();
   const chunks = chunkList(albumIds, MAX_FETCH_ALBUMS);
   for (let i = 0; i < chunks.length; i++) {
     const albumResponses = await getMultipleAlbums(chunks[i], token);
-    albums.push(...albumResponses.albums);
-    pcb?.(i / chunks.length);
+    for (let j = 0; j < albumResponses.albums.length; j++) {
+      const album = albumResponses.albums[j];
+      if (album) {
+        const albumIndex = albums.length;
+        albums.push(album);
+        if (album.tracks?.items) {
+          for (let k = 0; k < album.tracks.items.length; k++) {
+            const track = album.tracks.items[k];
+            trackIds.push(track.id);
+            trackAlbumMap.set(track.id, [albumIndex, k]);
+          }
+        }
+      }
+    }
+    pcb?.((0.5 * i) / chunks.length);
   }
-  console.log(albumIds.length);
-  console.log(albums.length);
+
+  console.log('1.');
+  console.log(albums);
+  // fuck this :(
+  const tracks = await getAllTracks(trackIds, token);
+  console.log(tracks);
+  for (let i = 0; i < tracks.length; i++) {
+    const track = tracks[i];
+    if (trackAlbumMap.has(track.id)) {
+      const [albumIndex, trackIndex] = trackAlbumMap.get(track.id)!;
+      if (track.popularity && albums[albumIndex].tracks?.items[trackIndex]) {
+        // @ts-ignore bc breh
+        albums[albumIndex].tracks.items[trackIndex].popularity = track.popularity;
+      }
+    }
+  }
+  console.log('2.');
+  console.log(albums);
 
   return albums;
 };
@@ -175,6 +206,21 @@ export const getLastPlaylistTrack = async (playlistID: string, token: string): P
 export const getAllPlaylistTracks = async (playlistId: string, token: string, pcb?: ProgressCallback): Promise<PlaylistTrack[]> => {
   return fetchAll((o) => getPlaylistTracks(playlistId, MAX_FETCH_ITEMS, o, token), deserializePlaylistTrack, undefined, undefined, pcb);
 }
+
+export const getAllTracks = async (ids: string[], token: string, pcb?: ProgressCallback): Promise<TrackResponse[]> => {
+  const tracks = [];
+  const chunks = chunkList(ids, MAX_FETCH_ALBUMS);
+  for (let i = 0; i < chunks.length; i++) {
+    const trackResponses = await getTracks(chunks[i], token);
+    tracks.push(...trackResponses.tracks);
+    pcb?.(i / chunks.length);
+  }
+  return tracks;
+};
+
+export const getTracks = async (ids: string[], token: string): Promise<{tracks: TrackResponse[]}> => (
+  callSpotifyAPI(token, '/tracks', GET, { ids })
+);
 
 export const addTrackToPlaylist = async (playlistID: string, trackURI: string, token: string) => (
   addTracksToPlaylist(playlistID, [trackURI], token)

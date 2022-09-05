@@ -168,7 +168,7 @@ export interface SpotifyStore {
   fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
   toggleAlbumForDeepDive: (albumId: string) => void;
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-  createOrUpdateDeepDivePlaylist: (albums: FetchedAlbum[], importLiked?: boolean) => Promise<void>;
+  createOrUpdateDeepDivePlaylist: (tracks: Track[], importLiked?: boolean) => Promise<void>;
   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
   toggleCurrentTrackInJustGood: () => Promise<void>;
@@ -880,7 +880,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    createOrUpdateDeepDivePlaylist: action(async (albums: FetchedAlbum[], importLiked: boolean = false) => {
+    createOrUpdateDeepDivePlaylist: action(async (tracks: Track[], importLiked: boolean = false) => {
       console.log('STARTING DEEP DIVE');
       store.startProgress(`${store.currentJustGoodPlaylist?.deepDivePlaylist ? 'Updating' : 'Creating'} Deep Dive Playlist`);
       store.logStore();
@@ -910,15 +910,13 @@ const useSpotifyStore = () => {
 
       // 2. Get all album tracks (in order) (let's go through the disco playlist)
       // 3. Get all appears on tracks (filter for only those that have the artist in them).
-      const filteredAlbums = albums.filter((a) => store.currentArtistDeepDiveAlbumIds?.has(a.id));
+      const filteredTracks = tracks.filter((t) => store.currentArtistDeepDiveAlbumIds?.has(t.albumId || ''));
       const trackURIs: string[] = [];
       const trackIds: Set<string> = new Set();
-      const tracks: Track[] = [];
-      filteredAlbums.forEach((a) => a.tracks.forEach((t) => {
-        tracks.push(t);
+      filteredTracks.forEach((t) => {
         trackIds.add(t.id);
         trackURIs.push(t.uri)
-      }));
+      });
 
       console.log(trackURIs)
       console.log('ADDING ALL TRACKS TO PLAYLIST');
@@ -939,10 +937,10 @@ const useSpotifyStore = () => {
         deepDivePlaylist: {
           id: deepDiveId,
           name: deepDiveName,
-          numTracks: tracks.length,
+          numTracks: filteredTracks.length,
         },
         trackIds: new Set((await store.call(getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb))).map(t => t.id)),
-        deepDiveTracks: tracks,
+        deepDiveTracks: filteredTracks,
         progress: 0,
       };
 
@@ -972,7 +970,13 @@ const useSpotifyStore = () => {
       store.plannedJustGoodPlaylists?.splice(index, 1);
       store.inProgressJustGoodPlaylists.unshift(store.currentJustGoodPlaylist);
 
-      store.currentDeepDiveArtistAlbumIDsOrdered = albums.map(a => a.id);
+      store.currentDeepDiveArtistAlbumIDsOrdered = [];
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        if (track.albumId && !store.currentDeepDiveArtistAlbumIDsOrdered.find(id => id === track.albumId)) {
+          store.currentDeepDiveArtistAlbumIDsOrdered.push(track.albumId);
+        }
+      }
 
       store.saveUser();
 
@@ -1567,7 +1571,7 @@ const useSpotifyStore = () => {
     call: async <T>(apiPromise: Promise<T>, backoff: number = 0): Promise<T> => {
       if (backoff > 0) {
         if (backoff > BACKOFF_LIMIT) {
-
+          throw new Error('Failed to retry API call')
         }
         await sleep(backoffTimeoutMs(backoff));
       }

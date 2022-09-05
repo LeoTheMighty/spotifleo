@@ -27,6 +27,7 @@ export interface Album extends SpotifyItem {
   albumGroup: AlbumGroup;
   releaseDate: Date;
   trackCount: number;
+  popularity: number;
   // restrictions
   // available markets?
 }
@@ -233,6 +234,7 @@ export interface AlbumResponse extends SpotifyItemResponse {
   release_date: string;
   release_date_precision: 'year' | 'month' | 'day';
   restrictions?: { reason: 'market' | 'product' | 'explicit' };
+  popularity?: number;
   artists?: ArtistResponse[];
   tracks?: FetchResponse<TrackResponse>;
 }

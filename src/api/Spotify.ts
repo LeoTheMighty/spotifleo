@@ -59,6 +59,10 @@ export const searchForArtist = async (
   })
 );
 
+export const getArtist = async (id: string, token: string): Promise<ArtistResponse> => (
+  callSpotifyAPI(token, `/artists/${id}`, GET)
+);
+
 /*
 
 Returned in chronological order but then split into different album groups

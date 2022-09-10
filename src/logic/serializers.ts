@@ -8,7 +8,15 @@ import {
   Track,
   TrackResponse
 } from '../types';
-import { artistString, getArtistIds, getGenre, getID, getImages } from './common';
+import {
+  artistString,
+  getArtistIds,
+  getDeepDiveDescriptionContent,
+  getDeepDivePlaylistDescription,
+  getGenre,
+  getID,
+  getImages, getJustGoodDescriptionContent
+} from './common';
 
 export const deserializeArtists = (artists: ArtistResponse[]): Artist[] => artists.map(deserializeArtist);
 export const deserializeArtist = ({ id, external_urls: { spotify }, images, uri, name, popularity, genres, }: ArtistResponse): Artist => ({
@@ -85,7 +93,14 @@ export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => {
 
 
 export const deserializeCachedPlaylists = (playlists: PlaylistResponse[]): CachedPlaylist[] => playlists.map(deserializeCachedPlaylist);
-export const deserializeCachedPlaylist = ({ id, name, tracks: { total } }: PlaylistResponse): CachedPlaylist => ({ id, name, numTracks: total });
+export const deserializeCachedPlaylist = ({ id, name, description, tracks: { total } }: PlaylistResponse): CachedPlaylist => ({
+  id,
+  name,
+  numTracks: total,
+  // Get the content from the description
+  justGoodContent: getJustGoodDescriptionContent(description),
+  deepDiveContent: getDeepDiveDescriptionContent(description),
+});
 
 export const deserializePlayingTrack = (playbackResponse: PlaybackResponse): PlayingTrack => ({
   ...deserializeTrack(playbackResponse.item),
@@ -94,7 +109,7 @@ export const deserializePlayingTrack = (playbackResponse: PlaybackResponse): Pla
   repeat: playbackResponse.repeat_state,
   context: playbackResponse.context && {
     type: playbackResponse.context.type,
-    id: getID(playbackResponse.context.uri),
+    id: getID(playbackResponse.context.uri) || '',
     uri: playbackResponse.context.uri,
   },
   progress: playbackResponse.progress_ms || 0,

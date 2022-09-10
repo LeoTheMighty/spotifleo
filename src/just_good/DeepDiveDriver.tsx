@@ -104,10 +104,10 @@ const DeepDiveDriver = observer(() => {
     return <LoadingIndicator />;
   }
 
-  const prevPrevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 2).img;
-  const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 1).img;
-  const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 1).img;
-  const nextNextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 2).img;
+  const prevPrevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 2)?.img;
+  const prevTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex - 1)?.img;
+  const nextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 1)?.img;
+  const nextNextTrackImg = arrayGetWrap(store.currentJustGoodPlaylist.deepDiveTracks, trackIndex + 2)?.img;
 
   return (
     <div className="deep-dive-driver">
@@ -120,11 +120,11 @@ const DeepDiveDriver = observer(() => {
             Edit Dive
           </button>
         </div>
-        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist.inProgress ? 'off' : 'on'}`} onClick={async () => {
+        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist.justGoodContent.inProgress ? 'off' : 'on'}`} onClick={async () => {
           await store.toggleJustGoodPlaylistComplete();
           if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
         }}>
-          { store.currentJustGoodPlaylist.inProgress ? (
+          { store.currentJustGoodPlaylist.justGoodContent.inProgress ? (
             <> <i className="d-inline bi bi-lock"/> Mark Complete </>
           ) : (
             <> <i className="d-inline bi bi-unlock-fill" /> Mark in Progress </>

@@ -340,7 +340,7 @@ const DeepDiveCreator = observer(() => {
             if (!grouped && !albumGrouped && sortPopular) {
               sortPopularForward ? tracks.sort(compareTracksPopular) : tracks.sort(compareTracksPopularReverse);
             }
-            await store.createOrUpdateDeepDivePlaylist(tracks, importExisting);
+            await store.createOrUpdateDeepDivePlaylist(tracks, (!grouped && !albumGrouped) ? 1 : 0, importExisting);
             store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id));
           }}>
             yes

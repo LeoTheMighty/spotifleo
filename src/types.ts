@@ -118,11 +118,31 @@ export interface FetchedPlaylist extends Playlist {
   tracks: Track[];
 }
 
+export interface PlaylistDescriptionContent {
+  type: number; // just good = 0, deep dive = 1
+}
+
+// TODO: Do we need a 2-way reference? Or can we keep it just on JustGood?
+// TODO: should we keep the artist ID on just just good or both?
+export interface JustGoodPlaylistDescriptionContent extends PlaylistDescriptionContent {
+  type: 0;
+  deepDivePlaylist?: string;
+  artistId: string;
+  inProgress: boolean;
+}
+
+export interface DeepDivePlaylistDescriptionContent extends PlaylistDescriptionContent {
+  type: 1;
+  justGoodPlaylist: string;
+  sortType: number; // 0 = album, 1 = song
+}
 
 export interface CachedPlaylist {
   name: string;
   id: string;
   numTracks: number;
+  justGoodContent?: JustGoodPlaylistDescriptionContent;
+  deepDiveContent?: DeepDivePlaylistDescriptionContent;
   last?: string; // the most recent track in the playlist to check if we're out of date
 }
 
@@ -131,24 +151,31 @@ export interface FetchedCachedPlaylist extends CachedPlaylist {
 }
 
 export interface StoredCachedJustGoodPlaylist extends CachedPlaylist {
-  artistId?: string;
+  artistId: string;
   artistImg?: Images;
   artistName: string;
-  artistLast?: string; // the most recent artist track to check if we're out of date
-  inProgress: boolean;
+  artistLast?: string; // the most recent artist release to check if we're out of date
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
-  deepDivePlaylist?: CachedPlaylist;
+  justGoodContent: JustGoodPlaylistDescriptionContent;
+  deepDivePlaylist?: CachedDeepDivePlaylist;
   notGoodIds?: string[];
 }
 
-export interface CachedJustGoodPlaylist extends CachedPlaylist {
-  artistId?: string;
+export interface CachedDeepDivePlaylist extends CachedPlaylist {
+  deepDiveContent: DeepDivePlaylistDescriptionContent;
+}
+
+export interface CachedPlaylistWithJustGoodContent extends CachedPlaylist {
+  justGoodContent: JustGoodPlaylistDescriptionContent;
+}
+
+export interface CachedJustGoodPlaylist extends CachedPlaylistWithJustGoodContent {
+  artistId: string;
   artistImg?: Images;
   artistName: string;
   artistLast?: string; // the most recent artist track to check if we're out of date
-  inProgress: boolean;
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
-  deepDivePlaylist?: CachedPlaylist;
+  deepDivePlaylist?: CachedDeepDivePlaylist;
   notGoodIds?: Set<string>; // cached within the playlist, not within
   trackIds?: Set<string>;
 }
@@ -156,18 +183,6 @@ export interface CachedJustGoodPlaylist extends CachedPlaylist {
 export interface JustGoodPlaylist extends CachedJustGoodPlaylist {
   trackIds: Set<string>;
   deepDiveTracks?: Track[];
-}
-
-// Sort Type =
-// 0 =>
-export interface DeepDivePlaylistDescriptionContent {
-  justGoodPlaylist: string;
-  sortType: number;
-}
-
-export interface JustGoodPlaylistDescriptionContent {
-  deepDivePlaylist: string;
-  artistId: string;
 }
 
 // Auth

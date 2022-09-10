@@ -16,6 +16,7 @@ import { observer } from 'mobx-react';
 import { Album, FetchedAlbum, Track } from '../types';
 import { SpotifyStore } from '../state/SpotifyStore';
 import AlbumViewer from './AlbumViewer';
+import TracksViewer from './TracksViewer';
 
 const DeepDiveViewer = observer(() => {
   const store = useStore();
@@ -38,14 +39,14 @@ const DeepDiveViewer = observer(() => {
             Edit Dive
           </button>
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>
-            Dive {store.currentJustGoodPlaylist?.inProgress ? '' : 'Back '} in
+            Dive {store.currentJustGoodPlaylist?.justGoodContent.inProgress ? '' : 'Back '} in
           </button>
         </div>
-        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist?.inProgress ? 'off' : 'on'}`} onClick={async () => {
+        <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist?.justGoodContent.inProgress ? 'off' : 'on'}`} onClick={async () => {
           await store.toggleJustGoodPlaylistComplete();
           if (store.currentJustGoodPlaylist?.id) navigate(viewDeepDiver(store.currentJustGoodPlaylist.id));
         }}>
-          { store.currentJustGoodPlaylist?.inProgress ? (
+          { store.currentJustGoodPlaylist?.justGoodContent.inProgress ? (
             <> <i className="d-inline bi bi-lock"/> Mark Complete </>
           ) : (
             <> <i className="d-inline bi bi-unlock-fill" /> Mark in Progress </>
@@ -70,16 +71,20 @@ const DeepDiveViewer = observer(() => {
       >
         Show{viewDiscography ? 'ing' : ''} Whole Deep Dive
       </button>
-      {store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {
-        return (
-          <AlbumViewer
-            album={album}
-            navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}
-            viewNotGood={viewDiscography}
-            store={store}
-          />
-        );
-      })}
+      {store.currentDeepDiveArtistDiscographyTracksOrdered && (
+        <TracksViewer showAlbum={true} store={store} tracks={store.currentDeepDiveArtistDiscographyTracksOrdered} viewNotGood={viewDiscography} />
+      )}
+      {/*{store.currentDeepDiveArtistDiscographyTracksOrdered?}*/}
+      {/*{store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {*/}
+      {/*  return (*/}
+      {/*    <AlbumViewer*/}
+      {/*      album={album}*/}
+      {/*      navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}*/}
+      {/*      viewNotGood={viewDiscography}*/}
+      {/*      store={store}*/}
+      {/*    />*/}
+      {/*  );*/}
+      {/*})}*/}
     </div>
   );
 });

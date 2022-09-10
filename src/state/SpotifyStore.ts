@@ -22,7 +22,13 @@ import {
   getAllCurrentUserLikedSongs,
   removeTrackFromLiked,
   addTrackToLiked,
-  replaceAllPlaylistItems, toggleShuffle, setRepeatMode, getPlaylistDetails, getLatestArtistAlbum, getFirstPlaylistTrack
+  replaceAllPlaylistItems,
+  toggleShuffle,
+  setRepeatMode,
+  getPlaylistDetails,
+  getLatestArtistAlbum,
+  getFirstPlaylistTrack,
+  getArtist
 } from '../api/Spotify';
 import {
   DEEP_DIVE_INDICATOR,
@@ -64,15 +70,24 @@ import {
   Progress,
   FetchedCachedPlaylist,
   PlayingTrack,
-  HelpViewType, APIError, User
+  HelpViewType,
+  APIError,
+  User,
+  JustGoodPlaylistDescriptionContent,
+  CachedDeepDivePlaylist,
+  DeepDivePlaylistDescriptionContent
 } from '../types';
-import { deserializeArtists, deserializePlayingTrack, deserializeTrack } from '../logic/serializers';
+import {
+  deserializeArtists,
+  deserializeCachedPlaylist,
+  deserializePlayingTrack,
+  deserializeTrack
+} from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
 /*
 
-// TODO !!!!!!!!!!!! YOU COULD LOOK AT SOMEONE ELSE'S PLAYLIST IN VIEW-MODE !!!!!!!!!!!!
 TODO: DO PROMISE ALLs TO DO THINGS IN PARALLEL?
 TODO:   COULD POTENTIALLY FIND THE TOTAL NUMBER OF REQUESTS (tracks.total) AND THEN FETCH IN PARALLEL
 TODO: DETECT WHETHER A CHANGE IN A PLAYLIST HAS BEEN MADE WITH THE MOST RECENT TRACK?
@@ -116,8 +131,11 @@ export interface SpotifyStore {
   currentDeepDiveView?: DeepDiverViewType;
   currentArtistDeepDiveAlbumIds?: Set<string>;
   currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
+  // TODO: Do we need to cache the tracks as well?
+  currentDeepDiveArtistDiscographyTracks?: Map<string, Track>; // track ID to Track object
   currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
   currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
+  currentDeepDiveArtistTrackIDsOrdered?: string[]; // helps us do the individual track view as well
   currentExternalPlaylistOwnerName?: string;
 
   // High Level Spotify Edit Actions
@@ -141,6 +159,7 @@ export interface SpotifyStore {
   currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
   currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
   currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
+  currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
 
   currentDeepDiveExternalURL: string | undefined;
 
@@ -168,7 +187,7 @@ export interface SpotifyStore {
   fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
   toggleAlbumForDeepDive: (albumId: string) => void;
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-  createOrUpdateDeepDivePlaylist: (tracks: Track[], importLiked?: boolean) => Promise<void>;
+  createOrUpdateDeepDivePlaylist: (tracks: Track[], sortType: number, importLiked?: boolean) => Promise<void>;
   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
   toggleCurrentTrackInJustGood: () => Promise<void>;
@@ -212,6 +231,7 @@ export interface SpotifyStore {
   // Help
   setHelpView: (helpView: HelpViewType) => void;
   skipWelcome: () => void;
+  backfill: () => Promise<void>;
 
   call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
 
@@ -288,6 +308,20 @@ const useSpotifyStore = () => {
         }
       }
       return albums;
+    },
+
+    get currentDeepDiveArtistDiscographyTracksOrdered(): Track[] | undefined {
+      if (!store.currentDeepDiveArtistDiscographyTracks || !store.currentDeepDiveArtistTrackIDsOrdered) return undefined;
+
+      const tracks: Track[] = [];
+      for (let i = 0; i < store.currentDeepDiveArtistTrackIDsOrdered.length; i++) {
+        const id = store.currentDeepDiveArtistTrackIDsOrdered[i];
+        const track = store.currentDeepDiveArtistDiscographyTracks.get(id);
+        if (track) {
+          tracks.push(track);
+        }
+      }
+      return tracks;
     },
 
     get currentDeepDiveExternalURL(): string | undefined {
@@ -464,9 +498,10 @@ const useSpotifyStore = () => {
 
       const justGoodPlaylists: CachedJustGoodPlaylist[] = [];
 
-      const deepDiveMap: { [artistName: string]: CachedPlaylist } = {};
+      const deepDiveMap: { [justGoodPlaylist: string]: CachedDeepDivePlaylist } = {};
       deepDivePlaylists.forEach((playlist) => {
-        deepDiveMap[playlist.name.substring(DEEP_DIVE_INDICATOR.length).trim()] = playlist;
+        // deepDiveMap[playlist.name.substring(DEEP_DIVE_INDICATOR.length).trim()] = playlist;
+        deepDiveMap[playlist.deepDiveContent.justGoodPlaylist] = playlist;
       });
 
       console.log('Created the deep dive map.');
@@ -477,28 +512,30 @@ const useSpotifyStore = () => {
       for (let x = 0; x < 2; x++) {
         const inProgress: boolean = x === 1;
         const playlists = inProgress ? inProgressJustGoodPlaylists : justJustGoodPlaylists;
-        const prefix = inProgress ? IN_PROGRESS_INDICATOR : JUST_GOOD_INDICATOR;
+        // const prefix = inProgress ? IN_PROGRESS_INDICATOR : JUST_GOOD_INDICATOR;
 
         for (let i = 0; i < playlists.length; i++) {
           console.log(`Processing ${inProgress ? 'In Progress' : ''} Just Good playlist ${i}.`);
           const playlist = playlists[i];
 
           console.log(playlist);
-          const artistName = playlist.name.substring(prefix.length).trim();
-          console.log(`Artist Name from playlist: ${artistName}`);
 
-          const artist: ArtistResponse | undefined = (await store.call(searchForArtist(artistName, 1, token))).artists.items[0];
-          console.log('Artist received from search:');
-          console.log(artist);
+          const { artistId } = playlist.justGoodContent;
+          // const artistName = playlist.name.substring(prefix.length).trim();
+          // console.log(`Artist Name from playlist: ${artistName}`);
+
+          const artist: ArtistResponse = await store.call(getArtist(artistId, token))
+          // const artist: ArtistResponse | undefined = (await store.call(searchForArtist(artistName, 1, token))).artists.items[0];
+          // console.log('Artist received from search:');
+          // console.log(artist);
 
           justGoodPlaylists.unshift({
             ...playlist,
             artistId: artist?.id,
-            artistName,
+            artistName: artist?.name,
             artistImg: getImages(artist?.images),
-            inProgress,
             progress: 0,
-            deepDivePlaylist: deepDiveMap[artistName],
+            deepDivePlaylist: deepDiveMap[playlist.id],
           });
 
           console.log('Finished just good playlist.');
@@ -687,20 +724,26 @@ const useSpotifyStore = () => {
           const cb3 = (p: number) => store.updateProgress(nestProgress(p, 0.8, 0.9));
           const deepDivePlaylistTracks = (await store.call(getAllPlaylistTracks(playlist.deepDivePlaylist.id, token, cb3)));
 
+          store.currentDeepDiveArtistTrackIDsOrdered = [];
           store.currentDeepDiveArtistAlbumIDsOrdered = [];
+          store.currentDeepDiveArtistDiscographyTracks = new Map();
           for (let i = 0; i < deepDivePlaylistTracks.length; i++) {
             const track = deepDivePlaylistTracks[i];
+            store.currentDeepDiveArtistDiscographyTracks.set(track.id, track);
+            store.currentDeepDiveArtistTrackIDsOrdered.push(track.id);
             if (track.albumId && !store.currentDeepDiveArtistAlbumIDsOrdered.find(id => id === track.albumId)) {
               store.currentDeepDiveArtistAlbumIDsOrdered.push(track.albumId);
             }
           }
 
+          // TODO: Necessary to deep copy like this?
           store.currentJustGoodPlaylist = {
             ...playlist,
             deepDivePlaylist: {
-              id: playlist.deepDivePlaylist.id,
-              name: playlist.deepDivePlaylist.name,
-              numTracks: playlist.deepDivePlaylist.numTracks,
+              ...playlist.deepDivePlaylist,
+              deepDiveContent: {
+                ...playlist.deepDivePlaylist.deepDiveContent,
+              },
             },
             trackIds: justGoodPlaylistTrackIds,
             deepDiveTracks: deepDivePlaylistTracks,
@@ -733,7 +776,7 @@ const useSpotifyStore = () => {
       }
 
       // Set the default view
-      const defaultView = playlist.deepDivePlaylist ? (playlist.inProgress ? 'deep-dive' : 'view-deep-dive') : 'edit-deep-dive';
+      const defaultView = playlist.deepDivePlaylist ? (playlist.justGoodContent.inProgress ? 'deep-dive' : 'view-deep-dive') : 'edit-deep-dive';
 
       store.currentDeepDiveView = view || defaultView;
 
@@ -748,36 +791,26 @@ const useSpotifyStore = () => {
 
       store.currentDeepDiveView = undefined;
 
-      console.log(`searching for playlist with id = ${playlistId}`);
-      const playlist = await store.call(getPlaylistDetails(playlistId, token));
-      const deepDivePlaylist = await store.call(getPlaylistDetails(deepDiveId, token));
-
-      if (!playlist || !deepDivePlaylist) throw new Error('External Deep Diver URL malformed');
-
-      store.currentExternalPlaylistOwnerName = playlist.owner.display_name;
-
-      let inProgress: boolean;
-      let prefix: string;
-      if (playlist.name.startsWith(JUST_GOOD_INDICATOR)) {
-        inProgress = false;
-        console.log('Finished playlist');
-        prefix = JUST_GOOD_INDICATOR;
-      } else if (playlist.name.startsWith(IN_PROGRESS_INDICATOR)) {
-        inProgress = true;
-        console.log('In pRogress playlist');
-        prefix = IN_PROGRESS_INDICATOR;
-      } else {
-        // TODO: Non-ideal way to detect ik
-        throw new Error('Playlist name malformed, cannot detect the artist');
-      }
-
-      const artistName = playlist.name.substring(prefix.length).trim();
-      console.log(`Artist Name from playlist: ${artistName}`);
-      const artist: ArtistResponse | undefined = (await store.call(searchForArtist(artistName, 1, token))).artists.items[0];
-
-      if (!artist) throw new Error('Could not find artist from playlist');
-
       if (store.currentJustGoodPlaylist?.id !== playlistId) {
+        console.log(`searching for playlist with id = ${playlistId}`);
+        const playlistResponse = await store.call(getPlaylistDetails(playlistId, token));
+        const deepDivePlaylistResponse = await store.call(getPlaylistDetails(deepDiveId, token));
+
+        if (!playlistResponse || !deepDivePlaylistResponse) throw new Error('External Deep Diver URL malformed');
+
+        store.currentExternalPlaylistOwnerName = playlistResponse.owner.display_name;
+
+        const playlist = deserializeCachedPlaylist(playlistResponse);
+        const deepDivePlaylist = deserializeCachedPlaylist(deepDivePlaylistResponse);
+
+        if (!playlist.justGoodContent || !deepDivePlaylist.deepDiveContent) throw new Error('External description contents malformed');
+
+        const { artistId } = playlist.justGoodContent;
+
+        const artist: ArtistResponse | undefined = (await store.call(getArtist(artistId, token)));
+
+        if (!artist) throw new Error('Could not find artist from playlist');
+        console.log(`Artist Name from playlist: ${artist.name}`);
         store.startProgress('Fetching External Just Good Playlist');
         store.updateProgress(0.1, 'Getting just good details');
 
@@ -815,15 +848,25 @@ const useSpotifyStore = () => {
           id: playlist.id,
           name: playlist.name,
           numTracks: justGoodPlaylistTrackIds.size,
-          artistName,
+          artistName: artist.name,
           artistImg: getImages(artist.images),
-          inProgress,
+          justGoodContent: {
+            deepDivePlaylist: deepDivePlaylist.id,
+            artistId: artistId,
+            inProgress: playlist.justGoodContent.inProgress,
+            type: 0,
+          },
           progress: 0,
           artistId: artist.id,
           deepDivePlaylist: {
             id: deepDivePlaylist.id,
             name: deepDivePlaylist.name,
             numTracks: deepDivePlaylistTracks.length,
+            deepDiveContent: {
+              justGoodPlaylist: playlist.id,
+              sortType: deepDivePlaylist.deepDiveContent.sortType,
+              type: 1,
+            }
           },
           trackIds: justGoodPlaylistTrackIds,
           deepDiveTracks: deepDivePlaylistTracks,
@@ -880,7 +923,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    createOrUpdateDeepDivePlaylist: action(async (tracks: Track[], importLiked: boolean = false) => {
+    createOrUpdateDeepDivePlaylist: action(async (tracks: Track[], sortType: number, importLiked: boolean = false) => {
       console.log('STARTING DEEP DIVE');
       store.startProgress(`${store.currentJustGoodPlaylist?.deepDivePlaylist ? 'Updating' : 'Creating'} Deep Dive Playlist`);
       store.logStore();
@@ -893,16 +936,31 @@ const useSpotifyStore = () => {
 
       let deepDiveId;
       let deepDiveName;
+      let content: DeepDivePlaylistDescriptionContent;
       if (store.currentJustGoodPlaylist.deepDivePlaylist === undefined) {
         console.log('CREATING DEEP DIVE PLAYLIST');
         store.updateProgress(0.1, 'Creating the playlist');
         // 1. Create Deep Dive Playlist
-        const response = await store.call(createPlaylist(getDeepDivePlaylistName(artistName), getDeepDivePlaylistDescription(artistName), false, token));
+        content = {
+          justGoodPlaylist: store.currentJustGoodPlaylist.id,
+          sortType,
+          type: 1,
+        };
+        const response = await store.call(createPlaylist(
+          getDeepDivePlaylistName(artistName),
+          getDeepDivePlaylistDescription(artistName, content),
+          false,
+          token,
+        ));
         deepDiveId = response.id;
         deepDiveName = response.name;
       } else {
         deepDiveId = store.currentJustGoodPlaylist.deepDivePlaylist.id;
         deepDiveName = store.currentJustGoodPlaylist.deepDivePlaylist.name;
+        content = {
+          ...store.currentJustGoodPlaylist.deepDivePlaylist.deepDiveContent,
+          sortType,
+        };
       }
 
       console.log('GETTING ALL TRACKS');
@@ -938,13 +996,21 @@ const useSpotifyStore = () => {
           id: deepDiveId,
           name: deepDiveName,
           numTracks: filteredTracks.length,
+          deepDiveContent: content,
         },
         trackIds: new Set((await store.call(getAllPlaylistTracks(store.currentJustGoodPlaylist.id, token, cb))).map(t => t.id)),
         deepDiveTracks: filteredTracks,
         progress: 0,
       };
 
-      await store.call(changePlaylistDetails(store.currentJustGoodPlaylist.id, getInProgressJustGoodPlaylistName(store.currentJustGoodPlaylist.artistName), getInProgressJustGoodPlaylistDescription(store.currentJustGoodPlaylist.artistName), undefined, token));
+      await store.call(changePlaylistDetails(
+        store.currentJustGoodPlaylist.id,
+        getInProgressJustGoodPlaylistName(store.currentJustGoodPlaylist.artistName),
+        getInProgressJustGoodPlaylistDescription(store.currentJustGoodPlaylist.artistName,
+          { deepDivePlaylist: deepDiveId, artistId: store.currentJustGoodPlaylist.artistId, inProgress: true, type: 0 }),
+        undefined,
+        token,
+      ));
 
       if (importLiked) {
         console.log('IMPORT EXISTING LIKED INTO THE JUST GOOD PLAYLIST');
@@ -1007,14 +1073,22 @@ const useSpotifyStore = () => {
       store.justGoodPlaylistArtistMap.set(artist.id, {
         id: '',
         name: 'name',
+        artistId: '',
         artistName: 'aristn',
-        inProgress: true,
+        justGoodContent: {
+          inProgress: true,
+          artistId: '',
+          type: 0,
+        },
         progress: 0,
         numTracks: 0,
       });
 
       const name = getInProgressJustGoodPlaylistName(artist.name);
-      const description = getInProgressJustGoodPlaylistDescription(artist.name);
+      const description = getInProgressJustGoodPlaylistDescription(
+        artist.name,
+        { artistId: artist.id, inProgress: true, type: 0 },
+      );
       const response = await store.call(createPlaylist(name, description, false, token));
 
       const justGoodPlaylist: CachedJustGoodPlaylist = {
@@ -1023,7 +1097,11 @@ const useSpotifyStore = () => {
         artistName: artist.name,
         artistId: artist.id,
         artistImg: artist.img,
-        inProgress: true,
+        justGoodContent: {
+          artistId: artist.id,
+          inProgress: true,
+          type: 0,
+        },
         progress: 0,
         numTracks: 0,
         notGoodIds: new Set(),
@@ -1112,7 +1190,7 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
       if (!store.currentJustGoodPlaylist?.trackIds) return notInitialized();
 
-      if (!store.currentJustGoodPlaylist.inProgress) {
+      if (!store.currentJustGoodPlaylist.justGoodContent.inProgress) {
         store.helpView = 'not-in-progress';
         return;
       }
@@ -1147,7 +1225,7 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
       if (!store.currentPlayingJustGoodPlaylist?.trackIds) return notInitialized();
 
-      if (!store.currentPlayingJustGoodPlaylist.inProgress) {
+      if (!store.currentPlayingJustGoodPlaylist.justGoodContent.inProgress) {
         store.helpView = 'not-in-progress';
         return;
       }
@@ -1221,19 +1299,27 @@ const useSpotifyStore = () => {
       const token = await store.useToken();
       if (!token) return noToken();
 
-      const inProgress = store.currentJustGoodPlaylist?.inProgress;
+      const inProgress = store.currentJustGoodPlaylist?.justGoodContent.inProgress;
       const playlistID = store.currentJustGoodPlaylist?.id;
       const artistName = store.currentJustGoodPlaylist?.artistName;
 
       if (!store.currentJustGoodPlaylist || !playlistID || !artistName || !store.inProgressJustGoodPlaylists || !store.justGoodPlaylists || inProgress === undefined) return fail('mark playlist complete not initialized');
 
       const name = inProgress ? getJustGoodPlaylistName(artistName) : getInProgressJustGoodPlaylistName(artistName);
-      const description = inProgress ? getJustGoodPlaylistDescription(artistName) : getInProgressJustGoodPlaylistDescription(artistName);
+      const content: JustGoodPlaylistDescriptionContent = {
+        deepDivePlaylist: store.currentJustGoodPlaylist.deepDivePlaylist?.id,
+        artistId: store.currentJustGoodPlaylist.artistId,
+        inProgress,
+        type: 0,
+      }
+      const description = inProgress ?
+        getJustGoodPlaylistDescription(artistName, content) :
+        getInProgressJustGoodPlaylistDescription(artistName, content);
 
       await store.call(changePlaylistDetails(playlistID, name, description, inProgress, token));
 
       store.currentJustGoodPlaylist.name = name;
-      store.currentJustGoodPlaylist.inProgress = !inProgress;
+      store.currentJustGoodPlaylist.justGoodContent.inProgress = !inProgress;
 
       // Remove the playlist
       const index = (inProgress ? store.inProgressJustGoodPlaylists : store.justGoodPlaylists)?.findIndex((p) => p.id === playlistID);
@@ -1276,7 +1362,7 @@ const useSpotifyStore = () => {
       let justGoodList: CachedJustGoodPlaylist[]
       if (!store.currentJustGoodPlaylist.deepDivePlaylist) {
         justGoodList = store.plannedJustGoodPlaylists;
-      } else if (store.currentJustGoodPlaylist.inProgress) {
+      } else if (store.currentJustGoodPlaylist.justGoodContent.inProgress) {
         justGoodList = store.inProgressJustGoodPlaylists;
       } else {
         justGoodList = store.justGoodPlaylists;
@@ -1286,7 +1372,7 @@ const useSpotifyStore = () => {
       justGoodList[index] = justGoodToCached(store.currentJustGoodPlaylist);
       if (!store.currentJustGoodPlaylist.deepDivePlaylist) {
         store.plannedJustGoodPlaylists = [...justGoodList];
-      } else if (store.currentJustGoodPlaylist.inProgress) {
+      } else if (store.currentJustGoodPlaylist.justGoodContent.inProgress) {
         store.inProgressJustGoodPlaylists = [...justGoodList];
       } else {
         store.justGoodPlaylists = [...justGoodList];
@@ -1599,6 +1685,84 @@ const useSpotifyStore = () => {
     },
 
     skipWelcome: action(() => { store.welcomeStep = undefined; store.helpView = undefined; }),
+
+    backfill: action(async () => {
+      const token = await store.useToken();
+      if (!token) return noToken();
+      if (!store.justGoodPlaylists || !store.inProgressJustGoodPlaylists || !store.plannedJustGoodPlaylists) return notInitialized();
+
+      for (let i = 0; i < store.justGoodPlaylists.length; i++) {
+        const p = store.justGoodPlaylists[i];
+        if (p.deepDivePlaylist) {
+          await changePlaylistDetails(
+            p.id,
+            getJustGoodPlaylistName(p.artistName),
+            getJustGoodPlaylistDescription(p.artistName, {
+              deepDivePlaylist: p.deepDivePlaylist.id,
+              artistId: p.artistId,
+              inProgress: false,
+              type: 0,
+            }),
+            true,
+            token,
+          );
+          await changePlaylistDetails(
+            p.deepDivePlaylist.id,
+            getDeepDivePlaylistName(p.artistName),
+            getDeepDivePlaylistDescription(p.artistName, {
+              justGoodPlaylist: p.id,
+              sortType: p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0,
+              type: 1,
+            }),
+            true,
+            token,
+          );
+        }
+      }
+      for (let i = 0; i < store.inProgressJustGoodPlaylists.length; i++) {
+        const p = store.inProgressJustGoodPlaylists[i];
+        if (p.deepDivePlaylist) {
+          await changePlaylistDetails(
+            p.id,
+            getInProgressJustGoodPlaylistName(p.artistName),
+            getInProgressJustGoodPlaylistDescription(p.artistName, {
+              deepDivePlaylist: p.deepDivePlaylist!.id,
+              artistId: p.artistId,
+              inProgress: true,
+              type: 0,
+            }),
+            true,
+            token,
+          );
+          await changePlaylistDetails(
+            p.deepDivePlaylist.id,
+            getDeepDivePlaylistName(p.artistName),
+            getDeepDivePlaylistDescription(p.artistName, {
+              justGoodPlaylist: p.id,
+              sortType: p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0,
+              type: 1,
+            }),
+            true,
+            token,
+          );
+        }
+      }
+      for (let i = 0; i < store.plannedJustGoodPlaylists.length; i++) {
+        const p = store.plannedJustGoodPlaylists[i];
+        await changePlaylistDetails(
+          p.id,
+          getInProgressJustGoodPlaylistName(p.artistName),
+          getInProgressJustGoodPlaylistDescription(p.artistName, {
+            deepDivePlaylist: p.deepDivePlaylist!.id,
+            artistId: p.artistId,
+            inProgress: true,
+            type: 0
+          }),
+          true,
+          token,
+        );
+      }
+    }),
   }));
 
   return store;

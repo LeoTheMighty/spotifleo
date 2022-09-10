@@ -28,6 +28,11 @@ const Settings = ({ hide }: Props) => {
             Start Welcome Flow
           </button>
         </div>
+        <div className="d-flex justify-content-center m-2">
+          <button className="reset-user-button primary-btn" onClick={() => { store.backfill() }}>
+            Backfill Playlists
+          </button>
+        </div>
       </ModalBody>
     </>
   );

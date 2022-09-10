@@ -12,7 +12,7 @@ import {
   APIError,
   FetchedAlbum,
   JustGoodPlaylistDescriptionContent,
-  DeepDivePlaylistDescriptionContent
+  DeepDivePlaylistDescriptionContent, CachedDeepDivePlaylist, CachedPlaylistWithJustGoodContent
 } from '../types';
 import { capitalize } from 'lodash';
 
@@ -49,31 +49,40 @@ export const formatResp = async (r: Response): Promise<any> => new Promise((reso
 const PLAYLIST_NAME_MAX = 100;
 const PLAYLIST_DESCRIPTION_MAX = 300;
 const myTag = 'Created using Leo Belyi\'s Deep Diver :)';
-const getJustGoodDescriptionContentTag = (content?: JustGoodPlaylistDescriptionContent) => (
-  content ? `DON'T TOUCH => |${content.deepDivePlaylist},${content.artistId}` : ''
+const guardRail = ' DON\'T TOUCH => |'
+const getJustGoodDescriptionContentTag = (content?: JustGoodPlaylistDescriptionContent): string => (
+  content ? `${guardRail}0,${content.deepDivePlaylist},${content.artistId},${content.inProgress ? '1' : '0'}` : ''
 );
-const getDeepDiveDescriptionContentTag = (content?: DeepDivePlaylistDescriptionContent) => (
-  content ? `DON'T TOUCH => |${content.justGoodPlaylist},${content.sortType}` : ''
+const getDeepDiveDescriptionContentTag = (content?: DeepDivePlaylistDescriptionContent): string => (
+  content ? `${guardRail}1,${content.justGoodPlaylist},${content.sortType}` : ''
 );
-const getJustGoodDescriptionContent = (description: string): JustGoodPlaylistDescriptionContent => {
+export const getJustGoodDescriptionContent = (description: string): JustGoodPlaylistDescriptionContent | undefined => {
   const contentString = arrayGetWrap(description.split('|'), -1);
-  const [deepDivePlaylist, artistId] = contentString.split(',');
+  if (contentString === undefined) return undefined;
+  const contentList = contentString.split(',');
+  const [type, deepDivePlaylist, artistId, inProgress] = contentList;
+  if (!type || !deepDivePlaylist || !artistId || !inProgress) return undefined;
+  if (type !== '0') return undefined;
   return {
+    type: 0,
     deepDivePlaylist,
     artistId,
+    inProgress: inProgress !== '0',
   }
 };
-const getDeepDiveDescriptionContent = (description: string): DeepDivePlaylistDescriptionContent => {
+export const getDeepDiveDescriptionContent = (description: string): DeepDivePlaylistDescriptionContent | undefined => {
   const contentString = arrayGetWrap(description.split('|'), -1);
-  const [justGoodPlaylist, sortType] = contentString.split(',');
+  if (contentString === undefined) return undefined;
+  const [type, justGoodPlaylist, sortType] = contentString.split(',');
+  if (!type || !justGoodPlaylist || !sortType) return undefined;
+  if (type !== '1') return undefined;
   return {
+    type: 1,
     justGoodPlaylist,
     sortType: parseInt(sortType),
   }
 };
-const ellipsizeString = (content: string, maxLength: number) => (
-  content.length > maxLength ? content.substring(0, maxLength - 3) + '...' : content
-);
+const ellipsizeString = (s: string, len: number) => s.length > len ? s.substring(0, len - 3) + '...' : s;
 export const getDeepDivePlaylistName = (artistName: string) => (
   `${DEEP_DIVE_INDICATOR} ${ellipsizeString(artistName, PLAYLIST_NAME_MAX - (DEEP_DIVE_INDICATOR.length + 1))}`
 );
@@ -171,26 +180,39 @@ export const formatMs = (ms?: number) => {
 };
 
 export const splitPlaylists = (playlists: CachedPlaylist[]): {
-  justGoodPlaylists: CachedPlaylist[],
-  inProgressJustGoodPlaylists: CachedPlaylist[],
-  deepDivePlaylists: CachedPlaylist[],
+  justGoodPlaylists: CachedPlaylistWithJustGoodContent[],
+  inProgressJustGoodPlaylists: CachedPlaylistWithJustGoodContent[],
+  deepDivePlaylists: CachedDeepDivePlaylist[],
   userPlaylists: CachedPlaylist[],
 } => {
-  const justGoodPlaylists: CachedPlaylist[] = [];
-  const inProgressJustGoodPlaylists: CachedPlaylist[] = [];
-  const deepDivePlaylists: CachedPlaylist[] = [];
+  const justGoodPlaylists: CachedPlaylistWithJustGoodContent[] = [];
+  const inProgressJustGoodPlaylists: CachedPlaylistWithJustGoodContent[] = [];
+  const deepDivePlaylists: CachedDeepDivePlaylist[] = [];
   const userPlaylists: CachedPlaylist[] = [];
 
   playlists.forEach((playlist) => {
-    const { name } = playlist;
-    if (name.startsWith(JUST_GOOD_INDICATOR)) {
-      justGoodPlaylists.push(playlist);
-    } else if (name.startsWith(IN_PROGRESS_INDICATOR)) {
-      inProgressJustGoodPlaylists.push(playlist);
-    } else if (name.startsWith(DEEP_DIVE_INDICATOR)) {
-      deepDivePlaylists.push(playlist)
+    const { justGoodContent, deepDiveContent } = playlist;
+    if (justGoodContent || deepDiveContent) {
+      if (justGoodContent) {
+        if (justGoodContent.inProgress) {
+          inProgressJustGoodPlaylists.push(playlist as CachedPlaylistWithJustGoodContent);
+        } else {
+          justGoodPlaylists.push(playlist as CachedPlaylistWithJustGoodContent);
+        }
+      } else if (deepDiveContent) {
+        deepDivePlaylists.push(playlist as CachedDeepDivePlaylist)
+      }
     } else {
-      userPlaylists.push(playlist);
+      // TODO: Remove this once fully migrated
+      // if (name.startsWith(JUST_GOOD_INDICATOR)) {
+      //   justGoodPlaylists.push(playlist);
+      // } else if (name.startsWith(IN_PROGRESS_INDICATOR)) {
+      //   inProgressJustGoodPlaylists.push(playlist);
+      // } else if (name.startsWith(DEEP_DIVE_INDICATOR)) {
+      //   deepDivePlaylists.push(playlist)
+      // } else {
+      //   userPlaylists.push(playlist);
+      // }
     }
   });
 
@@ -210,7 +232,7 @@ export const splitJustGoodPlaylists = (playlists: CachedJustGoodPlaylist[]): {
     const playlist = playlists[i];
     if (!playlist.deepDivePlaylist) {
       plannedJustGoodPlaylists.push(playlist);
-    } else if (playlist.inProgress) {
+    } else if (playlist.justGoodContent.inProgress) {
       inProgressJustGoodPlaylists.push(playlist);
     } else {
       finishedJustGoodPlaylists.push(playlist);
@@ -258,7 +280,7 @@ export const importMapOfSets = <T>(object: { [key: string]: T[] }): Map<string, 
 export const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const wrapIndex = (index: number, length: number) => (index % length + length) % length;
-export const arrayGetWrap = <T>(array: T[], index: number) => array[wrapIndex(index, array.length)];
+export const arrayGetWrap = <T>(array: T[], index: number): T | undefined => array[wrapIndex(index, array.length)];
 
 // Navigate To
 export const deepDiver = (playlistID: string, view?: string) => ({
@@ -274,8 +296,8 @@ export const justGoodToCached = (justGoodPlaylist: JustGoodPlaylist): CachedJust
   name: justGoodPlaylist.name,
   artistName: justGoodPlaylist.artistName,
   artistImg: justGoodPlaylist.artistImg,
+  justGoodContent: justGoodPlaylist.justGoodContent,
   deepDivePlaylist: justGoodPlaylist.deepDivePlaylist,
-  inProgress: justGoodPlaylist.inProgress,
   progress: justGoodPlaylist.progress,
   artistId: justGoodPlaylist.artistId,
   numTracks: justGoodPlaylist.numTracks,

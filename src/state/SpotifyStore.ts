@@ -162,6 +162,7 @@ export interface SpotifyStore {
   currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
 
   currentDeepDiveExternalURL: string | undefined;
+  currentDeepDiveExternalShareData: ShareData | undefined;
 
   isPlayingCurrentDeepDivePlaylist: boolean;
 
@@ -328,6 +329,15 @@ const useSpotifyStore = () => {
       if (!store.currentJustGoodPlaylist?.id || !store.currentJustGoodPlaylist.deepDivePlaylist?.id) return undefined;
 
       return `${externalBaseUrl}/spotifleo/deepdiver?playlist_id=${store.currentJustGoodPlaylist.id}&deep_dive_id=${store.currentJustGoodPlaylist.deepDivePlaylist.id}&view=external`;
+    },
+
+    get currentDeepDiveExternalShareData(): ShareData | undefined {
+      if (!store.currentDeepDiveExternalURL) return undefined;
+
+      return {
+        title: `${store.userName}'s Just Good ${store.currentJustGoodPlaylist?.artistName} Playlist`,
+        url: store.currentDeepDiveExternalURL,
+      };
     },
 
     get isPlayingCurrentDeepDivePlaylist(): boolean {
@@ -720,8 +730,18 @@ const useSpotifyStore = () => {
 
       store.currentDeepDiveView = undefined;
 
+      // To show artist name in loading
+      if (store.currentJustGoodPlaylist) {
+        store.currentJustGoodPlaylist.artistName = playlist.artistName;
+      } else {
+        store.currentJustGoodPlaylist = {
+          ...playlist,
+          trackIds: new Set(),
+        }
+      }
+
+
       if (store.currentJustGoodPlaylist?.id !== playlistId) {
-        store.currentJustGoodPlaylist && (store.currentJustGoodPlaylist.artistName = playlist.artistName);
         store.startProgress(`Fetching Just Good ${playlist.artistName}`);
         store.updateProgress(0.1, 'Getting all albums and tracks for the artist');
         console.log('Fetching all artist albums');

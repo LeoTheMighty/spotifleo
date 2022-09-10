@@ -2,6 +2,7 @@ import React from 'react';
 import TrackViewer from './TrackViewer';
 import { Track } from '../types';
 import { SpotifyStore } from '../state/SpotifyStore';
+import { observer } from 'mobx-react';
 
 type Props = {
   showAlbum: boolean;
@@ -10,7 +11,7 @@ type Props = {
   viewNotGood: boolean;
 };
 
-const TracksViewer = ({ showAlbum, store, tracks, viewNotGood }: Props): JSX.Element => (
+const TracksViewer = observer(({ showAlbum, store, tracks, viewNotGood }: Props): JSX.Element => (
   <>
     {tracks.map((track, index) => {
       const isGood = store.currentJustGoodPlaylist?.trackIds?.has(track.id) || false;
@@ -35,6 +36,6 @@ const TracksViewer = ({ showAlbum, store, tracks, viewNotGood }: Props): JSX.Ele
       );
     })}
   </>
-);
+));
 
 export default TracksViewer;

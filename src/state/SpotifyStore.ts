@@ -721,6 +721,7 @@ const useSpotifyStore = () => {
       store.currentDeepDiveView = undefined;
 
       if (store.currentJustGoodPlaylist?.id !== playlistId) {
+        store.currentJustGoodPlaylist && (store.currentJustGoodPlaylist.artistName = playlist.artistName);
         store.startProgress(`Fetching Just Good ${playlist.artistName}`);
         store.updateProgress(0.1, 'Getting all albums and tracks for the artist');
         console.log('Fetching all artist albums');

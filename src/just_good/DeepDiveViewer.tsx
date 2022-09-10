@@ -71,20 +71,22 @@ const DeepDiveViewer = observer(() => {
       >
         Show{viewDiscography ? 'ing' : ''} Whole Deep Dive
       </button>
-      {store.currentDeepDiveArtistDiscographyTracksOrdered && (
-        <TracksViewer showAlbum={true} store={store} tracks={store.currentDeepDiveArtistDiscographyTracksOrdered} viewNotGood={viewDiscography} />
+      {store.currentJustGoodPlaylist?.deepDivePlaylist?.deepDiveContent.sortType === 1 ? (
+        store.currentDeepDiveArtistDiscographyTracksOrdered && (
+          <TracksViewer showAlbum={true} store={store} tracks={store.currentDeepDiveArtistDiscographyTracksOrdered} viewNotGood={viewDiscography} />
+        )
+      ) : (
+        store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {
+          return (
+            <AlbumViewer
+              album={album}
+              navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}
+              viewNotGood={viewDiscography}
+              store={store}
+            />
+          );
+        })
       )}
-      {/*{store.currentDeepDiveArtistDiscographyTracksOrdered?}*/}
-      {/*{store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {*/}
-      {/*  return (*/}
-      {/*    <AlbumViewer*/}
-      {/*      album={album}*/}
-      {/*      navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}*/}
-      {/*      viewNotGood={viewDiscography}*/}
-      {/*      store={store}*/}
-      {/*    />*/}
-      {/*  );*/}
-      {/*})}*/}
     </div>
   );
 });

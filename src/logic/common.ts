@@ -51,7 +51,7 @@ const PLAYLIST_DESCRIPTION_MAX = 300;
 const myTag = 'Created using Leo Belyi\'s Deep Diver :)';
 const guardRail = ' DON\'T TOUCH => |'
 const getJustGoodDescriptionContentTag = (content?: JustGoodPlaylistDescriptionContent): string => (
-  content ? `${guardRail}0,${content.deepDivePlaylist},${content.artistId},${content.inProgress ? '1' : '0'}` : ''
+  content ? `${guardRail}0,${content.deepDivePlaylist ? `${content.deepDivePlaylist},` : ''}${content.artistId},${content.inProgress ? '1' : '0'}` : ''
 );
 const getDeepDiveDescriptionContentTag = (content?: DeepDivePlaylistDescriptionContent): string => (
   content ? `${guardRail}1,${content.justGoodPlaylist},${content.sortType}` : ''
@@ -60,8 +60,15 @@ export const getJustGoodDescriptionContent = (description: string): JustGoodPlay
   const contentString = arrayGetWrap(description.split('|'), -1);
   if (contentString === undefined) return undefined;
   const contentList = contentString.split(',');
-  const [type, deepDivePlaylist, artistId, inProgress] = contentList;
-  if (!type || !deepDivePlaylist || !artistId || !inProgress) return undefined;
+  let [type, deepDivePlaylist, artistId, inProgress]: (string | undefined)[] = [undefined, undefined, undefined, undefined];
+  if (contentList.length === 4) {
+    [type, deepDivePlaylist, artistId, inProgress] = contentList;
+  } else if (contentList.length === 3) {
+    [type, artistId, inProgress] = contentList;
+  } else {
+    return undefined;
+  }
+  if (!type || !artistId || !inProgress) return undefined;
   if (type !== '0') return undefined;
   return {
     type: 0,
@@ -191,7 +198,7 @@ export const splitPlaylists = (playlists: CachedPlaylist[]): {
   const userPlaylists: CachedPlaylist[] = [];
 
   playlists.forEach((playlist) => {
-    const { justGoodContent, deepDiveContent } = playlist;
+    const { name, justGoodContent, deepDiveContent } = playlist;
     if (justGoodContent || deepDiveContent) {
       if (justGoodContent) {
         if (justGoodContent.inProgress) {
@@ -204,15 +211,36 @@ export const splitPlaylists = (playlists: CachedPlaylist[]): {
       }
     } else {
       // TODO: Remove this once fully migrated
-      // if (name.startsWith(JUST_GOOD_INDICATOR)) {
-      //   justGoodPlaylists.push(playlist);
-      // } else if (name.startsWith(IN_PROGRESS_INDICATOR)) {
-      //   inProgressJustGoodPlaylists.push(playlist);
-      // } else if (name.startsWith(DEEP_DIVE_INDICATOR)) {
-      //   deepDivePlaylists.push(playlist)
-      // } else {
-      //   userPlaylists.push(playlist);
-      // }
+      if (name.startsWith(JUST_GOOD_INDICATOR)) {
+        justGoodPlaylists.push({
+          ...playlist,
+          justGoodContent: {
+            type: 0,
+            inProgress: false,
+            artistId: '',
+          }
+        });
+      } else if (name.startsWith(IN_PROGRESS_INDICATOR)) {
+        inProgressJustGoodPlaylists.push({
+          ...playlist,
+          justGoodContent: {
+            type: 0,
+            inProgress: true,
+            artistId: '',
+          }
+        });
+      } else if (name.startsWith(DEEP_DIVE_INDICATOR)) {
+        deepDivePlaylists.push({
+          ...playlist,
+          deepDiveContent: {
+            type: 1,
+            justGoodPlaylist: '',
+            sortType: 0,
+          },
+        })
+      } else {
+        userPlaylists.push(playlist);
+      }
     }
   });
 

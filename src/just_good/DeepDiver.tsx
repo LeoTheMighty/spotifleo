@@ -58,7 +58,7 @@ const DeepDiver = observer(() => {
     } else {
       return (
         <div className="d-flex justify-content-center flex-column align-items-center text-center w-100">
-          <i className="text-center text-bigger m-3"> Loading the Deep Dive of {store.currentJustGoodPlaylist?.artistName}... </i>
+          <i className="text-center text-bigger m-3"> Loading the Deep Dive{store.loadingArtistName ? ` of ${store.loadingArtistName}` : ''}... </i>
           <i className="text-center text-smaller mx-5"> {store.progress?.current} </i>
         </div>
       );

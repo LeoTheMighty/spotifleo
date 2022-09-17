@@ -1,4 +1,4 @@
-import { FetchedAlbum } from '../types';
+import { FetchedAlbum, TrackViewerAction } from '../types';
 import React  from 'react';
 import { albumGroupString } from '../logic/common';
 import { observer } from 'mobx-react';
@@ -11,9 +11,10 @@ type AlbumViewerProps = {
   navigateToDrive?: () => void;
   viewNotGood: boolean;
   store: SpotifyStore;
+  action?: TrackViewerAction;
 };
 
-const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: AlbumViewerProps) => {
+const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store, action }: AlbumViewerProps) => {
   if (!store.currentArtistDeepDiveAlbumIds?.has(album.id)) {
     return null;
   }
@@ -30,7 +31,7 @@ const AlbumViewer = observer(({ album, navigateToDrive, viewNotGood, store }: Al
           <i> {albumGroupString(album.albumGroup)} · {album.releaseDate.getFullYear()} · {album.tracks.length} song{album.tracks.length !== 1 ? 's' : ''}</i>
         </div>
       </div>
-      <TracksViewer showAlbum={false} store={store} tracks={album.tracks} viewNotGood={viewNotGood} />
+      <TracksViewer showAlbum={false} store={store} tracks={album.tracks} viewNotGood={viewNotGood} action={action} />
     </div>
   );
 });

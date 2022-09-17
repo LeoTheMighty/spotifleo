@@ -7,6 +7,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import { driveDeepDiver, min, viewDeepDiver } from '../logic/common';
 import { useNavigate } from 'react-router-dom';
 import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from 'react-bootstrap';
+import TracksViewer from './TracksViewer';
+import AlbumViewer from './AlbumViewer';
 
 /*
 
@@ -30,6 +32,7 @@ const compareTracksPopularReverse = (a: Track, b: Track) => a.popularity - b.pop
 const DeepDiveCreator = observer(() => {
   const store = useStore();
   const navigate = useNavigate();
+  const [viewList, setViewList] = useState(false);
   const [grouped, setGrouped] = useState(true);
   const [albumGrouped, setAlbumGrouped] = useState(false);
   const [sortAlpha, setSortAlpha] = useState(false);
@@ -144,11 +147,11 @@ const DeepDiveCreator = observer(() => {
     ${sortPopular ? (sortPopularForward ? 'Popularly' : 'Un-popularly') : ''}`;
   };
 
-  const toggleAlbum = (album: Album) => {
-    store.toggleAlbumForDeepDive(album.id);
+  const toggleAlbum = (album: FetchedAlbum) => {
+    store.toggleAlbumForDeepDive(album);
   };
 
-  const getGroupOfToggleAlbums = (albums: Album[] | undefined) => (
+  const getGroupOfToggleAlbums = (albums: FetchedAlbum[] | undefined) => (
     <div className="d-flex justify-content-center flex-wrap w-100">
       {albums?.map((album) => (
         <ToggleAlbum
@@ -213,6 +216,14 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
+  const getTracks = (): Track[] => {
+    const tracks = getAlbums().flatMap(a => a.tracks);
+    if (!grouped && !albumGrouped && sortPopular) {
+      sortPopularForward ? tracks.sort(compareTracksPopular) : tracks.sort(compareTracksPopularReverse);
+    }
+    return tracks;
+  }
+
   const getAlbumsComponent = () => {
     if (grouped) {
       const [albums, singles, appears] = getGroupedAlbums();
@@ -232,12 +243,49 @@ const DeepDiveCreator = observer(() => {
     }
   };
 
+  const getTrackListComponent = () => {
+    if (grouped) {
+      const [albums, singles, appears] = getGroupedAlbums();
+
+      return (
+        <>
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Albums: </h2> </div>
+          {albums.map((album) => (
+            <AlbumViewer album={album} viewNotGood={true} store={store} action="toggleDeepDive" />
+          ))}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Singles/EPs: </h2> </div>
+          {singles.map((album) => (
+            <AlbumViewer album={album} viewNotGood={true} store={store} action="toggleDeepDive" />
+          ))}
+          <div className="d-flex justify-content-start w-100 px-2"> <h2> Appears On: </h2> </div>
+          {appears.map((album) => (
+            <AlbumViewer album={album} viewNotGood={true} store={store} action="toggleDeepDive" />
+          ))}
+        </>
+      );
+    } else if (albumGrouped) {
+      return getUngroupedAlbums().map((album) => (
+        <AlbumViewer album={album} viewNotGood={true} store={store} action="toggleDeepDive" />
+      ));
+    } else {
+      return (
+        <TracksViewer
+          showAlbum={true}
+          store={store}
+          tracks={getTracks()}
+          viewNotGood={true}
+          action="toggleDeepDive"
+        />
+      );
+    }
+  };
+
   const hasAlbumGroup = (albumGroup: AlbumGroup) => {
     return !!store.currentDeepDiveArtistDiscographyGrouped?.find(a => a.albumGroup === albumGroup && store.currentArtistDeepDiveAlbumIds?.has(a.id));
   };
 
   return (
-    <div className="d-flex flex-column align-items-center">
+    <div className="d-flex flex-column align-items-center w-100">
       <div className="d-flex flex-column w-100">
         {(store.currentJustGoodPlaylist?.deepDivePlaylist) && (
           <div className="d-flex justify-content-between mx-2 mt-2">
@@ -270,22 +318,29 @@ const DeepDiveCreator = observer(() => {
         </h1>
       )}
       <h1 className="text-center text-lightest m-1"> Sort and filter your Deep Dive </h1>
-      <div className="d-flex justify-content-around my-1 w-100">
-        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
-          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
-            Albums
-          </p>
-        </button>
-        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
-          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through' }}>
-            Singles
-          </p>
-        </button>
-        <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
-          <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through' }}>
-            Features
-          </p>
-        </button>
+      <div className="d-flex flex-row justify-content-between my-1 w-100">
+        <div className="d-flex justify-content-start">
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('album')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('album') ? '' : 'line-through' }}>
+              Albums
+            </p>
+          </button>
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('single')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('single') ? '' : 'line-through' }}>
+              Singles
+            </p>
+          </button>
+          <button className="primary-btn secondary-btn m-1 px-2 py-1" onClick={() => store.toggleAlbumGroupForDeepDive('appears_on')}>
+            <p className="m-0 p-0" style={{ textDecoration: hasAlbumGroup('appears_on') ? '' : 'line-through' }}>
+              Features
+            </p>
+          </button>
+        </div>
+        <div className="d-flex justify-content-end">
+          <button className="deep-dive-creator-sort-button" onClick={() => setViewList(v => !v)}>
+            <i className={`bi bi-${viewList ? 'music-note-list' : 'grid-fill'} bi-small mx-1`} />
+          </button>
+        </div>
       </div>
       <div className="d-flex justify-content-between align-items-center w-100 my-1">
         <div className="d-flex justify-content-start flex-column mx-2 text-start">
@@ -316,7 +371,11 @@ const DeepDiveCreator = observer(() => {
           )}
         </div>
       </div>
-      { getAlbumsComponent() }
+      { viewList ? (
+        <div className="d-flex flex-column w-100">
+          { getTrackListComponent() }
+        </div>
+      ): getAlbumsComponent() }
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
         <ModalHeader> <ModalTitle> Ready to Start the deep dive? </ModalTitle></ModalHeader>
         <ModalBody>

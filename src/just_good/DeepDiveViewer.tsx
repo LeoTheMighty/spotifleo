@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ListViewer from './ListViewer';
 import { useStore } from '../state/SpotifyStoreProvider';
-import Image from '../components/Image';
 import { useNavigate } from 'react-router-dom';
 import {
   albumGroupString, artistString,
@@ -106,7 +104,13 @@ const DeepDiveViewer = observer(() => {
       </div>
       {viewType === 1 ? (
         store.currentDeepDiveArtistDiscographyTracksOrdered && (
-          <TracksViewer showAlbum={true} store={store} tracks={store.currentDeepDiveArtistDiscographyTracksOrdered} viewNotGood={viewDiscography} />
+          <TracksViewer
+            showAlbum={true}
+            store={store}
+            tracks={store.currentDeepDiveArtistDiscographyTracksOrdered}
+            viewNotGood={viewDiscography}
+            action="toggleJustGood"
+          />
         )
       ) : (
         store.currentDeepDiveArtistDiscographyOrdered?.map((album) => {
@@ -116,6 +120,7 @@ const DeepDiveViewer = observer(() => {
               navigateToDrive={() => (store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id)))}
               viewNotGood={viewDiscography}
               store={store}
+              action="toggleJustGood"
             />
           );
         })

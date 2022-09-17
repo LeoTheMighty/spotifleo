@@ -111,6 +111,7 @@ export interface SpotifyStore {
   // User Setup
   setupLoading: boolean;
   previewMode: boolean;
+  loadingArtistName?: string;
 
   userId?: string;
   userName?: string;
@@ -130,6 +131,7 @@ export interface SpotifyStore {
   currentJustGoodPlaylist?: JustGoodPlaylist;
   currentDeepDiveView?: DeepDiverViewType;
   currentArtistDeepDiveAlbumIds?: Set<string>;
+  currentArtistDeepDiveExcludedTrackIds?: Set<string>;
   currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
   // TODO: Do we need to cache the tracks as well?
   currentDeepDiveArtistDiscographyTracks?: Map<string, Track>; // track ID to Track object
@@ -186,8 +188,9 @@ export interface SpotifyStore {
   // Deep Diver
   fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
   fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
-  toggleAlbumForDeepDive: (albumId: string) => void;
+  toggleAlbumForDeepDive: (album: FetchedAlbum) => void;
   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
+  toggleTrackForDeepDive: (track: Track) => void;
   createOrUpdateDeepDivePlaylist: (tracks: Track[], sortType: number, importLiked?: boolean) => Promise<void>;
   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
@@ -731,15 +734,7 @@ const useSpotifyStore = () => {
       store.currentDeepDiveView = undefined;
 
       // To show artist name in loading
-      if (store.currentJustGoodPlaylist) {
-        store.currentJustGoodPlaylist.artistName = playlist.artistName;
-      } else {
-        store.currentJustGoodPlaylist = {
-          ...playlist,
-          trackIds: new Set(),
-        }
-      }
-
+      store.loadingArtistName = playlist.artistName;
 
       if (store.currentJustGoodPlaylist?.id !== playlistId) {
         store.startProgress(`Fetching Just Good ${playlist.artistName}`);
@@ -792,6 +787,7 @@ const useSpotifyStore = () => {
           };
 
           store.currentArtistDeepDiveAlbumIds = new Set();
+          store.currentArtistDeepDiveExcludedTrackIds = new Set();
           for (let i = 0; i < deepDivePlaylistTracks.length; i++) {
             const { albumId } = deepDivePlaylistTracks[i];
             if (albumId !== undefined) store.currentArtistDeepDiveAlbumIds.add(albumId);
@@ -804,6 +800,7 @@ const useSpotifyStore = () => {
           };
 
           store.currentArtistDeepDiveAlbumIds = new Set(response.map(a => a.id));
+          store.currentArtistDeepDiveExcludedTrackIds = new Set();
         }
 
         // Move the playlist to the front of the playlist
@@ -915,6 +912,7 @@ const useSpotifyStore = () => {
         };
 
         store.currentArtistDeepDiveAlbumIds = new Set();
+        store.currentArtistDeepDiveExcludedTrackIds = new Set();
         for (let i = 0; i < deepDivePlaylistTracks.length; i++) {
           const { albumId } = deepDivePlaylistTracks[i];
           if (albumId !== undefined) store.currentArtistDeepDiveAlbumIds.add(albumId);
@@ -931,13 +929,18 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    toggleAlbumForDeepDive: action((albumId: string) => {
-      if (!store.currentArtistDeepDiveAlbumIds) return notInitialized();
+    toggleAlbumForDeepDive: action((album: FetchedAlbum) => {
+      if (!store.currentArtistDeepDiveAlbumIds || !store.currentArtistDeepDiveExcludedTrackIds) return notInitialized();
 
-      if (store.currentArtistDeepDiveAlbumIds.has(albumId)) {
-        store.currentArtistDeepDiveAlbumIds.delete(albumId);
+      if (store.currentArtistDeepDiveAlbumIds.has(album.id)) {
+        store.currentArtistDeepDiveAlbumIds.delete(album.id);
+
+        // Only want excluded tracks if the album is in there, so remove it.
+        for (let i = 0; i < album.tracks.length; i++) {
+          store.currentArtistDeepDiveExcludedTrackIds.delete(album.tracks[i].id);
+        }
       } else {
-        store.currentArtistDeepDiveAlbumIds.add(albumId);
+        store.currentArtistDeepDiveAlbumIds.add(album.id);
       }
     }),
 
@@ -949,7 +952,7 @@ const useSpotifyStore = () => {
       store.currentDeepDiveArtistDiscography?.forEach((album) => {
         if (album.albumGroup === albumGroup && store.currentArtistDeepDiveAlbumIds?.has(album.id)) {
           // this means we want to turn off
-          store.toggleAlbumForDeepDive(album.id);
+          store.toggleAlbumForDeepDive(album);
           turnOnAll = false;
         }
       });
@@ -961,6 +964,45 @@ const useSpotifyStore = () => {
         });
       }
     }),
+
+
+    // If there is an album removed from the album IDs, no tracks from it should be in excluded.
+    // There are only track IDs in the excluded if it is not in the included.
+
+    // album IDs -> deepDiveList && track IDs -> excludedList, else none anywhere
+    toggleTrackForDeepDive(track: Track) {
+      if (!store.currentArtistDeepDiveExcludedTrackIds || !store.currentArtistDeepDiveAlbumIds) return notInitialized();
+      const album = track.albumId && store.currentDeepDiveArtistDiscography?.get(track.albumId);
+
+      if (!album) return notInitialized('album not found');
+
+      if (!store.currentArtistDeepDiveAlbumIds.has(album.id)) {
+        // add the album if it's not in there
+        store.currentArtistDeepDiveAlbumIds.add(album.id);
+        // if it's not there, add all tracks to the excluded
+        for (let i = 0; i < album.tracks.length; i++) {
+          store.currentArtistDeepDiveExcludedTrackIds.add(album.tracks[i].id);
+        }
+      }
+
+      if (store.currentArtistDeepDiveExcludedTrackIds.has(track.id)) {
+        store.currentArtistDeepDiveExcludedTrackIds.delete(track.id);
+      } else {
+        store.currentArtistDeepDiveExcludedTrackIds.add(track.id);
+
+        for (let i = 0; i < album.tracks.length; i++) {
+          if (!store.currentArtistDeepDiveExcludedTrackIds.has(album.tracks[i].id)) {
+            return;
+          }
+        }
+
+        // if we get here, all the album tracks are gone, remove the album
+        store.currentArtistDeepDiveAlbumIds.delete(album.id);
+        for (let i = 0; i < album.tracks.length; i++) {
+          store.currentArtistDeepDiveExcludedTrackIds.delete(album.tracks[i].id);
+        }
+      }
+    },
 
     /**
      * TODO
@@ -1003,6 +1045,13 @@ const useSpotifyStore = () => {
           ...store.currentJustGoodPlaylist.deepDivePlaylist.deepDiveContent,
           sortType,
         };
+        await store.call(changePlaylistDetails(
+          deepDiveId,
+          getDeepDivePlaylistName(artistName),
+          getDeepDivePlaylistDescription(artistName, content),
+          undefined,
+          token
+        ));
       }
 
       console.log('GETTING ALL TRACKS');
@@ -1075,8 +1124,10 @@ const useSpotifyStore = () => {
       }
 
       const index = store.plannedJustGoodPlaylists?.findIndex(p => p.id === store.currentJustGoodPlaylist!.id);
-      store.plannedJustGoodPlaylists?.splice(index, 1);
-      store.inProgressJustGoodPlaylists.unshift(store.currentJustGoodPlaylist);
+      if (index !== -1) { // only move it if it was in the planned
+        store.plannedJustGoodPlaylists?.splice(index, 1);
+        store.inProgressJustGoodPlaylists.unshift(store.currentJustGoodPlaylist);
+      }
 
       store.currentDeepDiveArtistAlbumIDsOrdered = [];
       for (let i = 0; i < tracks.length; i++) {

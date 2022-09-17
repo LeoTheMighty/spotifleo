@@ -410,6 +410,9 @@ export interface PlaybackResponse {
 // View
 export type DeepDiverViewType = 'edit-deep-dive' | 'deep-dive' | 'view-deep-dive' | 'external';
 
+
+export type TrackViewerAction = 'toggleJustGood' | 'toggleLike' | 'toggleDeepDive' | undefined;
+
 export interface Progress {
   progress: number; // <float> 0.0 - 1.0;
   task: string;    // description of the high level task being completed

@@ -4,6 +4,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 import './app.scss';
+import useSpotifyStore from './state/SpotifyStore';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

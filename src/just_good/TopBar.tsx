@@ -40,9 +40,7 @@ const TopBar = observer(() => {
           </Modal>
         </div>
       )}
-      <div className="loading-container">
-        <LoadingBar />
-      </div>
+      <LoadingBar progress={store.progress?.progress} startFrom={0} />
     </div>
   );
 });

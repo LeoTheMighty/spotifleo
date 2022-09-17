@@ -1,31 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { useStore } from '../state/SpotifyStoreProvider';
-import { observer } from 'mobx-react';
 import { ProgressBar } from 'react-bootstrap';
 
-const LoadingBar = observer(() => {
-  const store = useStore();
-  const [lastValue, setLastValue] = useState(0);
+type Props = {
+  progress?: number; // 0.0 - 1.0
+  startFrom?: number;
+  onlyShowOnChange?: boolean;
+};
+
+const LoadingBar = ({ progress, startFrom, onlyShowOnChange }: Props) => {
+  const [lastValue, setLastValue] = useState(startFrom || 0);
+  const [show, setShow] = useState(!onlyShowOnChange);
 
   useEffect(() => {
-    if (store.progress?.progress !== undefined) {
-      setLastValue(store.progress.progress);
-    } else {
-      setTimeout(() => setLastValue(0), 1000);
+    if (onlyShowOnChange) {
+      console.log(progress);
+      setShow(true);
+      setTimeout(() => setShow(false), 3000);
     }
-  }, [store.progress?.progress]);
 
+    if (progress !== undefined) {
+      setLastValue(progress);
+    } else if (startFrom !== undefined) {
+      setTimeout(() => setLastValue(startFrom), 1000);
+    }
+  }, [progress, startFrom]);
+
+  const showBar = onlyShowOnChange ? show : progress;
   return (
-    <ProgressBar
-      min={0.0}
-      max={1.0}
-      now={store.progress?.progress || lastValue}
-      defaultValue={0}
-      className={`loading-bar ${store.progress ? '' : 'opacity-0'}`}
-      animated
-      striped
-    />
+    <div className="loading-container">
+      <ProgressBar
+        min={0.0}
+        max={1.0}
+        now={progress || lastValue}
+        defaultValue={0}
+        className={`loading-bar ${showBar ? '' : 'opacity-0'}`}
+        animated
+        striped
+      />
+    </div>
   );
-});
+};
 
 export default LoadingBar;

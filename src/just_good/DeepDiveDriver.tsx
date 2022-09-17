@@ -14,6 +14,7 @@ import ConfigureDeepDivePlaylists from './ConfigureDeepDivePlaylists';
 import { useNavigate } from 'react-router-dom';
 import LoadingIndicator from '../common/LoadingIndicator';
 import useSwipe from '../components/SwipeHook';
+import LoadingBar from '../components/LoadingBar';
 
 /*
 
@@ -137,6 +138,9 @@ const DeepDiveDriver = observer(() => {
       } {...newTab}>
         { store.currentJustGoodPlaylist?.artistName } Deep Dive
       </a></h1>
+      <div className="d-flex flex-column w-100">
+        <LoadingBar progress={(trackIndex / store.currentJustGoodPlaylist.deepDiveTracks.length)} onlyShowOnChange />
+      </div>
       <div className="deep-dive-driver-track-scroller">
         <div className={`deep-dive-driver-image-container ${skipNext ? 'skip-next' : (skipPrev ? 'skip-prev' : '')}`}>
           <Image

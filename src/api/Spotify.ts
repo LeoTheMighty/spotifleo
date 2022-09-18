@@ -1,10 +1,20 @@
 import {
-  Album, AlbumGroup, AlbumResponse,
+  Album,
+  AlbumGroup,
+  AlbumResponse,
   ArtistResponse,
-  CachedPlaylist, FetchedAlbum,
+  CachedPlaylist,
+  FetchedAlbum,
   FetchResponse,
   PlaybackResponse,
-  PlaylistResponse, PlaylistTrack, PlaylistTrackResponse, ProgressCallback, SpotifyItemResponse, Track, TrackResponse,
+  PlaylistResponse,
+  PlaylistTrack,
+  PlaylistTrackResponse,
+  ProgressCallback,
+  QueueResponse,
+  SpotifyItemResponse,
+  Track,
+  TrackResponse,
   UserProfileResponse,
 } from '../types';
 import { chunkList, formatQueryList, formatResp, percent } from '../logic/common';
@@ -131,11 +141,8 @@ export const getAllMultipleAlbums = async (albumIds: string[], token: string, pc
           // Fetch the album tracks that may have gone missing
           let { next } = album.tracks;
           while (next) {
-            console.error('NEXT')
             const nextFetch = await callNext<FetchResponse<TrackResponse>>(token, next);
             if (nextFetch.items) album.tracks.items.push(...nextFetch.items);
-            console.error(`ADDING ${nextFetch.items.length} ITEMS`);
-            console.error(`NOW FULL TRACK LENGTH IS ${album.tracks.items.length}`);
             next = nextFetch?.next;
           }
 
@@ -415,6 +422,13 @@ export const prevPlayback = async (token: string) => callSpotifyAPI(token, '/me/
 export const seekPlayback = async (position: number, token: string) => callSpotifyAPI(token, '/me/player/seek', PUT, {
   position_ms: position,
 });
+
+// Queue endpoints
+export const addToQueue = async (trackUri: string, token: string) => callSpotifyAPI(token, '/me/player/queue', POST, {
+  uri: trackUri,
+});
+// TODO: What can we do with this now? It will give us the next few (exactly 20) queue songs. Player capability?
+export const getQueue = async (token: string): Promise<QueueResponse> => callSpotifyAPI(token, '/me/player/queue', GET);
 
 /**
  * For endpoints that provide a `next` value from an API response (all will be GET requests),

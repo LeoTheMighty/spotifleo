@@ -28,7 +28,7 @@ import {
   getPlaylistDetails,
   getLatestArtistAlbum,
   getFirstPlaylistTrack,
-  getArtist
+  getArtist, getQueue
 } from '../api/Spotify';
 import {
   DEEP_DIVE_INDICATOR,
@@ -1575,6 +1575,10 @@ const useSpotifyStore = () => {
       if (!token) return noToken();
 
       const playback = await store.call(getPlayback(token));
+      // store.call(getQueue(token)).then((resp) => {
+      //   console.log('QUEUE!')
+      //   console.log(resp);
+      // });
 
       runInAction(() => {
         store.currentTrack = playback.item && deserializePlayingTrack(playback);

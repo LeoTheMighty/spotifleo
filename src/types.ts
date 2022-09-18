@@ -407,6 +407,11 @@ export interface PlaybackResponse {
   };
 }
 
+export interface QueueResponse {
+  currently_playing: TrackResponse;
+  queue: TrackResponse[];
+}
+
 // View
 export type DeepDiverViewType = 'edit-deep-dive' | 'deep-dive' | 'view-deep-dive' | 'external';
 

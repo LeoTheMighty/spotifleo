@@ -134,6 +134,7 @@ export interface JustGoodPlaylistDescriptionContent extends PlaylistDescriptionC
 export interface DeepDivePlaylistDescriptionContent extends PlaylistDescriptionContent {
   type: 1;
   justGoodPlaylist: string;
+  latestDate?: string; // 2022-10-03
   sortType: number; // 0 = album, 1 = song
 }
 
@@ -173,7 +174,7 @@ export interface CachedJustGoodPlaylist extends CachedPlaylistWithJustGoodConten
   artistId: string;
   artistImg?: Images;
   artistName: string;
-  artistLast?: string; // the most recent artist track to check if we're out of date
+  artistLatestDate?: string; // the date of the most recent artist release
   progress: number; // which playlist track you last were on. Could also be helpful for creating list.
   deepDivePlaylist?: CachedDeepDivePlaylist;
   notGoodIds?: Set<string>; // cached within the playlist, not within

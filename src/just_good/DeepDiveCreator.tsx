@@ -4,7 +4,7 @@ import ToggleAlbum from './ToggleAlbum';
 import { observer } from 'mobx-react';
 import { Album, AlbumGroup, FetchedAlbum, Track } from '../types';
 import ConfirmModal from '../components/ConfirmModal';
-import { driveDeepDiver, min, viewDeepDiver } from '../logic/common';
+import { driveDeepDiver, min, outOfDate, viewDeepDiver } from '../logic/common';
 import { useNavigate } from 'react-router-dom';
 import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from 'react-bootstrap';
 import TracksViewer from './TracksViewer';
@@ -304,6 +304,16 @@ const DeepDiveCreator = observer(() => {
             'Start the Deep Dive'
           )}
         </button>
+        {store.currentJustGoodPlaylistOutOfDate && (
+          <>
+            <b className="d-flex justify-content-center align-items-center text-green text-bold text-big">
+              <i className="bi bi-circle-fill text-greener text-smallest me-2" />
+              Artist has new releases to add
+              <span className="mx-1 emoji" role="img" aria-label="bangbang">‼️</span>
+            </b>
+            <i className="d-flex justify-content-center text-small text-green"> Re-create the Deep Dive to include them </i>
+          </>
+        )}
         {/*<button className={`primary-btn toggle mx-2 my-3 ${importExisting ? 'on' : 'off'}`} onClick={() => setImportExisting(i => !i)}>*/}
         {/*  {importExisting ? (*/}
         {/*    'Importing Liked to Just Good'*/}

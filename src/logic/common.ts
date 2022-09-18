@@ -54,7 +54,7 @@ const getJustGoodDescriptionContentTag = (content?: JustGoodPlaylistDescriptionC
   content ? `${guardRail}0,${content.deepDivePlaylist ? `${content.deepDivePlaylist},` : ''}${content.artistId},${content.inProgress ? '1' : '0'}` : ''
 );
 const getDeepDiveDescriptionContentTag = (content?: DeepDivePlaylistDescriptionContent): string => (
-  content ? `${guardRail}1,${content.justGoodPlaylist},${content.sortType}` : ''
+  content ? `${guardRail}1,${content.justGoodPlaylist},${content.latestDate ? `${content.latestDate},` : ''}${content.sortType}` : ''
 );
 export const getJustGoodDescriptionContent = (description: string): JustGoodPlaylistDescriptionContent | undefined => {
   const contentString = arrayGetWrap(description.split('|'), -1);
@@ -80,12 +80,21 @@ export const getJustGoodDescriptionContent = (description: string): JustGoodPlay
 export const getDeepDiveDescriptionContent = (description: string): DeepDivePlaylistDescriptionContent | undefined => {
   const contentString = arrayGetWrap(description.split('|'), -1);
   if (contentString === undefined) return undefined;
-  const [type, justGoodPlaylist, sortType] = contentString.split(',');
+  const contentList = contentString.split(',');
+  let [type, justGoodPlaylist, latestDate, sortType]: (string | undefined)[] = [undefined, undefined, undefined, undefined];
+  if (contentList.length === 4) {
+    [type, justGoodPlaylist, latestDate, sortType] = contentList;
+  } else if (contentList.length === 3) {
+    [type, justGoodPlaylist, sortType] = contentList;
+  } else {
+    return undefined;
+  }
   if (!type || !justGoodPlaylist || !sortType) return undefined;
   if (type !== '1') return undefined;
   return {
     type: 1,
     justGoodPlaylist,
+    latestDate,
     sortType: parseInt(sortType),
   }
 };
@@ -380,3 +389,7 @@ export const setSubtraction = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
 
 export const min = (...args: number[]): number => args.reduce((a, b) => a > b ? b : a);
 export const max = (...args: number[]): number => args.reduce((a, b) => a < b ? b : a);
+
+export const outOfDate = (playlist: CachedJustGoodPlaylist): boolean => (
+  (playlist.artistLatestDate || '') > (playlist.deepDivePlaylist?.deepDiveContent.latestDate || '9') // will only work until year 9000
+);

@@ -52,7 +52,7 @@ import {
   justGoodToCached,
   nestProgress,
   wrapIndex,
-  sleep, BACKOFF_LIMIT, backoffTimeoutMs, setSubtraction, setIntersection, getTrackUri, externalBaseUrl
+  sleep, BACKOFF_LIMIT, backoffTimeoutMs, setSubtraction, setIntersection, getTrackUri, externalBaseUrl, outOfDate
 } from '../logic/common';
 import {
   Artist,
@@ -159,6 +159,7 @@ export interface SpotifyStore {
 
   allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
   currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
+  currentJustGoodPlaylistOutOfDate: boolean;
   currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
   currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
   currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
@@ -179,6 +180,7 @@ export interface SpotifyStore {
 
   // User Setup
   fetchUser: () => Promise<void>;
+  checkOutOfDate: () => Promise<void>;
   setupUser: () => Promise<User>;
   saveUser: () => void;
   storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => User;
@@ -284,6 +286,12 @@ const useSpotifyStore = () => {
         if (lists[i]?.find(p => p.id === id)) return lists[i];
       }
       return undefined;
+    },
+
+    get currentJustGoodPlaylistOutOfDate(): boolean {
+      if (!store.currentJustGoodPlaylist) return false;
+
+      return outOfDate(store.currentJustGoodPlaylist);
     },
 
     get currentDeepDiveArtistDiscographyGrouped(): FetchedAlbum[] | undefined {
@@ -416,6 +424,25 @@ const useSpotifyStore = () => {
       store.setupLoading = false;
     }),
 
+    async checkOutOfDate() {
+      const token = await store.useToken();
+      if (!token) return noToken();
+
+      const allJustGood = store.allJustGoodPlaylists;
+      if (allJustGood) {
+        for (let i = 0; i < allJustGood.length; i++) {
+          const justGoodPlaylist = allJustGood[i];
+          const latest = await store.call(getLatestArtistAlbum(justGoodPlaylist.artistId, token));
+          const offset = latest.releaseDate.getTimezoneOffset()
+          const latestDate = (new Date(latest.releaseDate.getTime() - (offset * 60 * 1000))).toISOString().split('T')[0];
+
+          console.log(`LATEST ${justGoodPlaylist.artistName} RELEASE WAS ON ${latestDate} AND CALLED ${latest.name} AND GROUP = ${latest.albumGroup}`);
+
+          justGoodPlaylist.artistLatestDate = latestDate;
+        }
+      }
+    },
+
     /**
      * TODO
      */
@@ -456,6 +483,10 @@ const useSpotifyStore = () => {
       store.justGoodPlaylists = finishedJustGoodPlaylists;
       store.inProgressJustGoodPlaylists = inProgressJustGoodPlaylists;
       store.plannedJustGoodPlaylists = plannedJustGoodPlaylists;
+
+      store.checkOutOfDate().then(() => {
+        console.log('Finished checking out of date!');
+      });
     }),
 
     /**
@@ -1027,6 +1058,7 @@ const useSpotifyStore = () => {
         // 1. Create Deep Dive Playlist
         content = {
           justGoodPlaylist: store.currentJustGoodPlaylist.id,
+          latestDate: store.currentJustGoodPlaylist.artistLatestDate,
           sortType,
           type: 1,
         };
@@ -1043,6 +1075,7 @@ const useSpotifyStore = () => {
         deepDiveName = store.currentJustGoodPlaylist.deepDivePlaylist.name;
         content = {
           ...store.currentJustGoodPlaylist.deepDivePlaylist.deepDiveContent,
+          latestDate: store.currentJustGoodPlaylist.artistLatestDate,
           sortType,
         };
         await store.call(changePlaylistDetails(
@@ -1714,11 +1747,7 @@ const useSpotifyStore = () => {
     },
 
     artistOutOfDate: async (playlist: CachedJustGoodPlaylist) => {
-      const token = await store.useToken();
-      if (!token) return noToken();
-      if (!playlist.artistId || !playlist.artistLast) return notInitialized();
-
-      return (await getLatestArtistAlbum(playlist.artistId, token)).id !== playlist.artistLast;
+      return outOfDate(playlist);
     },
 
     startProgress: action((task?: string) => {

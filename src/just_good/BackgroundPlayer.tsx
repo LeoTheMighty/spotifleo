@@ -49,6 +49,7 @@ const BackgroundPlayer = observer(() => {
         navigate(driveDeepDiver(store.currentPlayingJustGoodPlaylist.id));
       }
     } else {
+      store.updatePlayer();
     //   navigate(deepDiver(store.currentPlayingJustGoodPlaylist.id));
       // alert('TODO: Pop up screen to look up or add artist to just good? :)')
     }

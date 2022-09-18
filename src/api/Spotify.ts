@@ -87,9 +87,33 @@ export const getArtistAlbums = async (artistID: string, limit: number, offset: n
   })
 );
 
-export const getLatestArtistAlbum = async (artistID: string, token: string): Promise<Album> => (
-  deserializeAlbum((await getArtistAlbums(artistID, 1, 0, token)).items[0])
-);
+export const getLatestArtistAlbum = async (artistID: string, token: string): Promise<Album> => {
+  const releases = (await Promise.all([
+    callSpotifyAPI<FetchResponse<AlbumResponse>>(token, `/artists/${artistID}/albums`, GET, {
+      include_groups: 'album',
+      limit: 1,
+      offset: 0,
+    }),
+    callSpotifyAPI<FetchResponse<AlbumResponse>>(token, `/artists/${artistID}/albums`, GET, {
+      include_groups: 'single',
+      limit: 1,
+      offset: 0,
+    }),
+    callSpotifyAPI<FetchResponse<AlbumResponse>>(token, `/artists/${artistID}/albums`, GET, {
+      include_groups: 'appears_on',
+      limit: 10, // prematurely get 10 appears on to try to get the first non-compilation
+      offset: 0,
+    }),
+  ])).flatMap(r => (
+    (r && r.items.filter(r => r.album_group !== 'compilation')) || []
+  ));
+  return deserializeAlbum(releases.reduce(
+    (max, release) => (
+      (max?.release_date || '') > (release?.release_date || '') ?
+        max :
+        release)
+  ));
+};
 
 export const getAllArtistAlbums = async (artistID: string, token: string, pcb?: ProgressCallback): Promise<Album[]> => (
   fetchAll(
@@ -452,13 +476,13 @@ export const callNext = async <T>(token: string, nextUrl: string, method: string
  * @param queryValues The query values object to send in with the request. Will be embedded into the URI.
  * @param body The body to send into the request.
  */
-const callSpotifyAPI = async (
+const callSpotifyAPI = async <T>(
   token: string,
   endpoint: string,
   method: string,
   queryValues?: Query,
   body?: Object,
-) => new Promise<any>((resolve, reject) => {
+) => new Promise<T>((resolve, reject) => {
   fetch(SPOTIFY_API_BASE_URI + endpoint + (query(queryValues) || ''), {
     method,
     headers: { authorization: `Bearer ${token}` },

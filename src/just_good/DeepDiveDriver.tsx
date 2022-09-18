@@ -118,7 +118,10 @@ const DeepDiveDriver = observer(() => {
             View Playlist
           </button>
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>
-            Edit Dive
+            <div className="d-flex justify-content-center align-items-center">
+              Edit Dive
+              { store.currentJustGoodPlaylistOutOfDate && <i className="bi bi-circle-fill text-greener text-smallest ms-2" /> }
+            </div>
           </button>
         </div>
         <button className={`primary-btn toggle mx-2 my-3 ${store.currentJustGoodPlaylist.justGoodContent.inProgress ? 'off' : 'on'}`} onClick={async () => {

@@ -7,7 +7,7 @@ import {
   editDeepDiver,
   formatMs,
   getPlaylistUrl,
-  newTab,
+  newTab, outOfDate,
   viewDeepDiver
 } from '../logic/common';
 import { observer } from 'mobx-react';
@@ -42,7 +42,10 @@ const DeepDiveViewer = observer(() => {
       <div className="d-flex flex-column w-100">
         <div className="d-flex flex-row justify-content-between mx-2 mt-2">
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(editDeepDiver(store.currentJustGoodPlaylist.id))}>
-            Edit Dive
+            <div className="d-flex justify-content-center align-items-center">
+              Edit Dive
+              { store.currentJustGoodPlaylistOutOfDate && <i className="bi bi-circle-fill text-greener text-smallest ms-2" /> }
+            </div>
           </button>
           <button className="primary-btn" onClick={() => store.currentJustGoodPlaylist?.id && navigate(driveDeepDiver(store.currentJustGoodPlaylist.id))}>
             Dive {store.currentJustGoodPlaylist?.justGoodContent.inProgress ? '' : 'Back '} in

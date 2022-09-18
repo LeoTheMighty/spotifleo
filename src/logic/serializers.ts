@@ -76,9 +76,7 @@ export const deserializeAlbum = ({ id, name, external_urls: { spotify }, uri, im
 
 export const deserializeFetchedAlbums = (albums: AlbumResponse[]): FetchedAlbum[] => albums.map(deserializeFetchedAlbum);
 export const deserializeFetchedAlbum = (album: AlbumResponse): FetchedAlbum => {
-  console.log(album.tracks);
   const tracks = album.tracks ? deserializeTracks(album.tracks?.items, album) : [];
-  console.log(tracks);
   // let popularity = 0; // get average of all popularity
   // tracks.forEach(t => {
   //   popularity += t.popularity;

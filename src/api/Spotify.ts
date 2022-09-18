@@ -127,14 +127,25 @@ export const getAllMultipleAlbums = async (albumIds: string[], token: string, pc
       const album = albumResponses.albums[j];
       if (album) {
         const albumIndex = albums.length;
-        albums.push(album);
         if (album.tracks?.items) {
+          // Fetch the album tracks that may have gone missing
+          let { next } = album.tracks;
+          while (next) {
+            console.error('NEXT')
+            const nextFetch = await callNext<FetchResponse<TrackResponse>>(token, next);
+            if (nextFetch.items) album.tracks.items.push(...nextFetch.items);
+            console.error(`ADDING ${nextFetch.items.length} ITEMS`);
+            console.error(`NOW FULL TRACK LENGTH IS ${album.tracks.items.length}`);
+            next = nextFetch?.next;
+          }
+
           for (let k = 0; k < album.tracks.items.length; k++) {
             const track = album.tracks.items[k];
             trackIds.push(track.id);
             trackAlbumMap.set(track.id, [albumIndex, k]);
           }
         }
+        albums.push(album);
       }
     }
     pcb?.((0.5 * i) / chunks.length);
@@ -142,7 +153,6 @@ export const getAllMultipleAlbums = async (albumIds: string[], token: string, pc
 
   // fuck this :( i wish they sent the popularity in the initial album tracks call
   const tracks = await getAllTracks(trackIds, token, (i) => pcb?.((0.5 + (0.5 * i))));
-  console.log(tracks);
   for (let i = 0; i < tracks.length; i++) {
     const track = tracks[i];
     if (trackAlbumMap.has(track.id)) {
@@ -384,15 +394,6 @@ const query = (queryValues?: Query): string | undefined => (
   queryValues && '?' + Object.keys(queryValues).map(k => k + '=' + queryValues[k]).join('&')
 );
 
-/**
- * For endpoints that provide a `next` value from an API response (all will be GET requests),
- * we can simply call its `next` value to continue the full desired API call.
- *
- * @param token The oauth access token from when the user authorized the application.
- * @param nextUrl The URL received from the previous API call.
- */
-export const callNext = async (token: string, nextUrl: string): Promise<any> => callSpotifyAPI(token, nextUrl, GET);
-
 export const getPlayback = async (token: string): Promise<PlaybackResponse> => callSpotifyAPI(token, '/me/player', GET);
 export const playPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/play', PUT);
 export const playPlaylistPlayback = async (playlistUri: string, index: number, token: string) => callSpotifyAPI(token, '/me/player/play', PUT, undefined, {
@@ -413,6 +414,18 @@ export const nextPlayback = async (token: string) => callSpotifyAPI(token, '/me/
 export const prevPlayback = async (token: string) => callSpotifyAPI(token, '/me/player/previous', POST);
 export const seekPlayback = async (position: number, token: string) => callSpotifyAPI(token, '/me/player/seek', PUT, {
   position_ms: position,
+});
+
+/**
+ * For endpoints that provide a `next` value from an API response (all will be GET requests),
+ * we can simply call its `next` value to continue the full desired API call.
+ *
+ * @param token The oauth access token from when the user authorized the application.
+ * @param nextUrl The URL received from the previous API call.
+ * @param method The method to call the API with.
+ */
+export const callNext = async <T>(token: string, nextUrl: string, method: string = 'GET'): Promise<T> => new Promise((resolve, reject) => {
+  fetch(nextUrl, { method, headers: { authorization: `Bearer ${token}` }, }).then(formatResp).then(resolve).catch(reject);
 });
 
 

@@ -1839,7 +1839,8 @@ const useSpotifyStore = () => {
             getDeepDivePlaylistName(p.artistName),
             getDeepDivePlaylistDescription(p.artistName, {
               justGoodPlaylist: p.id,
-              sortType: p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0,
+              latestDate: p.artistLatestDate,
+              sortType: p.deepDivePlaylist?.deepDiveContent?.sortType || (p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0),
               type: 1,
             }),
             true,
@@ -1867,7 +1868,8 @@ const useSpotifyStore = () => {
             getDeepDivePlaylistName(p.artistName),
             getDeepDivePlaylistDescription(p.artistName, {
               justGoodPlaylist: p.id,
-              sortType: p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0,
+              latestDate: p.artistLatestDate,
+              sortType: p.deepDivePlaylist?.deepDiveContent?.sortType || (p.id === '3U37OoxcHb7P3p7GFqfKJV' ? 1 : 0),
               type: 1,
             }),
             true,

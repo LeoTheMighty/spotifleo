@@ -1062,8 +1062,10 @@ const useSpotifyStore = () => {
       const filteredTracks = tracks.filter((t) => store.currentArtistDeepDiveAlbumIds?.has(t.albumId || ''));
       const trackURIs: string[] = [];
       const trackIds: Set<string> = new Set();
+      store.currentDeepDiveArtistTrackIDsOrdered = [];
       filteredTracks.forEach((t) => {
         trackIds.add(t.id);
+        store.currentDeepDiveArtistTrackIDsOrdered!.push(t.id);
         trackURIs.push(t.uri)
       });
 

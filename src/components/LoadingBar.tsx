@@ -11,11 +11,13 @@ const LoadingBar = ({ progress, startFrom, onlyShowOnChange }: Props) => {
   const [lastValue, setLastValue] = useState(startFrom || 0);
   const [show, setShow] = useState(!onlyShowOnChange);
 
+  const [timeoutID, setTimeoutID] = useState<NodeJS.Timeout | undefined>(undefined);
   useEffect(() => {
     if (onlyShowOnChange) {
       console.log(progress);
       setShow(true);
-      setTimeout(() => setShow(false), 3000);
+      timeoutID && clearTimeout(timeoutID);
+      setTimeoutID(setTimeout(() => setShow(false), 3000));
     }
 
     if (progress !== undefined) {

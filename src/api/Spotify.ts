@@ -73,12 +73,15 @@ export const getArtist = async (id: string, token: string): Promise<ArtistRespon
   callSpotifyAPI(token, `/artists/${id}`, GET)
 );
 
-/*
 
-Returned in chronological order but then split into different album groups
-
+/**
+ * Holy shit, Various Artists has been DESTROYING my deep dives. No more.
  */
+const artistAlbumFilter = (r: AlbumResponse) => (
+  r.album_group !== 'compilation' && !(r.artists?.[0]?.name === 'Various Artists')
+);
 
+/* Returned in chronological order but then split into different album groups */
 export const getArtistAlbums = async (artistID: string, limit: number, offset: number, token: string): Promise<FetchResponse<AlbumResponse>> => (
   callSpotifyAPI(token, `/artists/${artistID}/albums`, GET, {
     include_groups: 'album,single,appears_on',
@@ -105,7 +108,7 @@ export const getLatestArtistAlbum = async (artistID: string, token: string): Pro
       offset: 0,
     }),
   ])).flatMap(r => (
-    (r && r.items.filter(r => r.album_group !== 'compilation')) || []
+    (r && r.items.filter(artistAlbumFilter)) || []
   ));
   return deserializeAlbum(releases.reduce(
     (max, release) => (
@@ -119,7 +122,7 @@ export const getAllArtistAlbums = async (artistID: string, token: string, pcb?: 
   fetchAll(
     (offset) => getArtistAlbums(artistID, MAX_FETCH_ITEMS, offset, token),
     deserializeAlbum,
-    (response) => response.album_type !== 'compilation',
+    artistAlbumFilter,
     (response) => `${response.name}_${response.album_type}`,
       pcb,
     )

@@ -98,7 +98,7 @@
 }
 
 .text-1 {
-  color: $primary-text;
+  color: $primary-text !important;
 }
 
 .text-2 {
@@ -119,6 +119,10 @@
 
 .bi-small {
   font-size: 1.5rem !important;
+}
+
+.bi-regular {
+  font-size: 2.25rem !important;
 }
 
 .bi-big {

@@ -37,12 +37,12 @@
 }
 
 .hardly-know-her {
-  color: transparent;
-  transition:  0.5s ease-in-out color;
+  opacity: 0;
+  transition:  0.5s ease-in-out opacity;
 }
 
 .hardly-know-her.show {
-  color: $primary-text;
+  opacity: 1;
 }
 
 .emoji {

@@ -436,9 +436,14 @@ const useSpotifyStore = () => {
           const offset = latest.releaseDate.getTimezoneOffset()
           const latestDate = (new Date(latest.releaseDate.getTime() - (offset * 60 * 1000))).toISOString().split('T')[0];
 
-          console.log(`LATEST ${justGoodPlaylist.artistName} RELEASE WAS ON ${latestDate} AND CALLED ${latest.name} AND GROUP = ${latest.albumGroup}`);
-
-          justGoodPlaylist.artistLatestDate = latestDate;
+          runInAction(() => {
+            justGoodPlaylist.artistLatestDate = latestDate;
+            if (outOfDate(justGoodPlaylist)) {
+              console.log(`FOUND OUT OF DATE ARTIST = ${justGoodPlaylist.artistName}`);
+              console.log(`LATEST RELEASE WAS ON ${latestDate} AND CALLED ${latest.name} AND GROUP = ${latest.albumGroup}. WAS OUT OF DATE SINCE: ${justGoodPlaylist.deepDivePlaylist?.deepDiveContent.latestDate}`);
+              console.log(latest);
+            }
+          });
         }
       }
     },
@@ -1798,7 +1803,7 @@ const useSpotifyStore = () => {
             store.setHelpView('usage');
           } else if (error.status === 429) {
             console.error('Rate limited');
-            return store.call(apiPromise, backoff + 1);
+            return await store.call(apiPromise, backoff + 1);
           } else if (error.status === 403) {
             // TODO: Could this also check to see if the refresh token is expired
             console.error('Forbidden');

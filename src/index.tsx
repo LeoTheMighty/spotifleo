@@ -4,14 +4,16 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 import './app.scss';
-import useSpotifyStore from './state/SpotifyStore';
+import StoreApp from './state/StoreApp';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <StoreApp>
+      <App />
+    </StoreApp>
   </React.StrictMode>
 );
 

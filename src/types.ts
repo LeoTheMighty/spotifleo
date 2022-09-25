@@ -442,6 +442,8 @@ export class APIError extends Error {
   }
 }
 
+export type Optional<T> = T | undefined;
+
 // export interface IconViewable extends SpotifyItem {
 //   img: string; // src/url of img
 //   title: string;

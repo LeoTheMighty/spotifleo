@@ -1,4 +1,4 @@
-import { action, runInAction, toJS } from 'mobx';
+import { action, makeAutoObservable, runInAction, toJS } from 'mobx';
 import { useLocalObservable } from 'mobx-react';
 import {
   searchForArtist,
@@ -75,7 +75,7 @@ import {
   User,
   JustGoodPlaylistDescriptionContent,
   CachedDeepDivePlaylist,
-  DeepDivePlaylistDescriptionContent
+  DeepDivePlaylistDescriptionContent, Optional
 } from '../types';
 import {
   deserializeArtists,
@@ -103,165 +103,202 @@ const notInitialized = (property?: string) => fail(`Not initialized${property ? 
 /**
  * The store to store all the User's Spotify information.
  */
-export interface SpotifyStore {
-  // ============ PROPERTIES ================
-  // Spotify Authentication
-  token?: Token;
-
-  // User Setup
-  setupLoading: boolean;
-  previewMode: boolean;
-  loadingArtistName?: string;
-
-  userId?: string;
-  userName?: string;
-  userImg?: Images;
-  userPlaylists?: CachedPlaylist[];
-  deepDiverPlaylistIndexes?: Map<string, number>; // which ones are activated
-  deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the activated deep diver playlists
-  loadingDeepDiverPlaylists: Set<string>; // which ones are loading
-  justGoodPlaylists?: CachedJustGoodPlaylist[];
-  inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
-  plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
-  justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
-  justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
-
-  // Deep Diver
-  currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
-  currentJustGoodPlaylist?: JustGoodPlaylist;
-  currentDeepDiveView?: DeepDiverViewType;
-  currentArtistDeepDiveAlbumIds?: Set<string>;
-  currentArtistDeepDiveExcludedTrackIds?: Set<string>;
-  currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
-  // TODO: Do we need to cache the tracks as well?
-  currentDeepDiveArtistDiscographyTracks?: Map<string, Track>; // track ID to Track object
-  currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
-  currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
-  currentDeepDiveArtistTrackIDsOrdered?: string[]; // helps us do the individual track view as well
-  currentExternalPlaylistOwnerName?: string;
-
-  // High Level Spotify Edit Actions
-  artistResults: Artist[];
-
-  // High Level Spotify Player
-  currentTrack?: PlayingTrack;
-
-  // Loading Logic
-  progress?: Progress; // Not loading if undefined
-
-  // Help Logic
-  helpView?: HelpViewType;
-  welcomeStep?: number;
-
-  // ============ COMPUTED ================
-  likedPlaylist: CachedPlaylist | undefined;
-  likedTrackSet: Set<string> | undefined;
-
-  allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
-  currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
-  currentJustGoodPlaylistOutOfDate: boolean;
-  currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
-  currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
-  currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
-
-  currentDeepDiveExternalURL: string | undefined;
-  currentDeepDiveExternalShareData: ShareData | undefined;
-
-  isPlayingCurrentDeepDivePlaylist: boolean;
-
-  playing: boolean;
-
-  // ============ FUNCTIONS ================
-  // Spotify Authentication
-  useToken: () => Promise<string | undefined>;
-  newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
-  fetchToken: () => void;
-  deauthorize: () => void;
-
-  // User Setup
-  fetchUser: () => Promise<void>;
-  checkOutOfDate: () => Promise<void>;
-  setupUser: () => Promise<User>;
-  saveUser: () => void;
-  storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => User;
-  resetUser: () => Promise<void>;
-  evictUser: () => void;
-
-  // Deep Diver
-  fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
-  fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
-  toggleAlbumForDeepDive: (album: FetchedAlbum) => void;
-  toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-  toggleTrackForDeepDive: (track: Track) => void;
-  createOrUpdateDeepDivePlaylist: (tracks: Track[], sortType: number, importLiked?: boolean) => Promise<void>;
-  playCurrentDeepDivePlaylistTrack: () => Promise<void>;
-  playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
-  toggleCurrentTrackInJustGood: () => Promise<void>;
-  toggleTrackInJustGood: (track: Track) => Promise<void>;
-  toggleTrackInPlayingJustGood: (track: Track) => Promise<void>;
-  toggleCurrentTrackInPlayingJustGood: () => Promise<void>;
-  toggleTrackNotGood: (trackId: string) => Promise<void>;
-  toggleJustGoodPlaylistComplete: () => Promise<void>;
-  togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Promise<void>;
-  updateJustGoodPlaylistFromCurrent: () => void;
-  prevDeepDiveTrack: () => Promise<void>;
-  nextDeepDiveTrack: () => Promise<void>;
-
-  // Artist Search
-  searchArtists: (term: string) => Promise<void>;
-  clearSearchArtistResults: () => Promise<void>;
-  createJustGoodPlaylist: (artist: Artist) => Promise<void>;
-
-  // High Level Spotify Player
-  togglePlaying: () => Promise<void>;
-  skipNext: () => Promise<void>;
-  skipPrevious: () => Promise<void>;
-  seekToPosition: (value: number) => Promise<void>;
-  toggleShuffle: () => Promise<void>;
-  toggleRepeat: () => Promise<void>;
-  pretendToProceedPosition: () => void;
-  updatePlayer: () => Promise<void>;
-  toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
-  toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
-
-  // Low Level Helpers
-  toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
-  playlistOutOfDate: (playlist: CachedPlaylist) => Promise<boolean>;
-  artistOutOfDate: (playlist: CachedJustGoodPlaylist) => Promise<boolean>;
-
-  // Loading Logic
-  startProgress: (task?: string) => void;
-  updateProgress: (progress: number, current?: string) => void;
-  finishProgress: () => void;
-
-  // Help
-  setHelpView: (helpView: HelpViewType) => void;
-  skipWelcome: () => void;
-  backfill: () => Promise<void>;
-
-  call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
-
-  // ============ DEBUGGING ================
-  logStore: () => void;
-}
+// export interface SpotifyStore {
+//   // ============ PROPERTIES ================
+//   // Spotify Authentication
+//   token?: Token;
+//
+//   // User Setup
+//   setupLoading: boolean;
+//   previewMode: boolean;
+//   loadingArtistName?: string;
+//
+//   userId?: string;
+//   userName?: string;
+//   userImg?: Images;
+//   userPlaylists?: CachedPlaylist[];
+//   deepDiverPlaylistIndexes?: Map<string, number>; // which ones are activated
+//   deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the activated deep diver playlists
+//   loadingDeepDiverPlaylists: Set<string>; // which ones are loading
+//   justGoodPlaylists?: CachedJustGoodPlaylist[];
+//   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
+//   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
+//   justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
+//   justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
+//
+//   // Deep Diver
+//   currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
+//   currentJustGoodPlaylist?: JustGoodPlaylist;
+//   currentDeepDiveView?: DeepDiverViewType;
+//   currentArtistDeepDiveAlbumIds?: Set<string>;
+//   currentArtistDeepDiveExcludedTrackIds?: Set<string>;
+//   currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
+//   // TODO: Do we need to cache the tracks as well?
+//   currentDeepDiveArtistDiscographyTracks?: Map<string, Track>; // track ID to Track object
+//   currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
+//   currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
+//   currentDeepDiveArtistTrackIDsOrdered?: string[]; // helps us do the individual track view as well
+//   currentExternalPlaylistOwnerName?: string;
+//
+//   // High Level Spotify Edit Actions
+//   artistResults: Artist[];
+//
+//   // High Level Spotify Player
+//   currentTrack?: PlayingTrack;
+//
+//   // Loading Logic
+//   progress?: Progress; // Not loading if undefined
+//
+//   // Help Logic
+//   helpView?: HelpViewType;
+//   welcomeStep?: number;
+//
+//   // ============ COMPUTED ================
+//   likedPlaylist: CachedPlaylist | undefined;
+//   likedTrackSet: Set<string> | undefined;
+//
+//   allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
+//   currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
+//   currentJustGoodPlaylistOutOfDate: boolean;
+//   currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
+//   currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
+//   currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
+//
+//   currentDeepDiveExternalURL: string | undefined;
+//   currentDeepDiveExternalShareData: ShareData | undefined;
+//
+//   isPlayingCurrentDeepDivePlaylist: boolean;
+//
+//   playing: boolean;
+//
+//   // ============ FUNCTIONS ================
+//   // Spotify Authentication
+//   useToken: () => Promise<string | undefined>;
+//   newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
+//   fetchToken: () => void;
+//   deauthorize: () => void;
+//
+//   // User Setup
+//   fetchUser: () => Promise<void>;
+//   checkOutOfDate: () => Promise<void>;
+//   setupUser: () => Promise<User>;
+//   saveUser: () => void;
+//   storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => User;
+//   resetUser: () => Promise<void>;
+//   evictUser: () => void;
+//
+//   // Deep Diver
+//   fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
+//   fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
+//   toggleAlbumForDeepDive: (album: FetchedAlbum) => void;
+//   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
+//   toggleTrackForDeepDive: (track: Track) => void;
+//   createOrUpdateDeepDivePlaylist: (tracks: Track[], sortType: number, importLiked?: boolean) => Promise<void>;
+//   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
+//   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
+//   toggleCurrentTrackInJustGood: () => Promise<void>;
+//   toggleTrackInJustGood: (track: Track) => Promise<void>;
+//   toggleTrackInPlayingJustGood: (track: Track) => Promise<void>;
+//   toggleCurrentTrackInPlayingJustGood: () => Promise<void>;
+//   toggleTrackNotGood: (trackId: string) => Promise<void>;
+//   toggleJustGoodPlaylistComplete: () => Promise<void>;
+//   togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Promise<void>;
+//   updateJustGoodPlaylistFromCurrent: () => void;
+//   prevDeepDiveTrack: () => Promise<void>;
+//   nextDeepDiveTrack: () => Promise<void>;
+//
+//   // Artist Search
+//   searchArtists: (term: string) => Promise<void>;
+//   clearSearchArtistResults: () => Promise<void>;
+//   createJustGoodPlaylist: (artist: Artist) => Promise<void>;
+//
+//   // High Level Spotify Player
+//   togglePlaying: () => Promise<void>;
+//   skipNext: () => Promise<void>;
+//   skipPrevious: () => Promise<void>;
+//   seekToPosition: (value: number) => Promise<void>;
+//   toggleShuffle: () => Promise<void>;
+//   toggleRepeat: () => Promise<void>;
+//   pretendToProceedPosition: () => void;
+//   updatePlayer: () => Promise<void>;
+//   toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
+//   toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
+//
+//   // Low Level Helpers
+//   toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
+//   playlistOutOfDate: (playlist: CachedPlaylist) => Promise<boolean>;
+//   artistOutOfDate: (playlist: CachedJustGoodPlaylist) => Promise<boolean>;
+//
+//   // Loading Logic
+//   startProgress: (task?: string) => void;
+//   updateProgress: (progress: number, current?: string) => void;
+//   finishProgress: () => void;
+//
+//   // Help
+//   setHelpView: (helpView: HelpViewType) => void;
+//   skipWelcome: () => void;
+//   backfill: () => Promise<void>;
+//
+//   call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
+//
+//   // ============ DEBUGGING ================
+//   logStore: () => void;
+// }
 
 /**
  * Use the Spotify Mobx Store. A ridiculously monolith-ed mobx store because I am quite
  * new at this mobx stuff don't judge me breh.
  */
 const useSpotifyStore = () => {
-  const store: SpotifyStore = useLocalObservable<SpotifyStore>(() => ({
+  const store = makeAutoObservable({
     // ============ INITIAL PROPERTIES ================
+    // Spotify Authentication
+    token: undefined as Optional<Token>,
+
+    // User Setup
     setupLoading: true,
     previewMode: false,
+    loadingArtistName: undefined as Optional<string>,
 
-    loadingDeepDiverPlaylists: new Set(),
+    userId: undefined as Optional<string>,
+    userName: undefined as Optional<string>,
+    userImg: undefined as Optional<Images>,
+    userPlaylists: undefined as Optional<CachedPlaylist[]>,
+    deepDiverPlaylistIndexes: undefined as Optional<Map<string, number>>, // which ones are activated
+    deepDiverPlaylistTrackSets: undefined as Optional<Map<string, Set<string>>>, // track sets for the activated deep diver playlist
+    loadingDeepDiverPlaylists: (new Set()) as Set<string>, // which ones are loading
+    justGoodPlaylists: undefined as Optional<CachedJustGoodPlaylist[]>,
+    inProgressJustGoodPlaylists: undefined as Optional<CachedJustGoodPlaylist[]>,
+    plannedJustGoodPlaylists: undefined as Optional<CachedJustGoodPlaylist[]>,
+    justGoodPlaylistMap: undefined as Optional<Map<string, CachedJustGoodPlaylist>>,
+    justGoodPlaylistArtistMap: undefined as Optional<Map<string, CachedJustGoodPlaylist>>,
 
-    artistResults: [],
+    // Deep Diver
+    currentPlayingJustGoodPlaylist: undefined as Optional<CachedJustGoodPlaylist>,
+    currentJustGoodPlaylist: undefined as Optional<JustGoodPlaylist>,
+    currentDeepDiveView: undefined as Optional<DeepDiverViewType>,
+    currentArtistDeepDiveAlbumIds: undefined as Optional<Set<string>>,
+    currentArtistDeepDiveExcludedTrackIds: undefined as Optional<Set<string>>,
+    currentDeepDiveArtistDiscography: undefined as Optional<Map<string, FetchedAlbum>>, // album ID to Album object
+    // TODO: Do we need to cache the tracks as well?
+    currentDeepDiveArtistDiscographyTracks: undefined as Optional<Map<string, Track>>, // track ID to Track object
+    currentDeepDiveArtistAlbumIDsGrouped: undefined as Optional<string[]>, // always sorted chronologically, albums, singles, appears
+    currentDeepDiveArtistAlbumIDsOrdered: undefined as Optional<string[]>, // album IDs current ordering, not including missing ones
+    currentDeepDiveArtistTrackIDsOrdered: undefined as Optional<string[]>, // helps us do the individual track view as well
+    currentExternalPlaylistOwnerName: undefined as Optional<string>,
 
-    showHelpScreen: false,
+    // High Level Spotify Edit Actions
+    artistResults: [] as Artist[],
 
-    welcomeStep: undefined,
+    // High Level Spotify Player
+    currentTrack: undefined as Optional<PlayingTrack>,
+
+    // Loading Logic
+    progress: undefined as Optional<Progress>, // Not loading if undefined
+
+    // Help Logic
+    helpView: undefined as Optional<HelpViewType>,
+    welcomeStep: undefined as Optional<number>,
 
     // ============ COMPUTED ================
     get likedPlaylist(): CachedPlaylist | undefined {
@@ -384,7 +421,7 @@ const useSpotifyStore = () => {
     /**
      * Store a newly created token.
      */
-    newToken: action((accessToken, refreshToken, expiresIn) => {
+    newToken: action((accessToken: string, refreshToken: string, expiresIn: number) => {
       // getTime and constructor is in milliseconds
       const expires = new Date(new Date().getTime() + (expiresIn * 1000));
       const token: Token = { refreshToken, accessToken, expires };
@@ -1785,7 +1822,7 @@ const useSpotifyStore = () => {
     }),
 
     // really slow
-    logStore: () => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),
+    logStore: (): void => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),
 
     call: async <T>(apiPromise: Promise<T>, backoff: number = 0): Promise<T> => {
       if (backoff > 0) {
@@ -1897,9 +1934,11 @@ const useSpotifyStore = () => {
         );
       }
     }),
-  }));
+  });
 
   return store;
 };
+
+export type SpotifyStore = ReturnType<typeof useSpotifyStore>;
 
 export default useSpotifyStore;

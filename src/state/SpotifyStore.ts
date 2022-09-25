@@ -1,99 +1,33 @@
 import { action, makeAutoObservable, runInAction, toJS } from 'mobx';
-import { useLocalObservable } from 'mobx-react';
 import {
-  searchForArtist,
-  playPlayback,
-  pausePlayback,
-  getPlayback,
-  nextPlayback,
-  prevPlayback,
-  seekPlayback,
-  getAllCurrentUserPlaylists,
-  getCurrentUserProfile,
-  getAllPlaylistTracks,
-  createPlaylist,
-  getAllArtistAlbumsWithTracks,
-  addAllTracksToPlaylist,
-  playPlaylistPlayback,
-  addTrackToPlaylist,
-  changePlaylistDetails,
-  removeTrackFromPlaylist,
-  LIKED_INDICATOR,
-  getAllCurrentUserLikedSongs,
-  removeTrackFromLiked,
-  addTrackToLiked,
-  replaceAllPlaylistItems,
-  toggleShuffle,
-  setRepeatMode,
-  getPlaylistDetails,
-  getLatestArtistAlbum,
-  getFirstPlaylistTrack,
-  getArtist, getQueue
+  searchForArtist, playPlayback, pausePlayback, getPlayback, nextPlayback, prevPlayback, seekPlayback,
+  getAllCurrentUserPlaylists, getCurrentUserProfile, getAllPlaylistTracks, createPlaylist, getAllArtistAlbumsWithTracks,
+  addAllTracksToPlaylist, playPlaylistPlayback, addTrackToPlaylist, changePlaylistDetails, removeTrackFromPlaylist,
+  LIKED_INDICATOR, getAllCurrentUserLikedSongs, removeTrackFromLiked, addTrackToLiked, replaceAllPlaylistItems,
+  toggleShuffle, setRepeatMode, getPlaylistDetails, getLatestArtistAlbum, getFirstPlaylistTrack, getArtist, getQueue
 } from '../api/Spotify';
 import {
-  DEEP_DIVE_INDICATOR,
-  getImages,
-  JUST_GOOD_INDICATOR,
-  IN_PROGRESS_INDICATOR,
-  splitJustGoodPlaylists,
-  splitPlaylists,
-  getDeepDivePlaylistName,
-  getDeepDivePlaylistDescription,
-  getJustGoodPlaylistName,
-  getInProgressJustGoodPlaylistName,
-  getInProgressJustGoodPlaylistDescription,
-  importMapOfSets,
-  exportMapOfSets,
-  getJustGoodPlaylistDescription,
-  importMap,
-  exportMap,
-  getPlaylistUri,
-  getID,
-  justGoodToCached,
-  nestProgress,
-  wrapIndex,
-  sleep, BACKOFF_LIMIT, backoffTimeoutMs, setSubtraction, setIntersection, getTrackUri, externalBaseUrl, outOfDate
+  DEEP_DIVE_INDICATOR, getImages, JUST_GOOD_INDICATOR, IN_PROGRESS_INDICATOR, splitJustGoodPlaylists, splitPlaylists,
+  getDeepDivePlaylistName, getDeepDivePlaylistDescription, getJustGoodPlaylistName, getInProgressJustGoodPlaylistName,
+  getInProgressJustGoodPlaylistDescription, importMapOfSets, exportMapOfSets, getJustGoodPlaylistDescription,
+  importMap, exportMap, getPlaylistUri, getID, justGoodToCached, nestProgress, wrapIndex, sleep, BACKOFF_LIMIT,
+  backoffTimeoutMs, setSubtraction, setIntersection, getTrackUri, externalBaseUrl, outOfDate
 } from '../logic/common';
 import {
-  Artist,
-  ArtistResponse,
-  CachedPlaylist,
-  Images,
-  CachedJustGoodPlaylist,
-  Token,
-  Track,
-  JustGoodPlaylist,
-  DeepDiverViewType,
-  Album,
-  AlbumGroup,
-  FetchedAlbum,
-  Progress,
-  FetchedCachedPlaylist,
-  PlayingTrack,
-  HelpViewType,
-  APIError,
-  User,
-  JustGoodPlaylistDescriptionContent,
-  CachedDeepDivePlaylist,
-  DeepDivePlaylistDescriptionContent, Optional
+  Artist, ArtistResponse, CachedPlaylist, Images, CachedJustGoodPlaylist, Token, Track, JustGoodPlaylist,
+  DeepDiverViewType, AlbumGroup, FetchedAlbum, Progress, FetchedCachedPlaylist, PlayingTrack, HelpViewType,
+  APIError, JustGoodPlaylistDescriptionContent, CachedDeepDivePlaylist, DeepDivePlaylistDescriptionContent, Optional
 } from '../types';
-import {
-  deserializeArtists,
-  deserializeCachedPlaylist,
-  deserializePlayingTrack,
-  deserializeTrack
-} from '../logic/serializers';
+import { deserializeArtists, deserializeCachedPlaylist, deserializePlayingTrack } from '../logic/serializers';
 import { getUser, getToken, storeToken, storeUser, removeUser, removeToken } from '../logic/storage';
 import { fetchRefreshToken, shouldRefreshToken } from '../auth/authHelper';
 
 /*
-
 TODO: DO PROMISE ALLs TO DO THINGS IN PARALLEL?
 TODO:   COULD POTENTIALLY FIND THE TOTAL NUMBER OF REQUESTS (tracks.total) AND THEN FETCH IN PARALLEL
 TODO: DETECT WHETHER A CHANGE IN A PLAYLIST HAS BEEN MADE WITH THE MOST RECENT TRACK?
 TODO: DETECT A CHANGE IN ARTIST DISCOGRAPHY?
 TODO: DON'T LOAD EVERYTHING AT ONCE AND UTILIZE OFFSET LOADING?
-
  */
 
 const fail = (reason: string) => { throw new Error(`Failed Action: ${reason}`) };
@@ -101,157 +35,11 @@ const noToken = () => fail('No Token');
 const notInitialized = (property?: string) => fail(`Not initialized${property ? `: ${property}` : ''}`);
 
 /**
- * The store to store all the User's Spotify information.
- */
-// export interface SpotifyStore {
-//   // ============ PROPERTIES ================
-//   // Spotify Authentication
-//   token?: Token;
-//
-//   // User Setup
-//   setupLoading: boolean;
-//   previewMode: boolean;
-//   loadingArtistName?: string;
-//
-//   userId?: string;
-//   userName?: string;
-//   userImg?: Images;
-//   userPlaylists?: CachedPlaylist[];
-//   deepDiverPlaylistIndexes?: Map<string, number>; // which ones are activated
-//   deepDiverPlaylistTrackSets?: Map<string, Set<string>>; // track sets for the activated deep diver playlists
-//   loadingDeepDiverPlaylists: Set<string>; // which ones are loading
-//   justGoodPlaylists?: CachedJustGoodPlaylist[];
-//   inProgressJustGoodPlaylists?: CachedJustGoodPlaylist[];
-//   plannedJustGoodPlaylists?: CachedJustGoodPlaylist[];
-//   justGoodPlaylistMap?: Map<string, CachedJustGoodPlaylist>,
-//   justGoodPlaylistArtistMap?: Map<string, CachedJustGoodPlaylist>,
-//
-//   // Deep Diver
-//   currentPlayingJustGoodPlaylist?: CachedJustGoodPlaylist;
-//   currentJustGoodPlaylist?: JustGoodPlaylist;
-//   currentDeepDiveView?: DeepDiverViewType;
-//   currentArtistDeepDiveAlbumIds?: Set<string>;
-//   currentArtistDeepDiveExcludedTrackIds?: Set<string>;
-//   currentDeepDiveArtistDiscography?: Map<string, FetchedAlbum>; // album ID to Album object
-//   // TODO: Do we need to cache the tracks as well?
-//   currentDeepDiveArtistDiscographyTracks?: Map<string, Track>; // track ID to Track object
-//   currentDeepDiveArtistAlbumIDsGrouped?: string[]; // always sorted chronologically, albums, singles, appears
-//   currentDeepDiveArtistAlbumIDsOrdered?: string[]; // album IDs current ordering, not including missing ones
-//   currentDeepDiveArtistTrackIDsOrdered?: string[]; // helps us do the individual track view as well
-//   currentExternalPlaylistOwnerName?: string;
-//
-//   // High Level Spotify Edit Actions
-//   artistResults: Artist[];
-//
-//   // High Level Spotify Player
-//   currentTrack?: PlayingTrack;
-//
-//   // Loading Logic
-//   progress?: Progress; // Not loading if undefined
-//
-//   // Help Logic
-//   helpView?: HelpViewType;
-//   welcomeStep?: number;
-//
-//   // ============ COMPUTED ================
-//   likedPlaylist: CachedPlaylist | undefined;
-//   likedTrackSet: Set<string> | undefined;
-//
-//   allJustGoodPlaylists: CachedJustGoodPlaylist[] | undefined;
-//   currentJustGoodPlaylistList: CachedJustGoodPlaylist[] | undefined;
-//   currentJustGoodPlaylistOutOfDate: boolean;
-//   currentDeepDiveArtistDiscographyGrouped: FetchedAlbum[] | undefined;
-//   currentDeepDiveArtistDiscographyOrdered: FetchedAlbum[] | undefined;
-//   currentDeepDiveArtistDiscographyTracksOrdered: Track[] | undefined;
-//
-//   currentDeepDiveExternalURL: string | undefined;
-//   currentDeepDiveExternalShareData: ShareData | undefined;
-//
-//   isPlayingCurrentDeepDivePlaylist: boolean;
-//
-//   playing: boolean;
-//
-//   // ============ FUNCTIONS ================
-//   // Spotify Authentication
-//   useToken: () => Promise<string | undefined>;
-//   newToken: (accessToken: string, refreshToken: string, expiresIn: number) => void;
-//   fetchToken: () => void;
-//   deauthorize: () => void;
-//
-//   // User Setup
-//   fetchUser: () => Promise<void>;
-//   checkOutOfDate: () => Promise<void>;
-//   setupUser: () => Promise<User>;
-//   saveUser: () => void;
-//   storeUser: (userId: string, userName: string, userImg: Images, userPlaylists: CachedPlaylist[], deepDiverPlaylistIndexes: Map<string, number>, deepDiverPlaylistTrackSets: Map<string, Set<string>>, justGoodPlaylists: CachedJustGoodPlaylist[]) => User;
-//   resetUser: () => Promise<void>;
-//   evictUser: () => void;
-//
-//   // Deep Diver
-//   fetchCurrentDeepDiverPlaylist: (playlist_id: string, view?: DeepDiverViewType) => Promise<void>;
-//   fetchExternalDeepDivePlaylist: (playlistId: string, deepDiveId: string) => Promise<void>;
-//   toggleAlbumForDeepDive: (album: FetchedAlbum) => void;
-//   toggleAlbumGroupForDeepDive: (albumGroup: AlbumGroup) => void;
-//   toggleTrackForDeepDive: (track: Track) => void;
-//   createOrUpdateDeepDivePlaylist: (tracks: Track[], sortType: number, importLiked?: boolean) => Promise<void>;
-//   playCurrentDeepDivePlaylistTrack: () => Promise<void>;
-//   playTrackInDeepDivePlaylist: (track: Track) => Promise<void>;
-//   toggleCurrentTrackInJustGood: () => Promise<void>;
-//   toggleTrackInJustGood: (track: Track) => Promise<void>;
-//   toggleTrackInPlayingJustGood: (track: Track) => Promise<void>;
-//   toggleCurrentTrackInPlayingJustGood: () => Promise<void>;
-//   toggleTrackNotGood: (trackId: string) => Promise<void>;
-//   toggleJustGoodPlaylistComplete: () => Promise<void>;
-//   togglePlaylistInDeepDiverPlaylists: (playlist: CachedPlaylist, i: number) => Promise<void>;
-//   updateJustGoodPlaylistFromCurrent: () => void;
-//   prevDeepDiveTrack: () => Promise<void>;
-//   nextDeepDiveTrack: () => Promise<void>;
-//
-//   // Artist Search
-//   searchArtists: (term: string) => Promise<void>;
-//   clearSearchArtistResults: () => Promise<void>;
-//   createJustGoodPlaylist: (artist: Artist) => Promise<void>;
-//
-//   // High Level Spotify Player
-//   togglePlaying: () => Promise<void>;
-//   skipNext: () => Promise<void>;
-//   skipPrevious: () => Promise<void>;
-//   seekToPosition: (value: number) => Promise<void>;
-//   toggleShuffle: () => Promise<void>;
-//   toggleRepeat: () => Promise<void>;
-//   pretendToProceedPosition: () => void;
-//   updatePlayer: () => Promise<void>;
-//   toggleTrackInDeepDiverPlaylist: (track: Track, playlist: CachedPlaylist) => Promise<void>;
-//   toggleCurrentTrackInPlaylist: (playlist: CachedPlaylist) => Promise<void>;
-//
-//   // Low Level Helpers
-//   toggleTrackInFetchedPlaylist: (track: Track, playlist: FetchedCachedPlaylist) => Promise<void>;
-//   playlistOutOfDate: (playlist: CachedPlaylist) => Promise<boolean>;
-//   artistOutOfDate: (playlist: CachedJustGoodPlaylist) => Promise<boolean>;
-//
-//   // Loading Logic
-//   startProgress: (task?: string) => void;
-//   updateProgress: (progress: number, current?: string) => void;
-//   finishProgress: () => void;
-//
-//   // Help
-//   setHelpView: (helpView: HelpViewType) => void;
-//   skipWelcome: () => void;
-//   backfill: () => Promise<void>;
-//
-//   call: <T>(apiPromise: Promise<T>, backoff?: number) => Promise<T>;
-//
-//   // ============ DEBUGGING ================
-//   logStore: () => void;
-// }
-
-/**
  * Use the Spotify Mobx Store. A ridiculously monolith-ed mobx store because I am quite
  * new at this mobx stuff don't judge me breh.
  */
 const useSpotifyStore = () => {
   const store = makeAutoObservable({
-    // ============ INITIAL PROPERTIES ================
     // Spotify Authentication
     token: undefined as Optional<Token>,
 
@@ -403,10 +191,8 @@ const useSpotifyStore = () => {
     /**
      * Use an access token for Spotify. Handles fetching and refreshing if necessary.
      */
-    useToken: action(async () => {
-      if (!store.token) {
-        await store.fetchToken();
-      }
+    async useToken(): Promise<Optional<string>> {
+      if (!store.token) { await store.fetchToken(); }
       if (store.token && shouldRefreshToken(store.token)) {
         console.log('Refreshing token');
 
@@ -416,24 +202,24 @@ const useSpotifyStore = () => {
       }
 
       return store.token?.accessToken;
-    }),
+    },
 
     /**
      * Store a newly created token.
      */
-    newToken: action((accessToken: string, refreshToken: string, expiresIn: number) => {
+    newToken(accessToken: string, refreshToken: string, expiresIn: number) {
       // getTime and constructor is in milliseconds
       const expires = new Date(new Date().getTime() + (expiresIn * 1000));
       const token: Token = { refreshToken, accessToken, expires };
 
       storeToken(token);
       store.token = token;
-    }),
+    },
 
     /**
      * Fetches a token from the
      */
-    fetchToken: action(async () => {
+    async fetchToken() {
       store.setupLoading = true;
 
       store.token = getToken();
@@ -444,7 +230,7 @@ const useSpotifyStore = () => {
       }
 
       store.setupLoading = false;
-    }),
+    },
 
     /**
      *
@@ -488,7 +274,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    fetchUser: action(async () => {
+    async fetchUser() {
       let user = getUser();
 
       if (!user) {
@@ -529,7 +315,7 @@ const useSpotifyStore = () => {
       store.checkOutOfDate().then(() => {
         console.log('Finished checking out of date!');
       });
-    }),
+    },
 
     /**
      * Creates and stores a new user, fetching all of the details using the spotify API.
@@ -540,7 +326,7 @@ const useSpotifyStore = () => {
      *    - The normal ones
      *    - The Just Good Playlists already created
      */
-    setupUser: action(async () => {
+    async setupUser() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -689,7 +475,7 @@ const useSpotifyStore = () => {
       store.setupLoading = false;
 
       return storedUser;
-    }),
+    },
 
     loadPreviewData: action(() => {
       // TODO: Load in the offline data so that you can
@@ -722,7 +508,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    saveUser: () => {
+    saveUser() {
       if (store.userId && store.userName && store.userImg && store.userPlaylists && store.deepDiverPlaylistIndexes && store.deepDiverPlaylistTrackSets && store.justGoodPlaylists && store.inProgressJustGoodPlaylists && store.plannedJustGoodPlaylists) {
         console.log('saving user');
         store.storeUser(
@@ -748,7 +534,7 @@ const useSpotifyStore = () => {
      * @param deepDiverPlaylistTrackSets
      * @param justGoodPlaylists
      */
-    storeUser: (
+    storeUser(
       userId: string,
       userName: string,
       userImg: Images,
@@ -756,8 +542,8 @@ const useSpotifyStore = () => {
       deepDiverPlaylistIndexes: Map<string, number>,
       deepDiverPlaylistTrackSets: Map<string, Set<string>>,
       justGoodPlaylists: CachedJustGoodPlaylist[],
-    ) => (
-      storeUser({
+    ) {
+      return storeUser({
         userId,
         userImg,
         userName,
@@ -765,22 +551,22 @@ const useSpotifyStore = () => {
         deepDiverPlaylistIndexes: exportMap(deepDiverPlaylistIndexes),
         deepDiverPlaylistTrackSets: exportMapOfSets(deepDiverPlaylistTrackSets),
         justGoodPlaylists,
-      })
-    ),
+      });
+    },
 
     /**
      * TODO
      */
-    resetUser: action(async () => {
+    async resetUser() {
       store.evictUser();
       await store.fetchUser();
       console.log("FINISHED RESETTING USER");
-    }),
+    },
 
     /**
      * TODO
      */
-    evictUser: action(() => {
+    evictUser() {
       removeUser();
 
       store.userId = undefined;
@@ -789,14 +575,14 @@ const useSpotifyStore = () => {
       store.userPlaylists = undefined;
       store.justGoodPlaylists = undefined;
       store.inProgressJustGoodPlaylists = undefined;
-    }),
+    },
 
     /**
      *
      * @param playlistId
      * @param view
      */
-    fetchCurrentDeepDiverPlaylist: async (playlistId: string, view?: DeepDiverViewType) => {
+    async fetchCurrentDeepDiverPlaylist(playlistId: string, view?: DeepDiverViewType) {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -897,7 +683,7 @@ const useSpotifyStore = () => {
       await store.updatePlayer();
     },
 
-    fetchExternalDeepDivePlaylist: action(async (playlistId: string, deepDiveId: string) => {
+    async fetchExternalDeepDivePlaylist(playlistId: string, deepDiveId: string) {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -997,12 +783,12 @@ const useSpotifyStore = () => {
       store.finishProgress();
 
       await store.updatePlayer();
-    }),
+    },
 
     /**
      * TODO
      */
-    toggleAlbumForDeepDive: action((album: FetchedAlbum) => {
+    toggleAlbumForDeepDive(album: FetchedAlbum) {
       if (!store.currentArtistDeepDiveAlbumIds || !store.currentArtistDeepDiveExcludedTrackIds) return notInitialized();
 
       if (store.currentArtistDeepDiveAlbumIds.has(album.id)) {
@@ -1015,12 +801,12 @@ const useSpotifyStore = () => {
       } else {
         store.currentArtistDeepDiveAlbumIds.add(album.id);
       }
-    }),
+    },
 
     /**
      * TODO
      */
-    toggleAlbumGroupForDeepDive: action((albumGroup: AlbumGroup) => {
+    toggleAlbumGroupForDeepDive(albumGroup: AlbumGroup) {
       let turnOnAll = true;
       store.currentDeepDiveArtistDiscography?.forEach((album) => {
         if (album.albumGroup === albumGroup && store.currentArtistDeepDiveAlbumIds?.has(album.id)) {
@@ -1036,7 +822,7 @@ const useSpotifyStore = () => {
           }
         });
       }
-    }),
+    },
 
 
     // If there is an album removed from the album IDs, no tracks from it should be in excluded.
@@ -1080,7 +866,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    createOrUpdateDeepDivePlaylist: action(async (tracks: Track[], sortType: number, importLiked: boolean = false) => {
+    async createOrUpdateDeepDivePlaylist(tracks: Track[], sortType: number, importLiked: boolean = false) {
       console.log('STARTING DEEP DIVE');
       store.startProgress(`${store.currentJustGoodPlaylist?.deepDivePlaylist ? 'Updating' : 'Creating'} Deep Dive Playlist`);
       store.logStore();
@@ -1217,24 +1003,24 @@ const useSpotifyStore = () => {
       store.saveUser();
 
       store.finishProgress();
-    }),
+    },
 
     /**
      * TODO
      */
-    searchArtists: action(async (term: string) => {
+    async searchArtists(term: string) {
       const token = await store.useToken();
       if (!token) return noToken();
 
       const response = await store.call(searchForArtist(term, 5, token));
 
       store.artistResults = deserializeArtists(response.artists.items);
-    }),
+    },
 
     /**
      * TODO
      */
-    createJustGoodPlaylist: action(async (artist: Artist) => {
+    async createJustGoodPlaylist(artist: Artist) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!store.justGoodPlaylistMap || !store.justGoodPlaylistArtistMap || store.justGoodPlaylistArtistMap?.hasOwnProperty(artist.id)) return fail('artist map not intialized');
@@ -1282,12 +1068,12 @@ const useSpotifyStore = () => {
       store.justGoodPlaylistArtistMap.set(artist.id, justGoodPlaylist);
 
       await store.saveUser();
-    }),
+    },
 
     /**
      * TODO
      */
-    playCurrentDeepDivePlaylistTrack: action(async () => {
+    async playCurrentDeepDivePlaylistTrack() {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!store.currentJustGoodPlaylist || (store.currentJustGoodPlaylist.progress === undefined)) return fail('Current just good playlist not initialized');
@@ -1312,9 +1098,9 @@ const useSpotifyStore = () => {
       setTimeout(() => store.updatePlayer(), 500);
 
       return await store.updatePlayer();
-    }),
+    },
 
-    prevDeepDiveTrack: action(async () => {
+    async prevDeepDiveTrack() {
       const token = await store.useToken();
       if (!token) return noToken();
       if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
@@ -1324,9 +1110,9 @@ const useSpotifyStore = () => {
       } else {
         store.currentJustGoodPlaylist.progress = wrapIndex(store.currentJustGoodPlaylist.progress - 1, store.currentJustGoodPlaylist.deepDiveTracks.length)
       }
-    }),
+    },
 
-    nextDeepDiveTrack: action(async () => {
+    async nextDeepDiveTrack() {
       const token = await store.useToken();
       if (!token) return noToken();
       if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
@@ -1336,12 +1122,12 @@ const useSpotifyStore = () => {
       } else {
         store.currentJustGoodPlaylist.progress = wrapIndex(store.currentJustGoodPlaylist.progress + 1, store.currentJustGoodPlaylist.deepDiveTracks.length)
       }
-    }),
+    },
 
     /**
      * TODO
      */
-    playTrackInDeepDivePlaylist: action(async (track: Track) => {
+    async playTrackInDeepDivePlaylist(track: Track) {
       if (!store.currentJustGoodPlaylist?.deepDiveTracks) return notInitialized();
 
       for (let i = 0; i < store.currentJustGoodPlaylist?.deepDiveTracks.length; i++) {
@@ -1351,9 +1137,9 @@ const useSpotifyStore = () => {
           await store.playCurrentDeepDivePlaylistTrack();
         }
       }
-    }),
+    },
 
-    toggleTrackInJustGood: action(async (track: Track) => {
+    async toggleTrackInJustGood(track: Track) {
       console.log('toggle');
 
       const token = await store.useToken();
@@ -1388,9 +1174,9 @@ const useSpotifyStore = () => {
           store.currentPlayingJustGoodPlaylist?.notGoodIds?.delete(track.id)
         }
       }
-    }),
+    },
 
-    toggleTrackInPlayingJustGood: action(async (track: Track) => {
+    async toggleTrackInPlayingJustGood(track: Track) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!store.currentPlayingJustGoodPlaylist?.trackIds) return notInitialized();
@@ -1423,24 +1209,24 @@ const useSpotifyStore = () => {
           store.currentJustGoodPlaylist?.notGoodIds?.delete(track.id)
         }
       }
-    }),
+    },
 
     /**
      * TODO
      */
-    toggleCurrentTrackInJustGood: action(async () => {
+    async toggleCurrentTrackInJustGood() {
       if (store.currentJustGoodPlaylist?.progress === undefined || !store.currentJustGoodPlaylist.deepDiveTracks) return notInitialized();
 
       return store.toggleTrackInJustGood(store.currentJustGoodPlaylist.deepDiveTracks[store.currentJustGoodPlaylist.progress]);
-    }),
+    },
 
-    toggleCurrentTrackInPlayingJustGood: action(async () => {
+    async toggleCurrentTrackInPlayingJustGood() {
       if (store.currentTrack === undefined) return notInitialized();
 
       return store.toggleTrackInPlayingJustGood(store.currentTrack);
-    }),
+    },
 
-    toggleTrackNotGood: async (trackId: string) => {
+    async toggleTrackNotGood(trackId: string) {
       if (!store.currentJustGoodPlaylist) return notInitialized();
 
       if (store.currentJustGoodPlaylist.notGoodIds === undefined) {
@@ -1465,7 +1251,7 @@ const useSpotifyStore = () => {
     /**
      * TODO
      */
-    toggleJustGoodPlaylistComplete: action(async () => {
+    async toggleJustGoodPlaylistComplete() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1500,12 +1286,12 @@ const useSpotifyStore = () => {
       inProgress ? store.justGoodPlaylists.unshift(playlist) : store.inProgressJustGoodPlaylists.unshift(playlist);
 
       await store.saveUser();
-    }),
+    },
 
     /**
      * TODO
      */
-    togglePlaylistInDeepDiverPlaylists: action(async (playlist: CachedPlaylist, i: number) => {
+    async togglePlaylistInDeepDiverPlaylists(playlist: CachedPlaylist, i: number) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (store.deepDiverPlaylistTrackSets === undefined || store.deepDiverPlaylistIndexes === undefined) return fail('Deep diver playlists not initialized');
@@ -1524,9 +1310,9 @@ const useSpotifyStore = () => {
       store.loadingDeepDiverPlaylists.delete(id);
 
       store.saveUser();
-    }),
+    },
 
-    updateJustGoodPlaylistFromCurrent: action(() => {
+    updateJustGoodPlaylistFromCurrent() {
       if (!store.currentJustGoodPlaylist || !store.plannedJustGoodPlaylists || !store.inProgressJustGoodPlaylists || !store.justGoodPlaylists) return notInitialized();
 
       let justGoodList: CachedJustGoodPlaylist[]
@@ -1549,25 +1335,25 @@ const useSpotifyStore = () => {
       }
 
       store.saveUser();
-    }),
+    },
 
     /**
      * TODO
      */
-    clearSearchArtistResults: action(async () => {
+    async clearSearchArtistResults() {
       store.artistResults = [];
-    }),
+    },
 
-    togglePlaying: action(async () => {
+    async togglePlaying() {
       const token = await store.useToken();
       if (!token) return noToken();
 
       await store.call(store.currentTrack?.playing ? pausePlayback(token) : playPlayback(token));
 
       return await store.updatePlayer();
-    }),
+    },
 
-    skipNext: action(async () => {
+    async skipNext() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1576,9 +1362,9 @@ const useSpotifyStore = () => {
       setTimeout(() => store.updatePlayer(), 500);
 
       return await store.updatePlayer();
-    }),
+    },
 
-    skipPrevious: action(async () => {
+    async skipPrevious() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1587,21 +1373,21 @@ const useSpotifyStore = () => {
       setTimeout(() => store.updatePlayer(), 500);
 
       return await store.updatePlayer();
-    }),
+    },
 
-    seekToPosition: action(async (value: number) => {
+    async seekToPosition(value: number) {
       const token = await store.useToken();
       if (!token) return noToken();
 
       await store.call(seekPlayback(Math.trunc(value), token));
 
       return await store.updatePlayer();
-    }),
+    },
 
     /**
      *
      */
-    toggleShuffle: action(async () => {
+    async toggleShuffle() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1612,12 +1398,12 @@ const useSpotifyStore = () => {
       }
 
       return await store.updatePlayer();
-    }),
+    },
 
     /**
      *
      */
-    toggleRepeat: action(async () => {
+    async toggleRepeat() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1631,21 +1417,21 @@ const useSpotifyStore = () => {
       }
 
       return await store.updatePlayer();
-    }),
+    },
 
     /**
      * For when you want to update the playing bar without actually playing it
      */
-    pretendToProceedPosition: action(() => {
+    pretendToProceedPosition() {
       if (!store.currentTrack) return notInitialized();
       if (store.currentTrack.progress === undefined) store.currentTrack.progress = 0;
       store.currentTrack.progress += 1000; // 1 second
-    }),
+    },
 
     /**
      *
      */
-    updatePlayer: action(async () => {
+    async updatePlayer() {
       const token = await store.useToken();
       if (!token) return noToken();
 
@@ -1706,9 +1492,9 @@ const useSpotifyStore = () => {
 
         store.logStore();
       });
-    }),
+    },
 
-    toggleTrackInDeepDiverPlaylist: action(async (track: Track, playlist: CachedPlaylist) => {
+    async toggleTrackInDeepDiverPlaylist(track: Track, playlist: CachedPlaylist) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!track || !playlist || !playlist.id) return notInitialized();
@@ -1717,9 +1503,9 @@ const useSpotifyStore = () => {
         ...playlist,
         trackIds: store.deepDiverPlaylistTrackSets?.get(playlist.id),
       });
-    }),
+    },
 
-    toggleTrackInFetchedPlaylist: action(async (track?: Track, playlist?: FetchedCachedPlaylist) => {
+    async toggleTrackInFetchedPlaylist(track?: Track, playlist?: FetchedCachedPlaylist) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!track || !playlist || !playlist.trackIds || !track.id || !track.uri || !playlist.id) return notInitialized();
@@ -1746,12 +1532,12 @@ const useSpotifyStore = () => {
       }
 
       await store.saveUser();
-    }),
+    },
 
     /**
      *
      */
-    toggleCurrentTrackInPlaylist: action(async (playlist: CachedPlaylist) => {
+    async toggleCurrentTrackInPlaylist(playlist: CachedPlaylist) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (store.currentTrack?.uri === undefined || store.currentTrack?.id === undefined) return fail('No current track');
@@ -1778,9 +1564,9 @@ const useSpotifyStore = () => {
       }
 
       await store.saveUser();
-    }),
+    },
 
-    playlistOutOfDate: async (playlist: CachedPlaylist) => {
+    async playlistOutOfDate(playlist: CachedPlaylist) {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!playlist.last || !playlist.id) return notInitialized();
@@ -1788,23 +1574,23 @@ const useSpotifyStore = () => {
       return (await getFirstPlaylistTrack(playlist.id, token))?.id !== playlist.last;
     },
 
-    artistOutOfDate: async (playlist: CachedJustGoodPlaylist) => {
+    async artistOutOfDate(playlist: CachedJustGoodPlaylist) {
       return outOfDate(playlist);
     },
 
-    startProgress: action((task?: string) => {
+    startProgress(task?: string) {
       store.progress = { task: (task || ''), current: '', progress: 0 };
-    }),
+    },
 
-    updateProgress: action((progress: number, current?: string) => {
+    updateProgress(progress: number, current?: string) {
       store.progress = {
         task: store.progress?.task || '',
         progress,
         current: current || store.progress?.current || '',
       };
-    }),
+    },
 
-    finishProgress: action(() => {
+    finishProgress() {
       if (store.progress) {
         store.progress = {
           task: store.progress?.task || '',
@@ -1814,17 +1600,17 @@ const useSpotifyStore = () => {
 
         setTimeout(() => runInAction(() => (store.progress = undefined)), 1000);
       }
-    }),
+    },
 
-    setHelpView: action((helpView: HelpViewType) => {
+    setHelpView(helpView: HelpViewType) {
       store.helpView = helpView;
       store.updatePlayer();
-    }),
+    },
 
     // really slow
-    logStore: (): void => console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))),
+    logStore() { console.log(Object.fromEntries(Object.entries(toJS(store)).filter(([key, value]) => (typeof value !== 'function')))) },
 
-    call: async <T>(apiPromise: Promise<T>, backoff: number = 0): Promise<T> => {
+    async call<T>(apiPromise: Promise<T>, backoff: number = 0): Promise<T> {
       if (backoff > 0) {
         if (backoff > BACKOFF_LIMIT) {
           throw new Error('Failed to retry API call')
@@ -1854,9 +1640,9 @@ const useSpotifyStore = () => {
       }
     },
 
-    skipWelcome: action(() => { store.welcomeStep = undefined; store.helpView = undefined; }),
+    skipWelcome() { store.welcomeStep = undefined; store.helpView = undefined; },
 
-    backfill: action(async () => {
+    async backfill() {
       const token = await store.useToken();
       if (!token) return noToken();
       if (!store.justGoodPlaylists || !store.inProgressJustGoodPlaylists || !store.plannedJustGoodPlaylists) return notInitialized();
@@ -1933,7 +1719,7 @@ const useSpotifyStore = () => {
           token,
         );
       }
-    }),
+    },
   });
 
   return store;

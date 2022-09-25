@@ -18,7 +18,7 @@ import { useStore } from './state/SpotifyStoreProvider';
 const NavToRoot = () => {
   const navigate = useNavigate();
   useEffect(() => navigate('/spotifleo'), [navigate]);
-  return (<div />);
+  return (<div>Rerouting to root...</div>);
 };
 
 const App = observer(() => {

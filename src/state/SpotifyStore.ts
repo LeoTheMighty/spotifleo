@@ -312,9 +312,10 @@ const useSpotifyStore = () => {
       store.inProgressJustGoodPlaylists = inProgressJustGoodPlaylists;
       store.plannedJustGoodPlaylists = plannedJustGoodPlaylists;
 
-      store.checkOutOfDate().then(() => {
-        console.log('Finished checking out of date!');
-      });
+      // This is a big reason why i get rate limited so much
+      // store.checkOutOfDate().then(() => {
+      //   console.log('Finished checking out of date!');
+      // });
     },
 
     /**

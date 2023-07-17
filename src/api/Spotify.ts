@@ -396,11 +396,15 @@ const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse),
 ): Promise<U[]> => {
   const items: U[] = [];
   let total = 1;
+  let filteredItemsTotal = 0;
   let offset = 0;
   let uniqueSet: Set<string> | undefined = undefined;
   if (uniqueKey) { uniqueSet = new Set(); }
   while (offset < total) {
     const response = await fetch(offset);
+
+    const unfilteredItemsLength = response.items.length;
+    if (unfilteredItemsLength === 0) break;
 
     response.items.filter(filter).forEach((t, i) => {
       if (uniqueKey && uniqueSet) {
@@ -412,7 +416,8 @@ const fetchAll = async <T extends (SpotifyItemResponse | PlaylistTrackResponse),
     });
 
     offset += response.items.length;
-    total = response.total
+    filteredItemsTotal += (unfilteredItemsLength - response.items.length);
+    total = (response.total - filteredItemsTotal);
 
     progressCallback?.(offset / total);
   }

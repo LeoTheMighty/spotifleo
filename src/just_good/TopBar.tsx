@@ -19,7 +19,7 @@ const TopBar = observer(() => {
       {store.token && (
         <div className="top-bar-container">
           { store.progress ? (
-            <button className="top-bar-button">
+            <button className="top-bar-button" onClick={() => navigate('/spotifleo')}>
               <LoadingIndicator className="top-bar-loading mx-2" />
             </button>
           ) : (

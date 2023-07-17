@@ -191,7 +191,8 @@ const DeepDiveCreator = observer(() => {
       return [albums, singles, appears];
     }
 
-    throw new Error('Fucked up getting albums fuck you');
+    console.error('Could not get albums');
+    return [[], [], []];
   };
 
   const getUngroupedAlbums = (): FetchedAlbum[] => {

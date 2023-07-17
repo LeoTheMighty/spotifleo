@@ -206,7 +206,8 @@ const DeepDiveCreator = observer(() => {
       return albums;
     }
 
-    throw new Error('Fucked up getting albums fuck you');
+    console.error('Could not get albums');
+    return [];
   };
 
   const getAlbums = (): FetchedAlbum[] => {
